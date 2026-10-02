@@ -218,7 +218,7 @@ const PERMS=[
  ["Général",[["dash","Peut voir le tableau de bord global"],["annuaire","Peut consulter l'annuaire des agents"]],"home"],
  ["Dossiers administratifs",[["dos.view","Peut voir les dossiers de son département"],["dos.treat","Peut accepter ou refuser un dossier"],["dos.assign","Peut assigner un dossier à un agent"],["dos.all","Peut voir les dossiers de tous les départements"],["dos.delete","Peut supprimer un dossier"]],"folder"],
  ["Affaires judiciaires",[["jus.view","Peut voir la liste des affaires"],["jus.open","Peut ouvrir une affaire"],["jus.instruct","Peut instruire une affaire (pièces, auditions, notes)"],["jus.status","Peut changer le statut, le juge et l'audience (clore / rouvrir)"],["jus.verdict","Peut rendre un jugement"],["jus.secret","Peut voir les affaires confidentielles"],["jus.delete","Peut supprimer une affaire"]],"scale"],
- ["Registre des entreprises",[["reg.ent.view","Peut consulter le registre des entreprises"],["reg.ent.edit","Peut créer, modifier et supprimer des fiches entreprise"]],"book"],
+ ["Registre des entreprises",[["reg.ent.view","Peut consulter le registre des entreprises"],["reg.ent.edit","Peut créer, modifier et supprimer des fiches entreprise (département Finances uniquement)"]],"book"],
  ["État civil",[["reg.civ.view","Peut consulter les actes et fiches d'état civil"],["reg.civ.edit","Peut enregistrer, modifier et supprimer des actes d'état civil"]],"user"],
  ["Finances",[["fin.view","Peut consulter la trésorerie"],["fin.edit","Peut saisir des recettes et des dépenses"],["fin.bill","Peut émettre des factures et des amendes"],["fin.decl","Peut valider les déclarations fiscales"],["fin.budget","Peut gérer les budgets et le taux d'imposition"],["fin.archive","Peut clôturer une période fiscale et gérer les archives"]],"coins"],
  ["Communication",[["com.post","Peut publier des annonces"],["com.banner","Peut gérer le bandeau d'information"]],"megaphone"],
@@ -468,7 +468,7 @@ V.accueil=()=>{const u=ME();
  if(u.role=="entreprise"){const D=vals(S.dossiers).filter(d=>d.ent==u.id),F=vals(S.factures).filter(f=>f.ent==u.id&&f.st=="due"),E=vals(S.entreprises).filter(e=>e.compte==u.id);
   return `<div class="ph"><h2>Bienvenue, ${esc(u.nom)}</h2><button class="btn" onclick="go('demande')">${ic("plus")}Nouvelle demande</button></div>
   <div class="kpis">${kpi("Demandes en cours",D.filter(d=>d.st=="attente"||d.st=="cours").length)}${kpi("Demandes acceptées",D.filter(d=>d.st=="ok").length)}${kpi("Factures à régler",F.length,F.length?"":"")}${kpi("Montant dû",money(F.reduce((s,f)=>s+num(f.montant),0)),"gold")}</div>
-  ${E.length?`<div class="card"><h3>Mes licences</h3><div class="tw"><table><tr><th>Entreprise<th>Licence<th>Statut<th>Expiration</tr>${E.map(e=>`<tr><td>${esc(e.nom)}<td>${esc(e.licence)}<td>${licB(e.licSt)}<td>${fdd(e.exp)}</tr>`).join("")}</table></div></div>`:""}
+  ${E.length?`<div class="card"><h3>Mon entreprise au registre</h3><div class="tw"><table><tr><th>Entreprise<th>Type<th>Gérant<th>Enregistrée le</tr>${E.map(e=>`<tr><td>${esc(e.nom)}<td>${esc(e.type||"—")}<td>${esc(((e.gerantPrenom||"")+" "+(e.gerantNom||e.gerant||"")).trim()||"—")}<td>${fdd(e.dateEnr)}</tr>`).join("")}</table></div></div>`:""}
   <div class="grid g2"><div><h4>Annonces</h4>${visibleAnn().slice(0,4).map(annCard).join("")||`<div class="card">${empty("Aucune annonce.")}</div>`}</div>
   <div><h4>Demandes récentes</h4><div class="card">${D.sort((a,b)=>b.t-a.t).slice(0,6).map(d=>`<div class="inl" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd);cursor:pointer" onclick="openM('dossier','${d.id}')"><span>${esc(d.objet)}<div class="mu">${esc(d.num)} · ${esc(d.dept)}</div></span>${bdg(DST,d.st)}</div>`).join("")||empty("Aucune demande.")}</div></div></div>`}
  const md=myDepts(),Dall=vals(S.dossiers),ag=vals(S.users).filter(isAgent),svcU=ag.filter(x=>x.svc&&x.svc.on),pi=payInfo(u);
@@ -586,33 +586,35 @@ function MAffaire(a){if(!a||!affVisible(a))return null;const closed=a.st=="jugee
 <script>
 /* =================== REGISTRES =================== */
 const REG={
- entreprises:{t:"Entreprises",p:"reg.ent",cols:["nom","gerant","secteur","licence","licSt","exp"],f:[
-  {k:"nom",l:"Raison sociale",req:1},{k:"gerant",l:"Gérant"},{k:"secteur",l:"Secteur",type:"select",o:["Commerce","Restauration","Automobile","Transport","Sécurité privée","Divertissement","Immobilier","Industrie","Média","Santé","Autre"]},
-  {k:"adresse",l:"Adresse"},{k:"tel",l:"Téléphone"},{k:"licence",l:"Type de licence"},{k:"licSt",l:"Statut de la licence",type:"select",o:["En demande","Active","Suspendue","Expirée","Révoquée"]},{k:"exp",l:"Expiration de la licence",type:"date"},
-  {k:"compte",l:"Compte entreprise lié",type:"account"},{k:"notes",l:"Notes",type:"area"}]},
+ entreprises:{t:"Entreprises",p:"reg.ent",cols:["nom","type","gerantNom","gerantPrenom","tel","mail","dateEnr"],f:[
+  {k:"nom",l:"Raison sociale",req:1},{k:"type",l:"Type d'entreprise",type:"select",o:()=>TCATS().map(c=>c.name)},
+  {k:"gerantNom",l:"Nom du gérant",req:1},{k:"gerantPrenom",l:"Prénom du gérant",req:1},{k:"tel",l:"Téléphone"},{k:"mail",l:"Mail",type:"email"},{k:"dateEnr",l:"Date d'enregistrement",type:"date",def:()=>new Date().toISOString().slice(0,10)},
+  {k:"compte",l:"Compte entreprise lié (facultatif)",type:"account"},{k:"notes",l:"Notes",type:"area"}]},
  identites:{t:"Fiches d'identité",p:"reg.civ",cols:["nom","prenom","naiss","sexe","statut","tel"],f:[
   {k:"nom",l:"Nom",req:1},{k:"prenom",l:"Prénom",req:1},{k:"naiss",l:"Date de naissance",type:"date"},{k:"lieu",l:"Lieu de naissance"},{k:"sexe",l:"Sexe",type:"select",o:["Homme","Femme","Autre"]},{k:"nat",l:"Nationalité"},
   {k:"adresse",l:"Adresse"},{k:"tel",l:"Téléphone"},{k:"profession",l:"Profession"},{k:"statut",l:"Situation",type:"select",o:["Célibataire","Marié(e)","Pacsé(e)","Divorcé(e)","Veuf(ve)","Décédé(e)"]},{k:"photo",l:"Photo (lien URL)"},{k:"notes",l:"Mentions marginales",type:"area"}]}
 };
+/* Registre des entreprises : écriture réservée au département Finances (et à la Direction) */
+function regCanEdit(s){const R=REG[s];if(!R||!can(R.p+".edit"))return false;if(s=="entreprises"){const u=ME();return isDir()||!!(u&&u.dept=="Finances")}return true}
 const regLabel=(R,k)=>(R.f.find(x=>x.k==k)||{}).l||k;
-function regCell(k,v){if(k=="licSt")return licB(v);if(k=="exp"||k=="naiss"||k=="date")return fdd(v);if(k=="amende"||k=="prime")return v?money(v):"—";
+function regCell(k,v){if(k=="licSt")return licB(v);if(k=="exp"||k=="naiss"||k=="date"||k=="dateEnr")return fdd(v);if(k=="amende"||k=="prime")return v?money(v):"—";
  if(k=="danger")return `<span class="bdg ${({Faible:"mu",Modérée:"bl",Élevée:"wa",Extrême:"no"}[v]||"mu")}">${esc(v||"—")}</span>`;if(k=="st")return `<span class="bdg ${v=="Levé"?"mu":"no"}">${esc(v||"Actif")}</span>`;return esc(v||"—")}
 V.registres=()=>{const avail=(can("reg.civ.view")?[["etatcivil",{t:"État civil"}]]:[]).concat(Object.entries(REG).filter(([k,R])=>can(R.p+".view")));if(!avail.length)return empty("Aucun registre accessible.");
  const s=avail.some(a=>a[0]==sub)?sub:avail[0][0];if(s=="etatcivil")return `<div class="ph"><h2>Registres officiels</h2></div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}${ecView()}`;
  const R=REG[s];
  let L=vals(S[s]).filter(r=>match(filt["r_"+s],...R.f.map(f=>r[f.k]))).sort((a,b)=>(a.nom||"").localeCompare(b.nom||""));
- return `<div class="ph"><h2>Registres officiels</h2>${can(R.p+".edit")?`<button class="btn" onclick="openM('reg',null,{reg:'${s}'})">${ic("plus")}Nouvelle fiche</button>`:""}</div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}
+ return `<div class="ph"><h2>Registres officiels</h2>${regCanEdit(s)?`<button class="btn" onclick="openM('reg',null,{reg:'${s}'})">${ic("plus")}Nouvelle fiche</button>`:""}</div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}
  <div class="card inl">${search("r_"+s)}<span class="mu">${L.length} fiche(s)</span></div>
  <div class="card tw"><table><tr>${R.cols.map(c=>`<th>${esc(regLabel(R,c))}`).join("")}</tr>${L.map(r=>`<tr class="click" onclick="openM('reg','${r.id}',{reg:'${s}'})">${R.cols.map(c=>`<td>${regCell(c,r[c])}`).join("")}</tr>`).join("")||`<tr><td colspan="${R.cols.length}" class="empty">Registre vide.</td></tr>`}</table></div>`};
-function fieldH(f,v,ro){const id="rf_"+f.k;v=v==null?"":v;
+function fieldH(f,v,ro){const id="rf_"+f.k;if((v==null||v==="")&&!ro&&f.def)v=f.def();v=v==null?"":v;
  if(ro)return `<div class="k">${esc(f.l)}</div><div class="pre">${f.type=="account"?esc(v?uname(v):"—"):f.type=="date"?fdd(v):f.type=="number"&&v!==""?money(v):esc(v||"—")}</div>`;
  const cls=f.type=="area"?"f full":"f";let inp;
- if(f.type=="select")inp=`<select id="${id}">${opts([""].concat(f.o),v)}</select>`;
+ if(f.type=="select"){const o=typeof f.o=="function"?f.o():f.o;inp=`<select id="${id}">${opts([""].concat(o,v&&!o.includes(v)?[v]:[]),v)}</select>`}
  else if(f.type=="area")inp=`<textarea id="${id}" rows="3">${esc(v)}</textarea>`;
  else if(f.type=="account")inp=`<select id="${id}"><option value="">— Aucun —</option>${vals(S.users).filter(u=>u.role=="entreprise").map(u=>`<option value="${u.id}" ${u.id==v?"selected":""}>${esc(u.nom)} (${esc(u.login)})</option>`).join("")}</select>`;
  else inp=`<input id="${id}" type="${f.type||"text"}" value="${esc(v)}">`;
  return `<label class="${cls}">${esc(f.l)}${f.req?" *":""}${inp}</label>`}
-function MReg(){const s=modal.reg,R=REG[s],r=modal.id?S[s][modal.id]:{},ed=can(R.p+".edit");if(modal.id&&!r)return null;
+function MReg(){const s=modal.reg,R=REG[s],r=modal.id?S[s][modal.id]:{},ed=regCanEdit(s);if(modal.id&&!r)return null;
  let extra="";
  const ph=r.photo&&/^https?:\/\//.test(r.photo)?`<img class="photo" src="${esc(r.photo)}" alt="Photo" style="float:right;margin:0 0 10px 10px">`:"";
  return {title:(modal.id?"":"Nouvelle fiche — ")+esc(R.t)+(r.nom?" — "+esc((r.prenom?r.prenom+" ":"")+r.nom):""),
@@ -937,11 +939,11 @@ function affDel(id){const a=S.affaires[id];ask("Supprimer définitivement l'affa
 
 /* Registres */
 const REGD={entreprises:"Intérieur",identites:"État-Civil"};
-function regSave(s,id){const R=REG[s],o={};for(const f of R.f){let v=tval("rf_"+f.k);if(f.type=="number")v=v===""?"":num(v);if(f.req&&v==="")return say("Champ requis : "+f.l);o[f.k]=v}
+function regSave(s,id){if(!regCanEdit(s))return say("Seul le département Finances peut modifier ce registre.");const R=REG[s],o={};for(const f of R.f){let v=tval("rf_"+f.k);if(f.type=="number")v=v===""?"":num(v);if(f.req&&v==="")return say("Champ requis : "+f.l);o[f.k]=v}
  if(o.photo&&!/^https?:\/\//.test(o.photo))return say("Le lien de la photo doit commencer par http(s)://");
  if(id){o.mt=Date.now();DBX.update(`${s}/${id}`,o)}else{id=nid();Object.assign(o,{id,t:Date.now(),by:meId});DBX.set(`${s}/${id}`,o)}
  log(`${R.t} : fiche « ${(o.prenom?o.prenom+" ":"")+o.nom} » ${modal.id?"modifiée":"créée"}`,REGD[s],"Registres");toast("Fiche enregistrée.");closeM()}
-function regDel(s,id){const r=S[s][id];ask("Supprimer la fiche « "+r.nom+" » ?",()=>{DBX.remove(`${s}/${id}`);log(`${REG[s].t} : fiche « ${r.nom} » supprimée`,REGD[s],"Registres");modal=null},"Supprimer")}
+function regDel(s,id){if(!regCanEdit(s))return;const r=S[s][id];ask("Supprimer la fiche « "+r.nom+" » ?",()=>{DBX.remove(`${s}/${id}`);log(`${REG[s].t} : fiche « ${r.nom} » supprimée`,REGD[s],"Registres");modal=null},"Supprimer")}
 
 /* Finances */
 function addTx(){const m=num(val("fm")),l=tval("fl");if(m<=0||!l)return say("Montant et libellé requis.");const id=nid(),u=ME(),dp=val("fdp");
