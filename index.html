@@ -212,7 +212,7 @@ const ROOT = "lsgov";
 /* ---------- Constantes ---------- */
 const DEF_DEPTS=["Finances","État-Civil","Justice","Intérieur","Communication","Sécurité"];
 const ROLES={entreprise:"Entreprise",fonctionnaire:"Fonctionnaire",encadrement:"Corps d'encadrement",direction:"Direction"};
-const COLS=["users","grades","dossiers","affaires","entreprises","identites","actes","transactions","factures","declarations","archives","paie","paiearch","patrouilles","patarch","annonces","messages","logs"];
+const COLS=["users","grades","dossiers","affaires","entreprises","identites","actes","transactions","factures","declarations","archives","paie","paiearch","patrouilles","patarch","recrutements","blacklist","annonces","messages","logs"];
 const DOS_TYPES={
  "Finances":["Déclaration fiscale","Demande de subvention","Contestation d'amende","Échéancier de paiement"],
  "État-Civil":["Enregistrement d'identité","Changement d'adresse","Acte de mariage","Acte de décès"],
@@ -234,6 +234,7 @@ const PERMS=[
  ["Comptes du personnel",[["rh.view","Peut voir la liste des comptes"],["rh.create","Peut créer des comptes"],["rh.edit","Peut modifier et suspendre des comptes"],["rh.delete","Peut supprimer des comptes"],["rh.grades","Peut créer et modifier des grades"]],"users"],
  ["Salaires",[["pay.dept","Peut faire les salaires de son département"],["pay.all","Gestion globale des salaires (tous les départements, validation et versement)"]],"wallet"],
  ["Sécurité",[["sec.archive","Peut archiver et supprimer les rapports de patrouille (département Sécurité)"]],"eye"],
+ ["Recrutements",[["rec.view","Voir les recrutements (candidatures et blacklist)"],["rec.treat","Traiter les recrutements (accepter, refuser, supprimer)"],["rec.cv","Créer un CV (dossier de recrutement)"],["rec.bl","Gérer la blacklist du Gouvernement (ajouter, modifier, retirer)"]],"briefcase"],
  ["Logs",[["log.dept","Peut voir les logs de son département"],["log.all","Peut voir tous les logs"]],"list"],
  ["Administration",[["adm.site","Peut gérer les paramètres du site, la maintenance et les sauvegardes"]],"settings"]
 ];
@@ -401,7 +402,7 @@ function closeSide(){$(".side")&&$(".side").classList.remove("open");$(".scrim")
 document.addEventListener("keydown",e=>{if(e.key=="Escape"&&modal){modal.type=="confirm"?askNo():closeM()}});
 
 /* ---------- Icônes ---------- */
-const IC={home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
+const IC={briefcase:"M3 7h18v13H3z|M8 7V4h8v3|M3 13h18",home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
 function ic(n){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(IC[n]||"").split("|").map(p=>p[0]=="c"?(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`)(p.slice(1).split(",")):`<path d="${p}"/>`).join("")}</svg>`}
 function seal(){const src=(S.config&&S.config.logo)||"logo.png";return `<img class="logo" src="${esc(src)}" alt="Sceau du gouvernement" onerror="this.outerHTML=sealSvg()">`}
 function setFavicon(){let l=document.querySelector("link[rel=icon]");if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l)}l.href=(S.config&&S.config.logo)||"logo.png"}
@@ -442,6 +443,7 @@ function navItems(){const u=ME(),n=unread(),I=[];
  if(can("dos.view")){const p=vals(S.dossiers).filter(d=>myDepts().includes(d.dept)&&d.st=="attente").length;I.push(["dossiers","Dossiers","folder",p])}
  if(can("jus.view"))I.push(["justice","Justice","scale"]);
  if(secOk())I.push(["securite","Sécurité","eye"]);
+ if(recOk())I.push(["recrutements","Recrutements","briefcase",can("rec.treat")?vals(S.recrutements).filter(r=>r.st=="attente").length:0]);
  if(["reg.ent.view","reg.civ.view"].some(can))I.push(["registres","Registres","book"]);
  if(["fin.view","fin.bill","fin.decl","fin.budget"].some(can))I.push(["finances","Finances","coins",canBill()?vals(S.factures).filter(f=>f.st=="verif").length:0]);
  I.push(["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n]);
@@ -981,6 +983,54 @@ function MPaieArch(a){if(!a)return null;const F=payFolders();if(!F.some(f=>f[0]=
  <div class="tw"><table><tr><th>Agent<th>Grade<th class="r">Heures<th>Activité<th class="r">Salaire<th class="r">Primes<th>Commentaire<th class="r">Total</tr>${L.map(l=>`<tr><td class="b">${esc(l.nom)}<td>${esc(l.grade||"")}<td class="r">${l.h!=null?fh(l.h):"—"}<td class="sm">${esc(l.det||"")}${l.why?`<div style="color:var(--no)">${esc(l.why)}</div>`:""}${num(l.av)?`<div style="color:var(--no)">Averto ${num(l.av)}</div>`:""}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td>${esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`).join("")}</table></div>`,
  foot:`${isDir()?`<button class="btn gh" style="margin-right:auto" onclick="openM('paiedel','${a.id}')">Supprimer l'archive</button>`:""}<button class="btn sec" onclick="payArchCSV('${a.id}')">Exporter (CSV)</button><button class="btn" onclick="closeM()">Fermer</button>`}}
 
+/* =================== RECRUTEMENTS =================== */
+const RST={attente:["En attente","wa"],acceptee:["Acceptée","ok"],refusee:["Refusée","no"]};
+const recOk=()=>can("rec.view")||can("rec.cv");
+const cvCache={};
+function loadCv(id){if(cvCache[id]!==undefined||loadCv.p[id])return;loadCv.p[id]=1;const done=v=>{cvCache[id]=v||{};delete loadCv.p[id];render()};
+ if(db)db.ref(ROOT+"/cvfiles/"+id).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.cvfiles&&S.cvfiles[id])}
+loadCv.p={};
+const pname=(p,n)=>NRM((p||"")+" "+(n||""));
+function blHits(nom,prenom,tel){const a=pname(prenom,nom),b=pname(nom,prenom),t=String(tel||"").replace(/\D/g,"");if(!NRM(nom)&&!t)return [];
+ return vals(S.blacklist).filter(x=>{const k=pname(x.prenom,x.nom);return (NRM(nom)&&(k==a||k==b||(NRM(x.nom)==NRM(nom)&&!NRM(x.prenom))))||(t.length>=4&&String(x.tel||"").replace(/\D/g,"")==t)})}
+const blBadge=H=>H.length?`<span class="bdg no" title="${esc(H.map(x=>x.motif||"").join(" · "))}">⛔ Blacklisté</span>`:"";
+V.recrutements=()=>{if(!recOk())return empty("Accès réservé.");const T=[["cand","Candidatures"]];if(can("rec.view"))T.push(["bl","Blacklist Gouvernement"]);const s=T.some(t=>t[0]==sub)?sub:"cand";
+ return `<div class="ph"><h2>Recrutements</h2></div>${tabsH(T,s)}${s=="bl"?blView():candView()}`};
+function candView(){const st=filt.rst||"attente",q=filt.rq||"";let A=vals(S.recrutements);if(!can("rec.view"))A=A.filter(r=>r.by==meId);
+ const L=A.filter(r=>st=="all"||r.st==st).filter(r=>match(q,r.num,r.nom,r.prenom,r.tel,r.dept,r.byNom)).sort((a,b)=>b.t-a.t);
+ const cnt=k=>A.filter(r=>k=="all"||r.st==k).length;
+ return `<div class="card inl"><input id="q_rq" placeholder="Rechercher : nom, prénom, téléphone, n°…" value="${esc(q)}" oninput="filt.rq=this.value;render()" style="flex:1;min-width:200px">${can("rec.cv")?`<button class="btn" onclick="openRecNew()">${ic("plus")}Nouveau CV</button>`:""}</div>
+ <div class="tabs">${[["attente","En attente"],["acceptee","Acceptées"],["refusee","Refusées"],["all","Toutes"]].map(([k,l])=>`<button class="${st==k?"on":""}" onclick="filt.rst='${k}';render()">${l} (${cnt(k)})</button>`).join("")}</div>
+ <div class="card tw"><table><tr><th>N°<th>Candidat<th>Téléphone<th>Poste visé<th>Déposé le<th>Par<th>Statut</tr>${L.map(r=>`<tr class="click" onclick="openM('rec','${r.id}')"><td class="nw b">${esc(r.num)}<td><b>${esc(r.prenom)} ${esc(r.nom)}</b> ${blBadge(blHits(r.nom,r.prenom,r.tel))}<td>${esc(r.tel||"—")}<td>${esc(r.dept||"—")}<td class="nw">${fd(r.t)}<td>${esc(r.byNom)}<td>${bdg(RST,r.st)}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune candidature.</td></tr>`}</table></div>`}
+function blView(){const q=filt.blq||"",B=vals(S.blacklist),L=B.filter(x=>match(q,x.nom,x.prenom,x.tel,x.motif,x.prenom+" "+x.nom,x.nom+" "+x.prenom)).sort((a,b)=>(a.nom||"").localeCompare(b.nom||""));const ed=can("rec.bl");
+ return `<div class="card"><h3 style="margin-top:0">⛔ Blacklist Gouvernement — personnes indésirables</h3><p class="mu sm" style="margin-top:0">Vérifiez ici qu'un candidat n'est pas persona non grata avant tout recrutement. Les candidatures correspondant à une personne de cette liste sont signalées automatiquement.</p>
+ <div class="inl"><input id="q_blq" placeholder="Rechercher un nom, un prénom, un numéro…" value="${esc(q)}" oninput="filt.blq=this.value;render()" style="flex:1;min-width:220px">${ed?`<button class="btn" onclick="openM('bl')">${ic("plus")}Ajouter une personne</button>`:""}</div>
+ ${q.trim()?`<p style="margin:10px 0 0" class="b">${L.length?`<span style="color:var(--no)">${L.length} correspondance(s) dans la blacklist.</span>`:`<span style="color:var(--ok)">Aucune correspondance : « ${esc(q)} » n'est pas dans la blacklist.</span>`}</p>`:""}</div>
+ <div class="card tw"><table><tr><th>Nom<th>Prénom<th>Téléphone<th>Motif<th>Ajouté le<th>Par<th></tr>${L.map(x=>`<tr><td class="b">${esc(x.nom)}<td>${esc(x.prenom||"—")}<td>${esc(x.tel||"—")}<td style="white-space:normal">${esc(x.motif||"—")}<td class="nw">${fd(x.t)}<td>${esc(x.byNom)}<td class="nw">${ed?`<button class="btn sec sm" onclick="openM('bl','${x.id}')">Modifier</button> <button class="btn gh sm" onclick="blDel('${x.id}')">Retirer</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">${B.length?"Aucun résultat.":"La blacklist est vide."}</td></tr>`}</table><p class="mu sm">${B.length} personne(s) dans la blacklist.</p></div>`}
+function MRecNew(){if(!can("rec.cv"))return null;const nf=modal.files||[],H=blHits(keep.rn||"",keep.rp||"",keep.rt||"");
+ return {title:"Nouveau dossier de recrutement",wide:1,body:`<div class="pe-card"><div class="form"><label class="f">Nom *<input id="rn" oninput="keep.rn=this.value;render()"></label><label class="f">Prénom *<input id="rp" oninput="keep.rp=this.value;render()"></label>
+ <label class="f">Numéro de téléphone *<input id="rt" placeholder="Ex. : 555-0123" oninput="keep.rt=this.value;render()"></label><label class="f">Poste / département visé <span class="mu">(facultatif)</span><select id="rd">${opts([["","—"]].concat(DEPTS().map(d=>[d,d])).concat([["Direction","Direction"]]))}</select></label>
+ <label class="f full">Notes <span class="mu">(facultatif)</span><textarea id="rno" rows="2"></textarea></label></div>
+ ${H.length?`<div class="card" style="border-color:var(--no);margin:10px 0 0"><b style="color:var(--no)">⛔ Attention : ce candidat correspond à la blacklist du Gouvernement.</b>${H.map(x=>`<div class="sm">${esc(x.prenom||"")} ${esc(x.nom)}${x.tel?" · "+esc(x.tel):""} — ${esc(x.motif||"sans motif")}</div>`).join("")}</div>`:(keep.rn?`<p class="sm" style="color:var(--ok);margin:10px 0 0">Aucune correspondance dans la blacklist.</p>`:"")}</div>
+ <h4>CV du candidat *</h4>
+ ${nf.length?`<div class="fgrid" style="margin-bottom:10px">${nf.map((f,i)=>`<div class="ftile new">${f.type.startsWith("image/")?`<img src="${f.data}" alt="">`:`<div class="fdoc">${ic("file")}<span>PDF</span></div>`}<div class="fname">${esc(f.name)}</div><button class="lnk" onclick="modal.files.splice(${i},1);render()">Retirer</button></div>`).join("")}</div>`:""}
+ <div class="drop" tabindex="0" onclick="document.getElementById('rf').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();addRecFiles(event.dataTransfer.files)">
+ <div class="drop-ic">${ic("file")}</div><b>Cliquez pour joindre l'image du CV</b><div class="mu">ou glissez-déposez, ou collez une capture (Ctrl+V)</div><div class="mu sm" style="margin-top:6px">Images (PNG, JPG…) ou PDF</div></div>
+ <input type="file" id="rf" accept="image/*,application/pdf" multiple style="display:none" onchange="addRecFiles(this.files);this.value=''">
+ ${modal.busy?`<p class="mu">Traitement des fichiers…</p>`:""}<p class="err" id="msg"></p>`,
+ foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" ${modal.busy?"disabled":""} onclick="recSave()">Créer le dossier</button>`}}
+function MRec(r){if(!r||!(can("rec.view")||r.by==meId&&can("rec.cv")))return null;const F=cvCache[r.id];if(F===undefined)loadCv(r.id);const H=blHits(r.nom,r.prenom,r.tel),tr=can("rec.treat");
+ if(modal.zoom&&F&&F[modal.zoom])return {title:esc(r.num)+" — CV",wide:1,body:`<img src="${F[modal.zoom].data}" style="width:100%;border-radius:10px;cursor:zoom-out" onclick="modal.zoom=null;render()">`,foot:`<button class="btn sec" onclick="modal.zoom=null;render()">Retour</button>`};
+ return {title:`Candidature ${esc(r.num)}`,wide:1,body:`${H.length?`<div class="card" style="border-color:var(--no)"><b style="color:var(--no)">⛔ Candidat présent dans la blacklist du Gouvernement</b>${H.map(x=>`<div class="sm">${esc(x.prenom||"")} ${esc(x.nom)}${x.tel?" · "+esc(x.tel):""} — ${esc(x.motif||"sans motif")} (ajouté le ${fd(x.t)} par ${esc(x.byNom)})</div>`).join("")}</div>`:""}
+ <div class="pe-card"><div class="kv"><div class="k">Candidat</div><div class="b" style="font-size:16px">${esc(r.prenom)} ${esc(r.nom)}</div><div class="k">Téléphone</div><div>${esc(r.tel||"—")}</div><div class="k">Poste visé</div><div>${esc(r.dept||"—")}</div><div class="k">Statut</div><div>${bdg(RST,r.st)}</div><div class="k">Déposé</div><div>le ${fd(r.t)} par ${esc(r.byNom)}</div>${r.notes?`<div class="k">Notes</div><div>${esc(r.notes)}</div>`:""}${r.dT?`<div class="k">Décision</div><div>${esc(RST[r.st][0])} le ${fd(r.dT)} par ${esc(r.dNom)}${r.motif?` — ${esc(r.motif)}`:""}</div>`:""}</div></div>
+ <h4>CV (${Object.keys(r.files||{}).length})</h4><div class="fgrid">${Object.entries(r.files||{}).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data)).join("")||`<p class="mu">Aucun fichier.</p>`}</div>
+ ${tr&&r.st=="attente"?`<label class="f" style="margin-top:14px">Commentaire de décision <span class="mu">(facultatif)</span><input id="rmo" placeholder="Ex. : entretien concluant, profil incomplet…"></label>`:""}<p class="err" id="msg"></p>`,
+ foot:`${tr?`<button class="btn gh" style="margin-right:auto" onclick="recDel('${r.id}')">Supprimer</button>`:""}${tr&&r.st!="attente"?`<button class="btn sec" onclick="recDecide('${r.id}','attente')">Remettre en attente</button>`:""}${tr&&r.st=="attente"?`<button class="btn no" onclick="recDecide('${r.id}','refusee')">Refuser</button><button class="btn ok" onclick="recDecide('${r.id}','acceptee')">Accepter</button>`:""}<button class="btn sec" onclick="closeM()">Fermer</button>`}}
+function MBl(){if(!can("rec.bl"))return null;const x=modal.id?S.blacklist[modal.id]:null;if(modal.id&&!x)return null;
+ return {title:x?"Modifier une entrée de la blacklist":"Ajouter à la blacklist",body:`<div class="form"><label class="f">Nom *<input id="bn" value="${esc(x?x.nom:"")}"></label><label class="f">Prénom<input id="bp" value="${esc(x?x.prenom||"":"")}"></label>
+ <label class="f">Téléphone <span class="mu">(facultatif)</span><input id="bt" value="${esc(x?x.tel||"":"")}"></label><label class="f full">Motif *<textarea id="bm" rows="3" placeholder="Raison de l'interdiction">${esc(x?x.motif||"":"")}</textarea></label></div><p class="err" id="msg"></p>`,
+ foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="blSave('${x?x.id:""}')">Enregistrer</button>`}}
+
 /* =================== JOURNAL =================== */
 V.journal=()=>{const all=can("log.all"),u=ME();let L=vals(S.logs).filter(l=>all||l.d==u.dept);if(filt.lc)L=L.filter(l=>l.cat==filt.lc);if(filt.ld)L=L.filter(l=>l.d==filt.ld);L=L.filter(l=>match(filt.lq,l.u,l.m)).sort((a,b)=>b.t-a.t).slice(0,400);
  const cats=[...new Set(vals(S.logs).map(l=>l.cat).filter(Boolean))].sort();
@@ -1040,6 +1090,9 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="archive")m=MArchive(S.archives[modal.id]);
  else if(modal.type=="acte")m=MActe(S.actes[modal.id]);
  else if(modal.type=="patNew")m=MPatNew();
+ else if(modal.type=="recNew")m=MRecNew();
+ else if(modal.type=="rec")m=MRec(S.recrutements[modal.id]);
+ else if(modal.type=="bl")m=MBl();
  else if(modal.type=="pat")m=MPat(S.patrouilles[modal.id]);
  else if(modal.type=="patarch")m=MPatArch(S.patarch[modal.id]);
  else if(modal.type=="paiearch")m=MPaieArch(S.paiearch[modal.id]);
@@ -1312,6 +1365,28 @@ function gridSync(){if(!isDir())return;const todo=[];
   todo.forEach(t=>{const min=t.ex.find(g=>gridRow(g)===GRILLE[t.dc][1][0]),enc=t.dc!="_dir"&&t.i<2,role=t.dc=="_dir"?"direction":enc?"encadrement":"fonctionnaire";
    const id=nid()+t.i;DBX.set("grades/"+id,{id,name:t.r[0],role,dept:t.dept,color:(min&&min.color)||"#c9a24a",rank:t.i*10,perms:role=="direction"?{}:enc&&min?Object.assign({},min.perms||{}):base})});
   log(`Grille salariale : ${todo.length} grade(s) créé(s)`,"","Grades");toast(todo.length+" grade(s) créé(s).")},"Créer")}
+
+/* Recrutements */
+function openRecNew(){modal={type:"recNew",files:[]};keep={};render()}
+async function addRecFiles(list){if(!modal||modal.type!="recNew")return;const arr=[...(list||[])];if(!arr.length)return;modal.busy=1;render();modal.files=modal.files||[];
+ for(const f of arr){try{modal.files.push(await fileToData(f))}catch(e){toast(e.message,1)}}modal.busy=0;render()}
+document.addEventListener("paste",e=>{if(!modal||modal.type!="recNew"||!e.clipboardData)return;const fs=[...e.clipboardData.items].filter(i=>i.kind=="file").map(i=>i.getAsFile()).filter(Boolean);if(fs.length){e.preventDefault();addRecFiles(fs)}});
+function recSave(){if(!can("rec.cv"))return;const nom=tval("rn"),pre=tval("rp"),tel=tval("rt"),nf=modal.files||[];
+ if(!nom||!pre||!tel)return say("Nom, prénom et numéro de téléphone sont obligatoires.");if(!nf.length)return say("Joignez l'image du CV du candidat.");
+ const u=ME(),id=nid(),now=Date.now(),files={};nf.forEach(f=>{const fk=nid();files[fk]={name:f.name,type:f.type,size:f.size,t:now};DBX.set(`cvfiles/${id}/${fk}`,{data:f.data,name:f.name,type:f.type})});
+ const H=blHits(nom,pre,tel);DBX.set("recrutements/"+id,{id,num:nextNum("recrutements","REC"),nom,prenom:pre,tel,dept:val("rd"),notes:tval("rno"),st:"attente",files,t:now,by:u.id,byNom:u.nom});
+ log(`Dossier de recrutement créé : ${pre} ${nom}${H.length?" — ⚠ présent dans la blacklist":""}`,u.dept,"Recrutements");toast(H.length?"Dossier créé — attention : candidat blacklisté.":"Dossier de recrutement créé.",H.length?1:0);modal=null;keep={};render()}
+function recDecide(id,st){if(!can("rec.treat"))return;const r=S.recrutements[id];if(!r)return;const mo=tval("rmo"),H=blHits(r.nom,r.prenom,r.tel);
+ const go=()=>{const u=ME();DBX.update("recrutements/"+id,st=="attente"?{st,dT:null,dNom:null,motif:null}:{st,dT:Date.now(),dNom:u.nom,motif:mo||null});
+  log(`Candidature ${r.num} (${r.prenom} ${r.nom}) : ${st=="attente"?"remise en attente":RST[st][0].toLowerCase()}${mo?" — "+mo:""}`,u.dept,"Recrutements");toast("Candidature "+(st=="attente"?"remise en attente":RST[st][0].toLowerCase())+".")};
+ if(st=="acceptee"&&H.length)ask(`${r.prenom} ${r.nom} figure dans la blacklist du Gouvernement (${H.map(x=>x.motif||"sans motif").join(" · ")}). Accepter quand même cette candidature ?`,()=>{go();modal=null},"Accepter quand même");else{go();modal=null;keep={};render()}}
+function recDel(id){if(!can("rec.treat"))return;const r=S.recrutements[id];ask(`Supprimer définitivement la candidature ${r.num} (${r.prenom} ${r.nom}) et son CV ?`,()=>{DBX.remove("cvfiles/"+id);DBX.remove("recrutements/"+id);delete cvCache[id];log(`Candidature supprimée : ${r.num} (${r.prenom} ${r.nom})`,ME().dept,"Recrutements");modal=null},"Supprimer")}
+function blSave(id){if(!can("rec.bl"))return;const nom=tval("bn"),motif=tval("bm");if(!nom||!motif)return say("Le nom et le motif sont obligatoires.");const u=ME(),f={nom,prenom:tval("bp"),tel:tval("bt"),motif};
+ if(id){DBX.update("blacklist/"+id,Object.assign({mt:Date.now(),mNom:u.nom},f));log(`Blacklist modifiée : ${f.prenom} ${nom}`,"","Recrutements")}
+ else{const nid2=nid();DBX.set("blacklist/"+nid2,Object.assign({id:nid2,t:Date.now(),by:u.id,byNom:u.nom},f));log(`Ajout à la blacklist : ${f.prenom} ${nom} — ${motif}`,"","Recrutements")}
+ toast("Blacklist mise à jour.");closeM()}
+function blDel(id){if(!can("rec.bl"))return;const x=S.blacklist[id];ask(`Retirer ${x.prenom||""} ${x.nom} de la blacklist ?`,()=>{DBX.remove("blacklist/"+id);log(`Retrait de la blacklist : ${x.prenom||""} ${x.nom}`,"","Recrutements")},"Retirer")}
+
 
 /* Démarrage */
 applyTheme();render();startData();
