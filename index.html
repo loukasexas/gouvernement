@@ -181,6 +181,7 @@ const PERMS=[
 ];
 const ALLP=PERMS.flatMap(g=>g[1].map(p=>p[0]));
 const PL=Object.fromEntries(PERMS.flatMap(g=>g[1]));
+const pk=k=>String(k).replace(/\./g,"_"); // Firebase interdit les points dans les clés
 
 /* ---------- État ---------- */
 let S={config:{}};COLS.forEach(c=>S[c]={});
@@ -217,7 +218,7 @@ function lsSet(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(
 
 /* ---------- Permissions ---------- */
 function can(p){const u=ME();if(!u||u.role=="entreprise")return false;if(u.role=="direction")return true;
- const g=G(u);return !!((g&&g.perms&&g.perms[p])||(u.xperms&&u.xperms[p]))}
+ const g=G(u);return !!((g&&g.perms&&g.perms[pk(p)])||(u.xperms&&u.xperms[pk(p)]))}
 const isDir=()=>{const u=ME();return u&&u.role=="direction"};
 function myDepts(){const u=ME();return (isDir()||can("dos.all"))?DEPTS():(u&&u.dept?[u.dept]:[])}
 function manageable(u){const m=ME();if(!m||!u||u.id==m.id)return false;if(isDir())return true;
@@ -253,7 +254,7 @@ function startData(){
   boot();
  }
 }
-async function boot(){
+async function boot(){try{
  if(!Object.keys(S.users).length){
   const id=nid();
   await DBX.set("users/"+id,{id,login:"direction",hash:await hashPw("direction","direction"),nom:"Cabinet du Gouverneur",role:"direction",gradeId:"",dept:"",matricule:"DIR-001",active:true,mustChange:true,created:Date.now()});
@@ -261,10 +262,11 @@ async function boot(){
  if(!Object.keys(S.grades).length)seedGrades();
  if(!S.config||!S.config.siteName)DBX.update("config",{siteName:"Gouvernement de Los Santos",subtitle:"État de San Andreas — Intranet officiel",depts:DEF_DEPTS,tax:8,requireService:true,treasuryStart:250000,budgets:{},banner:{on:true,txt:"Bienvenue sur l'intranet du Gouvernement de Los Santos. Pensez à prendre votre service avant de traiter les dossiers.",lvl:"info"},maintenance:{on:false,msg:""}});
  const sid=lsGet("lsgov_session");if(sid&&S.users[sid]&&S.users[sid].active!==false)meId=sid;
+} catch(e){console.error(e);toast("Erreur d'initialisation : "+e.message,1)}
  ready=true;applyTheme();render();
 }
 function seedGrades(){
- const P=(...a)=>Object.fromEntries(a.map(k=>[k,true]));
+ const P=(...a)=>Object.fromEntries(a.map(k=>[pk(k),true]));
  const base=["annuaire","dos.view","dos.treat"];
  const L=[
   ["Gouverneur","direction","",{},0,0,15000,"#c9a24a"],
@@ -495,7 +497,7 @@ V.justice=()=>{const s=sub||"affaires";let h=`<div class="ph"><h2>Justice</h2>${
  return h+`<div class="kpis">${kpi("Ouvertes",all.filter(a=>a.st=="ouverte").length)}${kpi("En instruction",all.filter(a=>a.st=="instruction").length)}${kpi("Audiences fixées",all.filter(a=>a.st=="audience").length)}${kpi("Jugées",all.filter(a=>a.st=="jugee").length)}</div>
  <div class="card inl">${search("aq","N°, titre, partie…")}${fsel("as",Object.entries(AST).map(([k,v])=>[k,v[0]]),"Tous les statuts")}${fsel("at",["Pénale","Civile","Commerciale","Administrative"],"Tous les types")}</div>
  <div class="card tw"><table><tr><th>N°<th>Intitulé<th>Type<th>Plaignant<th>Mis en cause<th>Juge<th>Statut<th>Ouverte</tr>${L.map(a=>`<tr class="click" onclick="openM('affaire','${a.id}')"><td class="nw">${esc(a.num)}${a.secret?' <span class="bdg no">Confidentiel</span>':""}<td>${esc(a.titre)}<td>${esc(a.type)}<td>${esc(a.plaignant||"—")}<td>${esc(a.accuse||"—")}<td>${a.juge?esc(uname(a.juge)):'<span class="mu">—</span>'}<td>${bdg(AST,a.st)}<td class="nw">${fd(a.t)}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune affaire.</td></tr>`}</table></div>`};
-function judges(){return vals(S.users).filter(x=>isAgent(x)&&x.active!==false&&(x.role=="direction"||(G(x)&&G(x).perms&&G(x).perms["jus.verdict"])||(x.xperms&&x.xperms["jus.verdict"])))}
+function judges(){return vals(S.users).filter(x=>isAgent(x)&&x.active!==false&&(x.role=="direction"||(G(x)&&G(x).perms&&G(x).perms[pk("jus.verdict")])||(x.xperms&&x.xperms[pk("jus.verdict")])))}
 function MAffaireNew(){const f=modal.from?S.dossiers[modal.from]:null;
  return {title:"Ouvrir une affaire judiciaire",body:`<div class="form"><label class="f full">Intitulé<input id="an" value="${f?esc(f.objet):""}"></label>
  <label class="f">Type<select id="aty">${opts(["Pénale","Civile","Commerciale","Administrative"])}</select></label><label class="f">Juge assigné<select id="aj"><option value="">— À désigner —</option>${judges().map(x=>`<option value="${x.id}">${esc(x.nom)}</option>`).join("")}</select></label>
@@ -634,8 +636,8 @@ V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(c
  <div class="card tw"><div class="inl" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Salaires de la période</h3>${can("rh.pay.do")?`<button class="btn" onclick="payAll()">Verser tous les salaires</button>`:""}</div>
  <table><tr><th>Agent<th>Grade<th>Dossiers<th>Heures<th class="r">Fixe<th>Prime / ajustement<th class="r">Total<th>Dernier versement<th></tr>${P.map(([u,p])=>`<tr><td class="b">${esc(u.nom)}<div class="mu">${esc(u.dept||"")}</div><td>${esc(gname(u))}<td>${p.nd} × ${money(p.pd)}<td>${p.h.toFixed(1)} h × ${money(p.ph)}<td class="r">${money(p.fx)}<td>${can("rh.pay.edit")?`<input type="number" value="${num(u.bonus)}" onchange="setBonus('${u.id}',this.value)">`:money(p.bo)}<td class="r b">${money(p.total)}<td class="nw">${u.paidAt?fd(u.paidAt):"—"}<td>${can("rh.pay.do")&&p.total>0?`<button class="btn ok sm" onclick="payUser('${u.id}')">Verser</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun agent.</td></tr>`}</table></div>
  <div class="card tw"><h3>Historique des versements</h3><table><tr><th>Date<th>Agent<th>Détail<th class="r">Montant<th>Par</tr>${hist.map(t=>`<tr><td class="nw">${fd(t.t)}<td>${esc(uname(t.user))}<td class="mu">${esc(t.label)}<td class="r b">${money(t.montant)}<td>${esc(t.byNom)}</tr>`).join("")||`<tr><td colspan="5" class="empty">Aucun versement.</td></tr>`}</table></div>`};
-function permBoxes(prefix,cur,lockOwn){return PERMS.map(([gn,ps])=>`<div class="pgrp"><h4>${gn}</h4><div class="pl">${ps.map(([k,l])=>{const dis=lockOwn&&!can(k);return `<label class="ck"><input type="checkbox" id="${prefix}${k.replace(/\./g,"_")}" ${cur&&cur[k]?"checked":""} ${dis?"disabled":""}><span>${esc(l)}</span></label>`}).join("")}</div></div>`).join("")}
-function readPerms(prefix,base,lockOwn){const o={};ALLP.forEach(k=>{const e=document.getElementById(prefix+k.replace(/\./g,"_"));if(!e)return;if(lockOwn&&!can(k)){if(base&&base[k])o[k]=true;return}if(e.checked)o[k]=true});return o}
+function permBoxes(prefix,cur,lockOwn){return PERMS.map(([gn,ps])=>`<div class="pgrp"><h4>${gn}</h4><div class="pl">${ps.map(([k,l])=>{const dis=lockOwn&&!can(k);return `<label class="ck"><input type="checkbox" id="${prefix}${k.replace(/\./g,"_")}" ${cur&&cur[pk(k)]?"checked":""} ${dis?"disabled":""}><span>${esc(l)}</span></label>`}).join("")}</div></div>`).join("")}
+function readPerms(prefix,base,lockOwn){const o={};ALLP.forEach(k=>{const e=document.getElementById(prefix+k.replace(/\./g,"_"));if(!e)return;if(lockOwn&&!can(k)){if(base&&base[pk(k)])o[pk(k)]=true;return}if(e.checked)o[pk(k)]=true});return o}
 function MGrade(){const g=modal.id?S.grades[modal.id]:{role:"fonctionnaire",dept:isDir()?"":ME().dept,perms:{},color:"#c9a24a"};if(modal.id&&!g)return null;const dir=isDir();const role=keep.gr||g.role;
  return {title:modal.id?"Modifier le grade":"Nouveau grade",body:`<div class="form"><label class="f">Intitulé du grade<input id="gn" value="${esc(g.name||"")}" placeholder="Ex. : Ministre de la Justice"></label>
  <label class="f">Rôle associé<select id="gr" onchange="keep.gr=this.value;render()" ${dir?"":"disabled"}>${opts(Object.entries(ROLES).filter(r=>r[0]!="entreprise"),role)}</select></label>
