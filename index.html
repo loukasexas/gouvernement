@@ -225,7 +225,7 @@ const PERMS=[
  ["Communication",[["com.post","Peut publier des annonces"],["com.banner","Peut gérer le bandeau d'information"]],"megaphone"],
  ["Comptes du personnel",[["rh.view","Peut voir la liste des comptes"],["rh.create","Peut créer des comptes"],["rh.edit","Peut modifier et suspendre des comptes"],["rh.delete","Peut supprimer des comptes"],["rh.grades","Peut créer et modifier des grades"]],"users"],
  ["Salaires",[["pay.dept","Peut faire les salaires de son département"],["pay.all","Gestion globale des salaires (tous les départements, validation et versement)"]],"wallet"],
- ["Journal d'activité",[["log.dept","Peut voir le journal de son département"],["log.all","Peut voir le journal complet"]],"list"],
+ ["Logs",[["log.dept","Peut voir les logs de son département"],["log.all","Peut voir tous les logs"]],"list"],
  ["Administration",[["adm.site","Peut gérer les paramètres du site, la maintenance et les sauvegardes"]],"settings"]
 ];
 const ALLP=PERMS.flatMap(g=>g[1].map(p=>p[0]));
@@ -437,7 +437,7 @@ function navItems(){const u=ME(),n=unread(),I=[];
  if(can("annuaire"))I.push(["annuaire","Annuaire","users"]);
  if(["rh.view","rh.grades"].some(can))I.push(["personnel","Personnel","shield"]);
  I.push(["salaire","Salaire","wallet",(can("pay.all")||isDir())?vals(S.paie).filter(p=>p&&p.st=="soumise").length:0]);
- if(can("log.dept")||can("log.all"))I.push(["journal","Journal","list"]);
+ if(can("log.dept")||can("log.all"))I.push(["journal","Logs","list"]);
  if(can("adm.site")||can("com.banner"))I.push(["admin","Administration","settings"]);
  I.push(["profil","Mon profil","user"]);
  return I}
@@ -853,12 +853,12 @@ function payArchView(key,nm){const A=vals(S.paiearch).filter(a=>a.dept==key).sor
 function MPaieArch(a){if(!a)return null;const F=payFolders();if(!F.some(f=>f[0]==a.dept))return null;const L=Object.entries(a.lines||{}).map(([id,l])=>Object.assign({id},l)).sort((x,y)=>String(x.nom).localeCompare(y.nom));
  return {title:"Paie archivée — "+esc(a.deptNom)+" — "+esc(a.periode),wide:1,body:`<div class="kpis">${kpi("Agents payés",L.length)}${kpi("Total versé",money(a.total),"gold")}</div><p class="mu">Versée le ${fd(a.t)} · préparée par ${esc(a.subNom||"—")} · validée par ${esc(a.byNom)}</p>
  <div class="tw"><table><tr><th>Agent<th>Grade<th class="r">Dossiers<th class="r">Heures<th class="r">Salaire<th class="r">Prime<th>Commentaire<th class="r">Total</tr>${L.map(l=>`<tr><td class="b">${esc(l.nom)}<td>${esc(l.grade||"")}<td class="r">${num(l.nd)}<td class="r">${num(l.h).toFixed(1)} h<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td>${esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`).join("")}</table></div>`,
- foot:`<button class="btn sec" onclick="payArchCSV('${a.id}')">Exporter (CSV)</button><button class="btn" onclick="closeM()">Fermer</button>`}}
+ foot:`${isDir()?`<button class="btn gh" style="margin-right:auto" onclick="openM('paiedel','${a.id}')">Supprimer l'archive</button>`:""}<button class="btn sec" onclick="payArchCSV('${a.id}')">Exporter (CSV)</button><button class="btn" onclick="closeM()">Fermer</button>`}}
 
 /* =================== JOURNAL =================== */
 V.journal=()=>{const all=can("log.all"),u=ME();let L=vals(S.logs).filter(l=>all||l.d==u.dept);if(filt.lc)L=L.filter(l=>l.cat==filt.lc);if(filt.ld)L=L.filter(l=>l.d==filt.ld);L=L.filter(l=>match(filt.lq,l.u,l.m)).sort((a,b)=>b.t-a.t).slice(0,400);
  const cats=[...new Set(vals(S.logs).map(l=>l.cat).filter(Boolean))].sort();
- return `<div class="ph"><h2>Journal d'activité</h2><span class="mu">${all?"Toutes les activités":"Département "+esc(u.dept)}</span></div><div class="card inl">${search("lq","Agent, action…")}${fsel("lc",cats,"Toutes catégories")}${all?fsel("ld",DEPTS(),"Tous départements"):""}</div>
+ return `<div class="ph"><h2>Logs</h2><span class="mu">${all?"Tous les logs":"Logs du département "+esc(u.dept)}</span></div><div class="card inl">${search("lq","Agent, action…")}${fsel("lc",cats,"Toutes catégories")}${all?fsel("ld",DEPTS(),"Tous départements"):""}</div>
  <div class="card tw"><table><tr><th>Date<th>Agent<th>Catégorie<th>Département<th>Action</tr>${L.map(l=>`<tr><td class="nw mu">${fd(l.t)}<td class="b">${esc(l.u)}<td>${esc(l.cat||"")}<td>${esc(l.d||"—")}<td>${esc(l.m)}</tr>`).join("")||`<tr><td colspan="5" class="empty">Aucune activité.</td></tr>`}</table></div>`};
 
 /* =================== ADMINISTRATION =================== */
@@ -914,6 +914,7 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="archive")m=MArchive(S.archives[modal.id]);
  else if(modal.type=="acte")m=MActe(S.actes[modal.id]);
  else if(modal.type=="paiearch")m=MPaieArch(S.paiearch[modal.id]);
+ else if(modal.type=="paiedel"){const a=S.paiearch[modal.id];m=a&&isDir()?{title:"Supprimer l'archive de paie",sm:1,body:`<p>Supprimer définitivement l'archive « <b>${esc(a.periode)}</b> » du département ${esc(a.deptNom)} (${money(a.total)}, ${Object.keys(a.lines||{}).length} agent(s)) ?</p><p class="mu sm">Si vous gardez les versements, ils restent dans le Trésor et dans l'historique des agents. Si vous les annulez, l'argent est recrédité et les fiches de paie disparaissent.</p><label class="ck"><input type="checkbox" id="pdtx"><span>Annuler aussi les versements dans le Trésor (le montant est recrédité)</span></label><p class="err" id="msg"></p>`,foot:`<button class="btn sec" onclick="openM('paiearch','${a.id}')">Annuler</button><button class="btn no" onclick="delPaieArch('${a.id}')">Supprimer</button>`}:null}
  else if(modal.type=="payret")m={title:"Renvoyer la paie pour correction",sm:1,body:`<label class="f">Ce qu'il faut corriger<textarea id="prm" rows="3"></textarea></label><p class="err" id="msg"></p>`,foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="payReturnDo()">Renvoyer</button>`};
  else if(modal.type=="acteEdit")m=MActeEdit();
  if(!m){modal=null;return ""}
@@ -1081,6 +1082,9 @@ function payValidate(key,nm){if(!payGlobal())return;const d=S.paie[key]||{};if(!
   DBX.set("paiearch/"+aid,{id:aid,dept:key,deptNom:nm,periode:d.periode,t:now,by:me.id,byNom:me.nom,subNom:d.subNom||d.updNom||"",total:tot,lines});
   DBX.set("paie/"+key,{st:"brouillon",lines:{},periode:""});
   log(`Paie ${d.periode} versée : ${money(tot)} à ${L.length} agent(s)`,nm,"Salaires");toast("Paie versée et archivée.");filt.pst="arch"},"Valider et verser")}
+function delPaieArch(id){if(!isDir())return;const a=S.paiearch[id];if(!a)return;const refund=!!val("pdtx");
+ const T=vals(S.transactions).filter(t=>t.paie==id);if(refund)T.forEach(t=>DBX.remove("transactions/"+t.id));else{const up={};T.forEach(t=>up[t.id+"/paie"]=null);if(T.length)DBX.update("transactions",up)}
+ DBX.remove("paiearch/"+id);log(`Archive de paie supprimée : ${a.periode} (${money(a.total)})${refund?" — versements annulés au Trésor":""}`,a.deptNom,"Salaires");toast("Archive supprimée.");modal=null;keep={};render()}
 function payArchCSV(id){const a=S.paiearch[id],q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
  const rows=[["Agent","Grade","Dossiers","Heures","Salaire","Prime","Commentaire","Total"]].concat(Object.values(a.lines||{}).map(l=>[l.nom,l.grade,num(l.nd),num(l.h),num(l.montant),num(l.prime),l.note||"",lineTotal(l)]));rows.push([],["Total","","","","","","",a.total]);
  const csv="﻿"+rows.map(r=>r.map(q).join(";")).join("\r\n"),b=new Blob([csv],{type:"text/csv;charset=utf-8"}),l=document.createElement("a");l.href=URL.createObjectURL(b);l.download=("paie-"+a.deptNom+"-"+a.periode).replace(/[^\w\-]+/g,"_")+".csv";document.body.appendChild(l);l.click();setTimeout(()=>{URL.revokeObjectURL(l.href);l.remove()},500)}
