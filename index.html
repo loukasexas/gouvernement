@@ -36,7 +36,7 @@ h2{font-size:20px}h3{font-size:16px}h4{font-size:14px;color:var(--mu);text-trans
 .top .who{margin-left:auto;text-align:right;line-height:1.25}
 .burger{display:none;background:none;border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:6px 8px;cursor:pointer}
 .ticker{overflow:hidden;white-space:nowrap;padding:7px 0;font-size:13px;font-weight:500;border-bottom:1px solid var(--bd)}
-.ticker span{display:inline-block;padding-left:100%;animation:tk 28s linear infinite;animation-delay:-5s}
+.ticker span{display:inline-block;padding-left:100%;animation:tk 28s linear infinite}
 .ticker.info{background:rgba(76,127,224,.14);color:var(--tx)}.ticker.warn{background:rgba(227,170,61,.16)}.ticker.alert{background:rgba(239,99,99,.18)}
 @keyframes tk{to{transform:translateX(-100%)}}
 @media(prefers-reduced-motion:reduce){.ticker span{animation:none;padding-left:16px}}
@@ -399,9 +399,11 @@ function page(){
  ${isAgent(u)?`<button class="btn sm ${svcOn?"ok":"gh"}" onclick="toggleSvc()" title="Prise / fin de service">${svcOn?`En service · <span data-since="${u.svc.since}">--</span>`:"Hors service"}</button>`:""}
  <div class="who"><div class="b">${esc(u.nom)}</div><div class="mu">${esc(gname(u))}${u.dept?" · "+esc(u.dept):""}</div></div>
  <button class="btn gh sm" onclick="toggleTheme()" title="Thème clair / sombre" aria-label="Changer de thème">${ic("sun").replace("<svg",'<svg width="16" height="16"')}</button></div>
- ${bn.on&&bn.txt?`<div class="ticker ${esc(bn.lvl||"info")}"><span>${esc(bn.txt)}</span></div>`:""}
+ ${bn.on&&bn.txt?`<div class="ticker ${esc(bn.lvl||"info")}">${tickerSpan(bn.txt)}</div>`:""}
  <main>${(V[view]||V.accueil)()}</main></div></div>${modalH()}`;
 }
+/* Le bandeau suit l'horloge : il reprend là où il en était après chaque changement de page */
+function tickerSpan(t){const d=Math.max(20,Math.round(14+String(t).length*.2)),ph=(Date.now()/1000)%d;return `<span style="animation-duration:${d}s;animation-delay:-${ph.toFixed(2)}s">${esc(t)}</span>`}
 function navItems(){const u=ME(),n=unread(),I=[];
  if(u.role=="entreprise"){const imp=vals(S.factures).filter(f=>f.ent==u.id&&f.st=="due").length;
   return [["accueil","Accueil","home"],["demande","Nouvelle demande","plus"],["mesdem","Mes demandes","folder"],["factures","Factures & impôts","wallet",imp],["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n],["profil","Mon profil","user"]]}
