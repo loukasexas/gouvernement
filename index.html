@@ -20,7 +20,8 @@ h2{font-size:20px}h3{font-size:16px}h4{font-size:14px;color:var(--mu);text-trans
 .app{display:flex;min-height:100vh}
 .side{width:248px;flex:none;background:var(--bg2);border-right:1px solid var(--bd);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;z-index:30}
 .brand{display:flex;gap:10px;align-items:center;padding:16px 16px 14px;border-bottom:1px solid var(--bd)}
-.brand svg{width:44px;height:44px;flex:none}
+.brand svg,.brand .logo{width:48px;height:48px;flex:none;object-fit:contain}
+.logo{display:block;width:100%;height:100%;object-fit:contain}
 .brand .t1{font-family:Cinzel,serif;font-weight:700;font-size:13px;color:var(--gold2);line-height:1.2}
 .brand .t2{font-size:11px;color:var(--mu)}
 .nav{padding:10px 8px;flex:1}
@@ -119,7 +120,7 @@ td input,td select{margin:0;width:110px;padding:5px 8px}
 .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at top,#16264a 0%,var(--bg) 60%)}
 :root[data-theme="light"] .login{background:radial-gradient(ellipse at top,#dfe6f5 0%,var(--bg) 60%)}
 .login .box{width:100%;max-width:400px;text-align:center}
-.login .seal{width:120px;height:120px;margin:0 auto 12px}
+.login .seal{width:150px;height:150px;margin:0 auto 12px}
 .login .card{text-align:left;margin-top:18px;padding:22px}
 .err{color:var(--no);min-height:1.3em;font-size:13px;margin:6px 0 0}
 .kv{display:grid;grid-template-columns:160px 1fr;gap:6px 14px;font-size:14px}
@@ -323,7 +324,7 @@ function tickClocks(){document.querySelectorAll("[data-since]").forEach(e=>{e.te
 setInterval(tickClocks,1000);
 function unread(){const m=ME();return m?vals(S.messages).filter(x=>x.to==m.id&&!x.read).length:0}
 function notify(){const n=unread();if(lastUnread>=0&&n>lastUnread&&!(view=="messages"))toast("Nouveau message reçu");lastUnread=n}
-function applyTheme(){const t=lsGet("lsgov_theme")||"dark";document.documentElement.setAttribute("data-theme",t);
+function applyTheme(){setFavicon();const t=lsGet("lsgov_theme")||"dark";document.documentElement.setAttribute("data-theme",t);
  const a=S.config&&S.config.accent;if(a&&/^#[0-9a-f]{6}$/i.test(a)){document.documentElement.style.setProperty("--gold",a);document.documentElement.style.setProperty("--gold2",a)}else{document.documentElement.style.removeProperty("--gold");document.documentElement.style.removeProperty("--gold2")}}
 function toggleTheme(){lsSet("lsgov_theme",(lsGet("lsgov_theme")||"dark")=="dark"?"light":"dark");applyTheme();render()}
 function openSide(){$(".side")&&$(".side").classList.add("open");$(".scrim")&&$(".scrim").classList.add("open")}
@@ -333,7 +334,9 @@ document.addEventListener("keydown",e=>{if(e.key=="Escape"&&modal){modal.type=="
 /* ---------- Icônes ---------- */
 const IC={home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
 function ic(n){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(IC[n]||"").split("|").map(p=>p[0]=="c"?(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`)(p.slice(1).split(",")):`<path d="${p}"/>`).join("")}</svg>`}
-function seal(){return `<svg viewBox="0 0 200 200" role="img" aria-label="Sceau"><defs><path id="sc" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0"/></defs>
+function seal(){const src=(S.config&&S.config.logo)||"logo.png";return `<img class="logo" src="${esc(src)}" alt="Sceau du gouvernement" onerror="this.outerHTML=sealSvg()">`}
+function setFavicon(){let l=document.querySelector("link[rel=icon]");if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l)}l.href=(S.config&&S.config.logo)||"logo.png"}
+function sealSvg(){return `<svg viewBox="0 0 200 200" role="img" aria-label="Sceau"><defs><path id="sc" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0"/></defs>
 <circle cx="100" cy="100" r="97" fill="#0d1628" stroke="#c9a24a" stroke-width="5"/><circle cx="100" cy="100" r="86" fill="none" stroke="#c9a24a" stroke-width="1.5"/><circle cx="100" cy="100" r="58" fill="#132443" stroke="#c9a24a" stroke-width="2"/>
 <text font-family="Cinzel,Georgia,serif" font-size="15" font-weight="700" fill="#e5c97a" letter-spacing="2.5"><textPath href="#sc" startOffset="0">GOUVERNEMENT DE LOS SANTOS • SAN ANDREAS •</textPath></text>
 <path d="M100 56l10.6 21.5 23.7 3.4-17.1 16.7 4 23.6L100 110l-21.2 11.2 4-23.6-17.1-16.7 23.7-3.4z" fill="#c9a24a"/>
@@ -671,7 +674,7 @@ V.admin=()=>{const c=S.config,bn=c.banner||{},mt=c.maintenance||{},adm=can("adm.
  return `<div class="ph"><h2>Administration</h2></div>
  ${can("com.banner")?`<div class="card"><h3>Bandeau d'information défilant</h3><div class="form"><label class="f full">Texte<input id="bt" value="${esc(bn.txt||"")}"></label><label class="f">Niveau<select id="bl">${opts([["info","Information"],["warn","Avertissement"],["alert","Alerte"]],bn.lvl||"info")}</select></label><label class="f">Affichage<select id="bo">${opts([["1","Affiché"],["0","Masqué"]],bn.on?"1":"0")}</select></label></div><button class="btn" onclick="saveBanner()">Mettre à jour</button></div>`:""}
  ${adm?`<div class="card"><h3>Paramètres généraux</h3><div class="form"><label class="f">Nom du gouvernement<input id="sn" value="${esc(c.siteName||"")}"></label><label class="f">Sous-titre<input id="ss" value="${esc(c.subtitle||"")}"></label>
- <label class="f">Couleur d'accent<input id="sa" type="color" value="${esc(c.accent||"#c9a24a")}"></label><label class="f">Trésorerie initiale ($)<input id="st0" type="number" value="${num(c.treasuryStart)}"></label>
+ <label class="f">Logo (fichier du dépôt ou lien https)<input id="slg" value="${esc(c.logo||"logo.png")}"></label><label class="f">Couleur d'accent<input id="sa" type="color" value="${esc(c.accent||"#c9a24a")}"></label><label class="f">Trésorerie initiale ($)<input id="st0" type="number" value="${num(c.treasuryStart)}"></label>
  <label class="f">Service obligatoire pour les fonctionnaires<select id="srs">${opts([["1","Oui"],["0","Non"]],c.requireService?"1":"0")}</select></label>
  <label class="f full">Départements (un par ligne)<textarea id="sdp" rows="6">${esc(DEPTS().join("\n"))}</textarea></label></div><button class="btn" onclick="saveSettings()">Enregistrer</button> <button class="btn gh" onclick="resetAccent()">Couleur par défaut</button></div>
  <div class="card"><h3>Mode maintenance</h3><p class="mu">Quand il est actif, seuls la Direction et les administrateurs peuvent utiliser l'intranet.</p><div class="form"><label class="f">État<select id="mo">${opts([["0","Désactivé"],["1","Activé"]],mt.on?"1":"0")}</select></label><label class="f full">Message affiché<textarea id="mm" rows="2">${esc(mt.msg||"")}</textarea></label></div><button class="btn" onclick="saveMaint()">Appliquer</button></div>
@@ -816,7 +819,7 @@ function payAll(){const L=vals(S.users).filter(u=>isAgent(u)&&(isDir()||manageab
 /* Administration */
 function saveBanner(){DBX.update("config",{banner:{txt:tval("bt"),lvl:val("bl"),on:val("bo")=="1"}});log("Bandeau d'information mis à jour","Communication","Administration");toast("Bandeau mis à jour.")}
 function saveSettings(){const dp=val("sdp").split("\n").map(s=>s.trim()).filter(Boolean);if(!dp.length)return toast("Il faut au moins un département.",1);
- DBX.update("config",{siteName:tval("sn")||"Gouvernement de Los Santos",subtitle:tval("ss"),accent:val("sa"),treasuryStart:num(val("st0")),requireService:val("srs")=="1",depts:[...new Set(dp)]});applyTheme();log("Paramètres du site modifiés","","Administration");toast("Paramètres enregistrés.")}
+ DBX.update("config",{siteName:tval("sn")||"Gouvernement de Los Santos",subtitle:tval("ss"),accent:val("sa"),logo:tval("slg")||"logo.png",treasuryStart:num(val("st0")),requireService:val("srs")=="1",depts:[...new Set(dp)]});applyTheme();log("Paramètres du site modifiés","","Administration");toast("Paramètres enregistrés.")}
 function resetAccent(){DBX.update("config",{accent:null});setTimeout(applyTheme,50);toast("Couleur par défaut rétablie.")}
 function saveMaint(){const on=val("mo")=="1";DBX.update("config",{maintenance:{on,msg:tval("mm")}});log("Maintenance "+(on?"activée":"désactivée"),"","Administration");toast("Maintenance "+(on?"activée":"désactivée")+".")}
 function exportData(){const data={config:S.config};COLS.forEach(c=>data[c]=S[c]);const b=new Blob([JSON.stringify(data,null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sauvegarde-intranet-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);log("Sauvegarde exportée","","Administration")}
