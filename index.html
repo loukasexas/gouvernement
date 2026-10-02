@@ -337,26 +337,7 @@ async function boot(){try{
  ready=true;applyTheme();render();
 }
 function seedGrades(){
- const P=(...a)=>Object.fromEntries(a.map(k=>[pk(k),true]));
- const base=["annuaire","dos.view","dos.treat"];
- const L=[
-  ["Gouverneur","direction","",{},0,0,15000,"#c9a24a"],
-  ["Vice-Gouverneur","direction","",{},0,0,12000,"#c9a24a"],
-  ["Ministre de la Justice","encadrement","Justice",P(...base,"dash","dos.assign","jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","reg.cas.view","reg.cas.edit","reg.civ.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#8b5cf6"],
-  ["Ministre des Finances","encadrement","Finances",P(...base,"dash","dos.assign","fin.view","fin.edit","fin.bill","fin.decl","fin.budget","reg.ent.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#22c55e"],
-  ["Ministre de l'Intérieur","encadrement","Intérieur",P(...base,"dash","dos.assign","reg.ent.view","reg.ent.edit","reg.civ.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#3b82f6"],
-  ["Ministre de la Sécurité","encadrement","Sécurité",P(...base,"dash","dos.assign","sec.archive","reg.avis.view","reg.avis.edit","reg.cas.view","reg.civ.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#ef4444"],
-  ["Ministre de la Communication","encadrement","Communication",P(...base,"dash","dos.assign","com.post","com.banner","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#f59e0b"],
-  ["Ministre de l'État-Civil","encadrement","État-Civil",P(...base,"dash","dos.assign","reg.civ.view","reg.civ.edit","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#14b8a6"],
-  ["Juge","fonctionnaire","Justice",P(...base,"jus.view","jus.instruct","jus.status","jus.verdict","reg.cas.view","reg.cas.edit","reg.civ.view"),50,300,0,"#a78bfa"],
-  ["Greffier","fonctionnaire","Justice",P(...base,"jus.view","jus.open","jus.instruct","reg.cas.view"),40,250,0,"#a78bfa"],
-  ["Agent du Trésor","fonctionnaire","Finances",P(...base,"fin.view","fin.bill","reg.ent.view"),40,250,0,"#4ade80"],
-  ["Officier d'état civil","fonctionnaire","État-Civil",P(...base,"reg.civ.view","reg.civ.edit"),40,250,0,"#2dd4bf"],
-  ["Agent de l'Intérieur","fonctionnaire","Intérieur",P(...base,"reg.ent.view","reg.ent.edit"),40,250,0,"#60a5fa"],
-  ["Agent de sécurité","fonctionnaire","Sécurité",P(...base,"reg.avis.view","reg.cas.view"),40,250,0,"#f87171"],
-  ["Chargé de communication","fonctionnaire","Communication",P(...base,"com.post"),40,250,0,"#fbbf24"]
- ];
- const o={};L.forEach(([name,role,dept,perms,perDossier,perHour,fixe,color],i)=>{const id=nid()+i;o[id]={id,name,role,dept,perms,perDossier,perHour,fixe,color,rank:i}});
+ const o={};gridTargets().forEach((t,j)=>{const id=nid()+j;o[id]={id,name:t.name,role:t.role,dept:t.dept,rank:t.rank,color:t.color,perms:t.perms}});
  DBX.update("grades",o);
 }
 
@@ -839,7 +820,7 @@ V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(c
   `<div class="card inl">${search("pq","Nom, identifiant, grade…")}${fsel("pr",Object.entries(ROLES),"Tous rôles")}${fsel("pd",DEPTS(),"Tous départements")}</div>
   <div class="card tw"><table><tr><th>Nom<th>Identifiant<th>Rôle<th>Grade<th>Département<th>État<th></tr>${L.map(u=>`<tr><td class="b">${esc(u.nom)}<td>${esc(u.login)}<td>${esc(ROLES[u.role])}<td>${esc(G(u)?G(u).name:"—")}<td>${esc(u.dept||"—")}<td>${u.active===false?'<span class="bdg no">Suspendu</span>':'<span class="bdg ok">Actif</span>'}<td class="nw">${manageable(u)&&can("rh.edit")?`<button class="btn sec sm" onclick="openM('user','${u.id}')">Modifier</button>`:""} ${manageable(u)&&can("rh.delete")?`<button class="btn gh sm" onclick="delUser('${u.id}')">Supprimer</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucun compte.</td></tr>`}</table></div>`}
  if(s=="grades"){const L=vals(S.grades).filter(g=>isDir()||g.role=="fonctionnaire"&&(g.dept==ME().dept)||g.dept==ME().dept).sort((a,b)=>Object.keys(ROLES).indexOf(b.role)-Object.keys(ROLES).indexOf(a.role)||(a.rank||0)-(b.rank||0));
-  return h+`<div class="card inl" style="justify-content:space-between"><span class="mu">Un grade précise un rôle : il fixe l'intitulé, la rémunération (grille salariale) et les permissions exactes de l'agent.</span><span class="inl">${isDir()?`<button class="btn sec" onclick="gridSync()">Créer les grades de la grille</button>`:""}<button class="btn" onclick="openM('grade')">${ic("plus")}Nouveau grade</button></span></div>
+  return h+`<div class="card inl" style="justify-content:space-between"><span class="mu">Un grade précise un rôle : il fixe l'intitulé, la rémunération (grille salariale) et les permissions exactes de l'agent.</span><span class="inl">${isDir()?`<button class="btn sec" onclick="openM('gridrep')">Remplacer par la grille officielle</button>`:""}<button class="btn" onclick="openM('grade')">${ic("plus")}Nouveau grade</button></span></div>
   <div class="card tw"><table><tr><th>Grade<th>Rôle<th>Département<th>Permissions<th class="r">Salaire de base<th class="r">Maximal<th class="r">Taux h. sup.<th>Agents<th></tr>${L.map(g=>`<tr><td><span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span><td>${esc(ROLES[g.role])}<td>${esc(g.dept||"Tous")}<td>${g.role=="direction"?"Toutes":Object.keys(g.perms||{}).filter(k=>g.perms[k]).length}${(c=>c?`<td class="r nw">${money(c.base)}<td class="r nw">${c.max>c.base?money(c.max):"—"}<td class="r nw">${c.max>c.base?money(c.rate):"—"}${c.src=="grille"?"":` <span class="mu sm" title="Valeurs propres au grade">*</span>`}`:`<td colspan="3" class="mu sm">Hors grille salariale</td>`)(payCfg(g))}<td>${vals(S.users).filter(u=>u.gradeId==g.id).length}<td class="nw">${gradeEditable(g)?`<button class="btn sec sm" onclick="openM('grade','${g.id}')">Modifier</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun grade.</td></tr>`}</table></div>`}
  return h};
 let openGrp=new Set([0]);
@@ -983,6 +964,32 @@ function MPaieArch(a){if(!a)return null;const F=payFolders();if(!F.some(f=>f[0]=
  <div class="tw"><table><tr><th>Agent<th>Grade<th class="r">Heures<th>Activité<th class="r">Salaire<th class="r">Primes<th>Commentaire<th class="r">Total</tr>${L.map(l=>`<tr><td class="b">${esc(l.nom)}<td>${esc(l.grade||"")}<td class="r">${l.h!=null?fh(l.h):"—"}<td class="sm">${esc(l.det||"")}${l.why?`<div style="color:var(--no)">${esc(l.why)}</div>`:""}${num(l.av)?`<div style="color:var(--no)">Averto ${num(l.av)}</div>`:""}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td>${esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`).join("")}</table></div>`,
  foot:`${isDir()?`<button class="btn gh" style="margin-right:auto" onclick="openM('paiedel','${a.id}')">Supprimer l'archive</button>`:""}<button class="btn sec" onclick="payArchCSV('${a.id}')">Exporter (CSV)</button><button class="btn" onclick="closeM()">Fermer</button>`}}
 
+/* Grades officiels générés depuis la grille salariale */
+const GCOL={_dir:"#c9a24a",fin:"#22c55e",ec:"#a78bfa",jus:"#94a3b8",int:"#3b82f6",com:"#ec4899",sec:"#f97316"};
+function gridPerms(dc,name,i){const n=NRM(name),S0=["annuaire","dos.view","dos.treat"],L=[...S0];const add=(...a)=>L.push(...a);
+ if(dc!="_dir"&&i<2){add("dash","dos.assign","rh.view","rh.create","rh.edit","rh.grades","pay.dept","log.dept","rec.view","rec.treat","rec.cv");
+  ({fin:()=>add("fin.view","fin.edit","fin.bill","fin.decl","fin.budget","fin.archive","reg.ent.view","reg.ent.edit"),ec:()=>add("reg.civ.view","reg.civ.edit","rec.bl"),jus:()=>add("jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view"),int:()=>add("reg.ent.view","reg.civ.view"),com:()=>add("com.post","com.banner"),sec:()=>add("sec.archive")}[dc]||(()=>0))()}
+ else if(dc=="fin"){add("fin.view","fin.bill","reg.ent.view");if(i<6)add("fin.edit","fin.decl","fin.budget","fin.archive","reg.ent.edit");if(/controle|referent/.test(n))add("fin.decl")}
+ else if(dc=="ec"){add("reg.civ.view","reg.civ.edit");if(n.includes("ressources humaines"))add("rec.cv");if(n.includes("directeur rh"))add("rec.view","rec.treat","rec.cv","rec.bl","rh.view");if(n.includes("formateur"))add("rec.view")}
+ else if(dc=="jus"){add("jus.view","jus.instruct");if(/responsable|chief|juge/.test(n))add("jus.status","jus.verdict","fin.bill");if(/procureur|responsable|secretaire/.test(n))add("jus.open");if(/responsable|chief|general/.test(n))add("jus.secret")}
+ else if(dc=="int")add("reg.ent.view","reg.civ.view");
+ else if(dc=="com"){add("com.post");if(i<6)add("com.banner")}
+ else if(dc=="sec"){if(i<5)add("sec.archive")}
+ return Object.fromEntries([...new Set(L)].map(k=>[pk(k),true]))}
+function gridTargets(){const T=[];Object.entries(GRILLE).forEach(([dc,[nm,R]])=>{const dept=dc=="_dir"?"":DEPTS().find(d=>dcode(d)==dc);if(dept===undefined)return;
+ R.forEach((r,i)=>T.push({dc,dept,r,i,name:r[0],role:dc=="_dir"?"direction":i<2?"encadrement":"fonctionnaire",rank:i,color:GCOL[dc]||"#c9a24a",perms:dc=="_dir"?{}:gridPerms(dc,r[0],i)}))});return T}
+function gridPlan(){const T=gridTargets(),used=new Set(),G=vals(S.grades),up=[],cr=[];
+ T.forEach(t=>{const ex=G.find(g=>!used.has(g.id)&&gridRow(g)===t.r&&(t.dc=="_dir"?g.role=="direction":g.role!="direction"&&g.dept==t.dept));if(ex){used.add(ex.id);up.push({g:ex,t})}else cr.push(t)});
+ const del=G.filter(g=>!used.has(g.id));return {T,up,cr,del,lost:vals(S.users).filter(u=>u.gradeId&&del.some(g=>g.id==u.gradeId))}}
+function MGridReplace(){if(!isDir())return null;const P=gridPlan();
+ return {title:"Remplacer les grades par la grille officielle",wide:1,body:`<p>Tous les grades seront alignés sur la grille salariale (${P.T.length} grades, classés par département et par rang).</p>
+ <div class="kpis">${kpi("Grades conservés et renommés",P.up.length)}${kpi("Grades créés",P.cr.length)}${kpi("Anciens grades supprimés",P.del.length)}</div>
+ <p class="mu sm">Les grades conservés gardent leurs agents et leurs permissions actuelles (complétées par les permissions par défaut du poste). Les grades créés reçoivent des permissions par défaut adaptées au poste (modifiables ensuite).</p>
+ ${P.up.filter(x=>x.g.name!=x.t.name).length?`<h4>Renommés</h4><p class="sm">${P.up.filter(x=>x.g.name!=x.t.name).map(x=>`${esc(x.g.name)} → <b>${esc(x.t.name)}</b> (${esc(x.t.dept||"Direction")})`).join(" · ")}</p>`:""}
+ ${P.del.length?`<h4>Supprimés</h4><p class="sm">${P.del.map(g=>esc(g.name)+(g.dept?" ("+esc(g.dept)+")":"")).join(" · ")}</p>`:""}
+ ${P.lost.length?`<div class="card" style="border-color:var(--wa)"><b>${P.lost.length} agent(s) perdront leur grade</b> et devront être réaffectés dans Personnel → Comptes :<div class="sm" style="margin-top:6px">${P.lost.map(u=>`${esc(u.nom)} (${esc(gname(u))}${u.dept?", "+esc(u.dept):""})`).join(" · ")}</div></div>`:""}<p class="err" id="msg"></p>`,
+ foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="gridReplace()">Remplacer les grades</button>`}}
+
 /* =================== RECRUTEMENTS =================== */
 const RST={attente:["En attente","wa"],acceptee:["Acceptée","ok"],refusee:["Refusée","no"]};
 const recOk=()=>can("rec.view")||can("rec.cv");
@@ -1093,6 +1100,7 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="recNew")m=MRecNew();
  else if(modal.type=="rec")m=MRec(S.recrutements[modal.id]);
  else if(modal.type=="bl")m=MBl();
+ else if(modal.type=="gridrep")m=MGridReplace();
  else if(modal.type=="pat")m=MPat(S.patrouilles[modal.id]);
  else if(modal.type=="patarch")m=MPatArch(S.patarch[modal.id]);
  else if(modal.type=="paiearch")m=MPaieArch(S.paiearch[modal.id]);
@@ -1354,17 +1362,11 @@ function importData(inp){const f=inp.files[0];if(!f)return;const r=new FileReade
 function wipeAll(){ask("Tout effacer définitivement ? Cette action est irréversible.",()=>{DBX.replaceAll({}).then(()=>{meId=null;lsSet("lsgov_session",null);ready=false;S={config:{}};COLS.forEach(c=>S[c]={});setTimeout(boot,600)})},"Tout effacer")}
 
 
-/* Grille salariale : création des grades manquants */
-function gridSync(){if(!isDir())return;const todo=[];
- Object.entries(GRILLE).forEach(([dc,[nm,R]])=>{const dept=dc=="_dir"?"":DEPTS().find(d=>dcode(d)==dc);if(dept===undefined)return;
-  const ex=vals(S.grades).filter(g=>dc=="_dir"?g.role=="direction":g.role!="direction"&&g.dept==dept);
-  R.forEach((r,i)=>{if(!ex.some(g=>gridRow(g)===r))todo.push({dc,dept,r,i,ex})})});
- if(!todo.length)return toast("Tous les grades de la grille existent déjà.");
- ask(`Créer ${todo.length} grade(s) manquant(s) d'après la grille salariale (${[...new Set(todo.map(t=>GRILLE[t.dc][0]))].join(", ")}) ? Ils recevront les permissions de base : complétez-les ensuite.`,()=>{
-  const P=(...a)=>Object.fromEntries(a.map(k=>[pk(k),true])),base=P("annuaire","dos.view","dos.treat");
-  todo.forEach(t=>{const min=t.ex.find(g=>gridRow(g)===GRILLE[t.dc][1][0]),enc=t.dc!="_dir"&&t.i<2,role=t.dc=="_dir"?"direction":enc?"encadrement":"fonctionnaire";
-   const id=nid()+t.i;DBX.set("grades/"+id,{id,name:t.r[0],role,dept:t.dept,color:(min&&min.color)||"#c9a24a",rank:t.i*10,perms:role=="direction"?{}:enc&&min?Object.assign({},min.perms||{}):base})});
-  log(`Grille salariale : ${todo.length} grade(s) créé(s)`,"","Grades");toast(todo.length+" grade(s) créé(s).")},"Créer")}
+function gridReplace(){if(!isDir())return;const P=gridPlan(),o={};
+ P.up.forEach(({g,t})=>o[g.id]=Object.assign({},g,{name:t.name,role:t.role,dept:t.dept,rank:t.rank,color:t.color,perms:t.role=="direction"?{}:Object.assign({},t.perms,g.perms||{})}));
+ P.cr.forEach((t,j)=>{const id=nid()+j;o[id]={id,name:t.name,role:t.role,dept:t.dept,rank:t.rank,color:t.color,perms:t.perms}});
+ P.del.forEach(g=>o[g.id]=null);P.lost.forEach(u=>DBX.update("users/"+u.id,{gradeId:""}));
+ DBX.update("grades",o);log(`Grades remplacés par la grille officielle : ${P.up.length} conservé(s), ${P.cr.length} créé(s), ${P.del.length} supprimé(s)`,"","Grades");toast("Grades remplacés par la grille officielle.");closeM()}
 
 /* Recrutements */
 function openRecNew(){modal={type:"recNew",files:[]};keep={};render()}
