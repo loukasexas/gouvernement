@@ -221,7 +221,7 @@ const PERMS=[
  ["Affaires judiciaires",[["jus.view","Peut voir la liste des affaires"],["jus.open","Peut ouvrir une affaire"],["jus.instruct","Peut instruire une affaire (pièces, auditions, notes)"],["jus.status","Peut changer le statut, le juge et l'audience (clore / rouvrir)"],["jus.verdict","Peut rendre un jugement"],["jus.secret","Peut voir les affaires confidentielles"],["jus.delete","Peut supprimer une affaire"]],"scale"],
  ["Registre des entreprises",[["reg.ent.view","Peut consulter le registre des entreprises"],["reg.ent.edit","Peut créer, modifier et supprimer des fiches entreprise (département Finances uniquement)"]],"book"],
  ["État civil",[["reg.civ.view","Peut consulter les actes et fiches d'état civil"],["reg.civ.edit","Peut enregistrer, modifier et supprimer des actes d'état civil"]],"user"],
- ["Finances",[["fin.view","Peut consulter la trésorerie"],["fin.edit","Peut saisir des recettes et des dépenses"],["fin.bill","Peut émettre des factures et des amendes"],["fin.decl","Peut valider les déclarations fiscales"],["fin.budget","Peut gérer les budgets et le taux d'imposition"],["fin.archive","Peut clôturer une période fiscale et gérer les archives"]],"coins"],
+ ["Finances",[["fin.view","Peut consulter la trésorerie"],["fin.edit","Peut saisir des recettes et des dépenses"],["fin.bill","Peut émettre des factures et des amendes"],["fin.decl","Peut valider les déclarations fiscales"],["fin.budget","Peut gérer les taux d'imposition"],["fin.archive","Peut clôturer une période fiscale et gérer les archives"]],"coins"],
  ["Communication",[["com.post","Peut publier des annonces"],["com.banner","Peut gérer le bandeau d'information"]],"megaphone"],
  ["Comptes du personnel",[["rh.view","Peut voir la liste des comptes"],["rh.create","Peut créer des comptes"],["rh.edit","Peut modifier et suspendre des comptes"],["rh.delete","Peut supprimer des comptes"],["rh.grades","Peut créer et modifier des grades"]],"users"],
  ["Salaires",[["pay.dept","Peut faire les salaires de son département"],["pay.all","Gestion globale des salaires (tous les départements, validation et versement)"]],"wallet"],
@@ -317,7 +317,7 @@ async function boot(){try{
   await DBX.set("users/"+id,{id,login:"direction",hash:await hashPw("direction","direction"),nom:"Cabinet du Gouverneur",role:"direction",gradeId:"",dept:"",matricule:"DIR-001",active:true,mustChange:true,created:Date.now()});
  }
  if(!Object.keys(S.grades).length)seedGrades();
- if(!S.config||!S.config.siteName)DBX.update("config",{siteName:"Gouvernement de Los Santos",subtitle:"État de San Andreas — Intranet officiel",depts:DEF_DEPTS,tax:8,requireService:true,treasuryStart:250000,budgets:{},banner:{on:true,txt:"Bienvenue sur l'intranet du Gouvernement de Los Santos. Pensez à prendre votre service avant de traiter les dossiers.",lvl:"info"},maintenance:{on:false,msg:""}});
+ if(!S.config||!S.config.siteName)DBX.update("config",{siteName:"Gouvernement de Los Santos",subtitle:"État de San Andreas — Intranet officiel",depts:DEF_DEPTS,tax:8,treasuryStart:250000,banner:{on:true,txt:"Bienvenue sur l'intranet du Gouvernement de Los Santos. ",lvl:"info"},maintenance:{on:false,msg:""}});
  if(!S.config.taxCatsInit){const o={},L=[["Hôpitaux",0],["Forces de l'ordre",0],["Concessionnaires",15],["Garages mécaniques",30],["Commerces",10],["Restauration",10]];L.forEach(([name,rate],i)=>{o[nid()+i]={name,rate,rank:i}});DBX.update("config",{taxCats:o,taxCatsInit:true})}
  const sid=lsGet("lsgov_session");if(sid&&S.users[sid]&&S.users[sid].active!==false)meId=sid;
 } catch(e){console.error(e);toast("Erreur d'initialisation : "+e.message,1)}
@@ -411,13 +411,11 @@ function page(){
  if(mt.on&&!isDir()&&!can("adm.site"))return `<div class="login"><div class="box"><div class="seal">${seal()}</div><div class="card"><h3>Maintenance en cours</h3><p class="pre">${esc(mt.msg||"L'intranet est temporairement indisponible.")}</p><button class="btn sec" onclick="logout()">Se déconnecter</button></div></div></div>`;
  const N=navItems();if(!N.some(n=>n[0]==view))view=N[0][0];
  const bn=S.config.banner||{};
- const svcOn=u.svc&&u.svc.on;
  return `<div class="app"><div class="scrim" onclick="closeSide()"></div><aside class="side"><div class="brand">${seal()}<div><div class="t1">${esc(S.config.siteName||"Gouvernement de Los Santos")}</div><div class="t2">${esc(S.config.subtitle||"Intranet officiel")}</div></div></div>
  <nav class="nav">${N.map(([k,l,i,c])=>`<button class="${k==view?"on":""}" onclick="go('${k}')">${ic(i)}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`).join("")}
  <button onclick="logout()">${ic("logout")}<span>Déconnexion</span></button></nav>
  <div class="side-foot">${DB_URL?(connected?'<span class="dot ok"></span>Synchronisé':'<span class="dot no"></span>Hors ligne — reconnexion…'):'<span class="dot"></span>Mode local (non partagé)'}</div></aside>
  <div class="wrap"><div class="top"><button class="burger" onclick="openSide()" aria-label="Menu">${ic("menu").replace("<svg",'<svg width="20" height="20"')}</button>
- ${isAgent(u)?`<button class="btn sm ${svcOn?"ok":"gh"}" onclick="toggleSvc()" title="Prise / fin de service">${svcOn?`En service · <span data-since="${u.svc.since}">--</span>`:"Hors service"}</button>`:""}
  <div class="who"><div class="b">${esc(u.nom)}</div><div class="mu">${esc(gname(u))}${u.dept?" · "+esc(u.dept):""}</div></div>
  <button class="btn gh sm" onclick="toggleTheme()" title="Thème clair / sombre" aria-label="Changer de thème">${ic("sun").replace("<svg",'<svg width="16" height="16"')}</button></div>
  ${bn.on&&bn.txt?`<div class="ticker ${esc(bn.lvl||"info")}">${tickerSpan(bn.txt)}</div>`:""}
@@ -428,7 +426,7 @@ function tickerSpan(t){const d=Math.max(20,Math.round(14+String(t).length*.2)),p
 function navItems(){const u=ME(),n=unread(),I=[];
  if(u.role=="entreprise"){const imp=vals(S.factures).filter(f=>f.ent==u.id&&f.st=="due").length;
   return [["accueil","Accueil","home"],["demande","Nouvelle demande","plus"],["mesdem","Mes demandes","folder"],["factures","Factures & impôts","wallet",imp],["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n],["profil","Mon profil","user"]]}
- I.push(["accueil","Accueil","home"],["service","Prise de service","clock"]);
+ I.push(["accueil","Accueil","home"]);
  if(can("dos.view")){const p=vals(S.dossiers).filter(d=>myDepts().includes(d.dept)&&d.st=="attente").length;I.push(["dossiers","Dossiers","folder",p])}
  if(can("jus.view"))I.push(["justice","Justice","scale"]);
  if(["reg.ent.view","reg.civ.view"].some(can))I.push(["registres","Registres","book"]);
@@ -472,46 +470,32 @@ V.accueil=()=>{const u=ME();
   ${E.length?`<div class="card"><h3>Mon entreprise au registre</h3><div class="tw"><table><tr><th>Entreprise<th>Type<th>Gérant<th>Enregistrée le</tr>${E.map(e=>`<tr><td>${esc(e.nom)}<td>${esc(e.type||"—")}<td>${esc(((e.gerantPrenom||"")+" "+(e.gerantNom||e.gerant||"")).trim()||"—")}<td>${fdd(e.dateEnr)}</tr>`).join("")}</table></div></div>`:""}
   <div class="grid g2"><div><h4>Annonces</h4>${visibleAnn().slice(0,4).map(annCard).join("")||`<div class="card">${empty("Aucune annonce.")}</div>`}</div>
   <div><h4>Demandes récentes</h4><div class="card">${D.sort((a,b)=>b.t-a.t).slice(0,6).map(d=>`<div class="inl" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd);cursor:pointer" onclick="openM('dossier','${d.id}')"><span>${esc(d.objet)}<div class="mu">${esc(d.num)} · ${esc(d.dept)}</div></span>${bdg(DST,d.st)}</div>`).join("")||empty("Aucune demande.")}</div></div></div>`}
- const md=myDepts(),Dall=vals(S.dossiers),ag=vals(S.users).filter(isAgent),svcU=ag.filter(x=>x.svc&&x.svc.on),pi=payInfo(u);
+ const md=myDepts(),Dall=vals(S.dossiers),ag=vals(S.users).filter(isAgent),pi=payInfo(u);
  const glob=can("dash");
  let h=`<div class="ph"><div><h2>Bonjour, ${esc(u.nom)}</h2><div class="mu">${esc(gname(u))}${u.dept?" · Département "+esc(u.dept):""} · ${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div></div>
- <button class="btn ${u.svc&&u.svc.on?"no":"ok"}" onclick="toggleSvc()">${ic("clock")}${u.svc&&u.svc.on?"Fin de service":"Prendre mon service"}</button></div>`;
+ </div>`;
  h+=`<div class="kpis">${kpi("Dossiers en attente"+(glob?"":" (mon dép.)"),Dall.filter(d=>(glob||md.includes(d.dept))&&d.st=="attente").length)}
  ${can("jus.view")?kpi("Affaires en cours",vals(S.affaires).filter(a=>!["jugee","classee"].includes(a.st)).length):kpi("Mes dossiers traités",Dall.filter(d=>d.by==u.id).length)}
- ${kpi("Agents en service",glob?svcU.length:svcU.filter(x=>x.dept==u.dept).length)}
  ${can("fin.view")?kpi("Trésorerie",money(treasury()),"gold"):kpi("Salaire en cours",money(pi.total),"gold")}
  ${kpi("Messages non lus",unread())}</div>`;
  h+=`<div class="grid g2"><div><h4>Annonces</h4>${visibleAnn().slice(0,4).map(annCard).join("")||`<div class="card">${empty("Aucune annonce.")}</div>`}</div><div>`;
- if(glob){h+=`<h4>Activité par département</h4><div class="card tw"><table><tr><th>Département<th>Attente<th>En cours<th>Traités<th>En service</tr>${DEPTS().map(d=>{const f=s=>Dall.filter(x=>x.dept==d&&x.st==s).length;return `<tr><td>${esc(d)}<td>${f("attente")}<td>${f("cours")}<td>${f("ok")+f("no")}<td>${svcU.filter(x=>x.dept==d).length}</tr>`}).join("")}</table></div>`}
- h+=`<h4>Agents en service</h4><div class="card">${(glob?svcU:svcU.filter(x=>x.dept==u.dept||!x.dept)).map(x=>`<div class="inl" style="justify-content:space-between;padding:5px 0"><span><span class="dot ok"></span>${esc(x.nom)} <span class="mu">· ${esc(gname(x))}${x.dept?" · "+esc(x.dept):""}</span></span><span class="mu" data-since="${x.svc.since}">--</span></div>`).join("")||empty("Personne n'est en service.")}</div></div></div>`;
+ if(glob){h+=`<h4>Activité par département</h4><div class="card tw"><table><tr><th>Département<th>Attente<th>En cours<th>Traités</tr>${DEPTS().map(d=>{const f=s=>Dall.filter(x=>x.dept==d&&x.st==s).length;return `<tr><td>${esc(d)}<td>${f("attente")}<td>${f("cours")}<td>${f("ok")+f("no")}</tr>`}).join("")}</table></div>`}
+ h+=`</div></div>`;
  return h};
 
 /* =================== SERVICE =================== */
-V.service=()=>{const u=ME(),s=u.svc||{},on=!!s.on,pi=payInfo(u);
- const hist=(u.svcLog?vals(u.svcLog):[]).sort((a,b)=>b.a-a.a).slice(0,15);
- const col=vals(S.users).filter(x=>isAgent(x)&&x.svc&&x.svc.on&&x.id!=u.id&&(isDir()||x.dept==u.dept));
- return `<div class="ph"><h2>Prise de service</h2></div><div class="grid g2"><div class="card svc"><div>${on?'<span class="bdg ok">En service</span>':'<span class="bdg no">Hors service</span>'}</div>
- <div class="clk">${on?`<span data-since="${s.since}">--</span>`:"00:00:00"}</div><div class="mu">${on?"Depuis "+fd(s.since):"Vous n'êtes pas en service."}</div>
- <p><button class="btn ${on?"no":"ok"}" style="font-size:16px;padding:12px 26px" onclick="toggleSvc()">${on?"Terminer mon service":"Prendre mon service"}</button></p>
- ${S.config.requireService&&u.role=="fonctionnaire"?`<p class="mu sm">Le service est requis pour traiter les dossiers.</p>`:""}</div>
- <div class="card"><h3>Mon temps de service</h3><div class="kv"><div class="k">Période en cours</div><div class="b">${dur(pi.ms)}</div><div class="k">Total depuis l'embauche</div><div class="b">${dur((s.total||0)+(on?Date.now()-s.since:0))}</div><div class="k">Dernier versement</div><div>${u.paidAt?fd(u.paidAt):"Jamais"}</div></div>
- <h3 style="margin-top:16px">Collègues en service</h3>${col.map(x=>`<div style="padding:4px 0"><span class="dot ok"></span>${esc(x.nom)} <span class="mu">· ${esc(gname(x))}</span></div>`).join("")||`<p class="mu">Aucun.</p>`}</div></div>
- <div class="card"><h3>Historique des services</h3><div class="tw"><table><tr><th>Début<th>Fin<th>Durée</tr>${hist.map(x=>`<tr><td>${fd(x.a)}<td>${fd(x.b)}<td>${dur(x.b-x.a)}</tr>`).join("")||`<tr><td colspan="3" class="empty">Aucun service terminé.</td></tr>`}</table></div></div>`};
-
 /* =================== DOSSIERS =================== */
 function dosList(){const md=myDepts();let L=vals(S.dossiers).filter(d=>md.includes(d.dept));
  if(filt.dd)L=L.filter(d=>d.dept==filt.dd);if(filt.ds)L=L.filter(d=>d.st==filt.ds);if(filt.dm=="me")L=L.filter(d=>d.assign==meId);
  L=L.filter(d=>match(filt.dq,d.num,d.objet,d.entNom,d.type,d.det));
  const pr={haute:0,normale:1,basse:2};return L.sort((a,b)=>((a.st=="attente"||a.st=="cours")?0:1)-((b.st=="attente"||b.st=="cours")?0:1)||(pr[a.prio]||1)-(pr[b.prio]||1)||b.t-a.t)}
 V.dossiers=()=>{const md=myDepts(),L=dosList(),u=ME();
- const blocked=u.role=="fonctionnaire"&&S.config.requireService&&!(u.svc&&u.svc.on);
  return `<div class="ph"><div><h2>Dossiers administratifs</h2><div class="mu">${md.length==DEPTS().length?"Tous les départements":"Département : "+esc(md.join(", "))}</div></div></div>
- ${blocked?`<div class="card" style="border-color:var(--wa)">Vous êtes hors service : vous pouvez consulter les dossiers mais pas les traiter. <button class="btn sm ok" onclick="toggleSvc()">Prendre mon service</button></div>`:""}
  <div class="card inl">${search("dq","N°, objet, entreprise…")}${md.length>1?fsel("dd",md,"Tous les départements"):""}${fsel("ds",Object.entries(DST).map(([k,v])=>[k,v[0]]),"Tous les statuts")}<select id="s_dm" onchange="filt.dm=this.value;render()"><option value="">Tous les dossiers</option><option value="me" ${filt.dm=="me"?"selected":""}>Assignés à moi</option></select></div>
  <div class="card tw"><table><tr><th>N°<th>Objet<th>Demandeur<th>Département<th>Priorité<th>Assigné<th>Statut<th>Déposé</tr>
  ${L.map(d=>`<tr class="click" onclick="openM('dossier','${d.id}')"><td class="nw">${esc(d.num)}<td>${esc(d.objet)}<div class="mu">${esc(d.type||"")}</div><td>${esc(d.entNom)}<td>${esc(d.dept)}<td>${prioB(d.prio)}<td>${d.assign?esc(uname(d.assign)):'<span class="mu">—</span>'}<td>${bdg(DST,d.st)}<td class="nw">${fd(d.t)}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucun dossier.</td></tr>`}</table></div>`};
 const prioB=p=>p=="haute"?'<span class="bdg no">Haute</span>':p=="basse"?'<span class="bdg mu">Basse</span>':'<span class="bdg bl">Normale</span>';
-function canTreat(d){const u=ME();if(!can("dos.treat")||!myDepts().includes(d.dept))return false;if(u.role=="fonctionnaire"&&S.config.requireService&&!(u.svc&&u.svc.on))return false;return true}
+function canTreat(d){const u=ME();if(!can("dos.treat")||!myDepts().includes(d.dept))return false;return true}
 function MDossier(d){if(!d)return null;const u=ME(),ent=u.role=="entreprise",open=d.st=="attente"||d.st=="cours",tr=!ent&&canTreat(d);
  const C=vals(d.comments).filter(c=>!ent||!c.internal).sort((a,b)=>a.t-b.t);
  const agentsD=vals(S.users).filter(x=>isAgent(x)&&x.active!==false&&(x.dept==d.dept||x.role=="direction"));
@@ -667,7 +651,7 @@ function MActeEdit(){const a=modal.id?S.actes[modal.id]:null;if(modal.id&&!a||!c
 
 /* =================== FINANCES =================== */
 function treasury(){return num(S.config.treasuryStart)+vals(S.transactions).reduce((s,t)=>s+(t.type=="in"?1:-1)*num(t.montant),0)}
-V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);if(can("fin.bill")||can("fin.view"))T.push(["fact","Comptabilité"]);if(can("fin.decl")||can("fin.view"))T.push(["decl","Déclarations fiscales"]);if(can("fin.budget")||can("fin.view"))T.push(["fisc","Taxes par entreprise"],["budget","Budgets"]);if(can("fin.view")||can("fin.archive"))T.push(["arch","Archives fiscales"]);
+V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);if(can("fin.bill")||can("fin.view"))T.push(["fact","Comptabilité"]);if(can("fin.decl")||can("fin.view"))T.push(["decl","Déclarations fiscales"]);if(can("fin.budget")||can("fin.view"))T.push(["fisc","Taxes par entreprise"]);if(can("fin.view")||can("fin.archive"))T.push(["arch","Archives fiscales"]);
  const s=T.some(t=>t[0]==sub)?sub:T[0][0];let h=`<div class="ph"><h2>Finances publiques</h2></div>${tabsH(T,s)}`;
  const X=vals(S.transactions),inS=X.filter(t=>t.type=="in").reduce((a,t)=>a+num(t.montant),0),outS=X.filter(t=>t.type=="out").reduce((a,t)=>a+num(t.montant),0),due=vals(S.factures).filter(f=>f.st=="due");
  if(s=="tresor"){let L=X;if(filt.tt)L=L.filter(t=>t.type==filt.tt);if(filt.tc)L=L.filter(t=>t.cat==filt.tc);if(filt.td)L=L.filter(t=>t.dept==filt.td);L=L.filter(t=>match(filt.tq,t.label,t.cat,t.dept)).sort((a,b)=>b.t-a.t);
@@ -683,11 +667,10 @@ V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);i
   <div class="card tw"><table><tr><th>N°<th>Nature<th>Destinataire<th>Motif<th class="r">Montant<th>Échéance<th>Statut<th></tr>${L.map(f=>`<tr><td class="nw">${esc(f.num)}<td>${kindL(f.kind)}<td>${esc(f.entNom)}<td>${esc(f.motif)}<td class="r b nw">${money(f.montant)}<td>${fdd(f.ech)}${f.st=="due"&&f.ech&&f.ech<new Date().toISOString().slice(0,10)?' <span class="bdg no">Retard</span>':""}<td>${bdg(FST,f.st)}${f.st=="due"&&f.rejet?`<div class="sm" style="color:var(--no);margin-top:4px">Preuve refusée</div>`:""}<td class="nw">${f.st=="verif"?`<button class="btn sm bl" onclick="openM('verif','${f.id}')">Vérifier la preuve</button>`:""}${f.st=="payee"&&f.proof?`<button class="btn sm gh" onclick="openM('verif','${f.id}')">Voir la preuve</button>`:""}${canBill()&&f.st=="due"?`<button class="btn sm ok" onclick="payFact('${f.id}')">Marquer payée</button> <button class="btn sm gh" onclick="cancelFact('${f.id}')">Annuler</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune facture.</td></tr>`}</table></div>`}
  if(s=="decl"){const L=vals(S.declarations).filter(d=>!d.arch).sort((a,b)=>(a.st=="validee")-(b.st=="validee")||b.t-a.t);
   return h+`<div class="card tw"><table><tr><th>Date<th>Entreprise<th>Période<th class="r">CA déclaré<th>Taux<th class="r">Impôt<th>Statut<th></tr>${L.map(d=>`<tr><td class="nw">${fd(d.t)}<td>${esc(d.entNom)}<td>${esc(d.periode)}<td class="r">${money(d.ca)}<td>${d.taux} %<td class="r b">${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">À vérifier</span>'}<td>${can("fin.decl")&&d.st!="validee"?`<button class="btn sm ok" onclick="validDecl('${d.id}')">Valider</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune déclaration.</td></tr>`}</table></div>`}
- const B=S.config.budgets||{},ed=can("fin.budget");
+ const ed=can("fin.budget");
  if(s=="fisc")return h+fiscView(ed);
  if(s=="arch")return h+archView();
- return h+` <div class="card tw"><h3>Budgets par département</h3><table><tr><th>Département<th class="r">Budget alloué<th class="r">Dépensé<th style="width:30%">Consommation<th class="r">Reste</tr>${DEPTS().map((d,i)=>{const b=num(B[d]),sp=X.filter(t=>t.type=="out"&&t.dept==d).reduce((a,t)=>a+num(t.montant),0),p=b?Math.min(100,sp/b*100):0;
-  return `<tr><td>${esc(d)}<td class="r">${ed?`<input type="number" min="0" value="${b}" onchange="setBudget(${i},this.value)">`:money(b)}<td class="r">${money(sp)}<td><div class="bar"><i class="${b&&sp>b?"over":""}" style="width:${b?p:0}%"></i></div><td class="r ${b-sp<0?"":"b"}" style="${b-sp<0?"color:var(--no)":""}">${money(b-sp)}</tr>`}).join("")}</table></div>`};
+ return h};
 /* =================== ARCHIVES FISCALES =================== */
 function curPeriod(){const last=vals(S.archives).reduce((m,a)=>Math.max(m,num(a.to)),0);
  const D=vals(S.declarations).filter(d=>!d.arch),F=vals(S.factures).filter(f=>f.kind=="taxe"&&!f.arch&&f.st!="annulee");
@@ -756,14 +739,13 @@ V.messages=()=>{const C=convs(),me=ME();if(!convWith&&C.length)convWith=C[0].w;
 /* =================== ANNUAIRE =================== */
 V.annuaire=()=>{let L=vals(S.users).filter(u=>isAgent(u)&&u.active!==false);if(filt.ud)L=L.filter(u=>u.dept==filt.ud);L=L.filter(u=>match(filt.uq,u.nom,gname(u),u.matricule,u.tel)).sort((a,b)=>((G(a)||{}).rank??99)-((G(b)||{}).rank??99)||a.nom.localeCompare(b.nom));
  return `<div class="ph"><h2>Annuaire des agents</h2></div><div class="card inl">${search("uq","Nom, grade, matricule…")}${fsel("ud",DEPTS(),"Tous départements")}</div>
- <div class="card tw"><table><tr><th>Agent<th>Grade<th>Département<th>Matricule<th>Téléphone<th>Statut<th></tr>${L.map(u=>{const g=G(u);return `<tr><td class="b">${esc(u.nom)}<td>${g?`<span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span>`:esc(ROLES[u.role])}<td>${esc(u.dept||"—")}<td>${esc(u.matricule||"—")}<td>${esc(u.tel||"—")}<td>${u.svc&&u.svc.on?'<span class="dot ok"></span>En service':'<span class="dot"></span><span class="mu">Hors service</span>'}<td>${u.id!=meId?`<button class="btn gh sm" onclick="convWith='${u.id}';go('messages')">Écrire</button>`:""}</tr>`}).join("")||`<tr><td colspan="7" class="empty">Aucun agent.</td></tr>`}</table></div>`};
+ <div class="card tw"><table><tr><th>Agent<th>Grade<th>Département<th>Matricule<th>Téléphone<th></tr>${L.map(u=>{const g=G(u);return `<tr><td class="b">${esc(u.nom)}<td>${g?`<span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span>`:esc(ROLES[u.role])}<td>${esc(u.dept||"—")}<td>${esc(u.matricule||"—")}<td>${esc(u.tel||"—")}<td>${u.id!=meId?`<button class="btn gh sm" onclick="convWith='${u.id}';go('messages')">Écrire</button>`:""}</tr>`}).join("")||`<tr><td colspan="7" class="empty">Aucun agent.</td></tr>`}</table></div>`};
 
 /* =================== PERSONNEL =================== */
-function payInfo(u){const g=G(u)||{},since=u.paidAt||0,s=u.svc||{};
+function payInfo(u){const g=G(u)||{},since=u.paidAt||0;
  const nd=vals(S.dossiers).filter(d=>d.by==u.id&&(d.st=="ok"||d.st=="no")&&(d.tt||0)>since).length;
- const ms=(s.acc||0)+(s.on?Date.now()-Math.max(s.since||0,since):0);const h=ms/36e5;
- const pd=num(g.perDossier),ph=num(g.perHour),fx=num(g.fixe),bo=num(u.bonus);
- return {nd,ms,h,pd,ph,fx,bo,total:Math.round(nd*pd+h*ph+fx+bo)}}
+ const pd=num(g.perDossier),fx=num(g.fixe),bo=num(u.bonus);
+ return {nd,pd,fx,bo,total:Math.round(nd*pd+fx+bo)}}
 function scopeUsers(){return vals(S.users).filter(u=>u.id==meId||isDir()||manageable(u)||(can("rh.view")&&u.dept==ME().dept&&ME().dept))}
 V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(can("rh.grades")||isDir())T.push(["grades","Grades & permissions"]);
  const s=T.some(t=>t[0]==sub)?sub:T[0][0];let h=`<div class="ph"><h2>Gestion du personnel</h2></div>${tabsH(T,s)}`;
@@ -780,7 +762,7 @@ V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(c
   <div class="card tw"><table><tr><th>Nom<th>Identifiant<th>Rôle<th>Grade<th>Département<th>État<th></tr>${L.map(u=>`<tr><td class="b">${esc(u.nom)}<td>${esc(u.login)}<td>${esc(ROLES[u.role])}<td>${esc(G(u)?G(u).name:"—")}<td>${esc(u.dept||"—")}<td>${u.active===false?'<span class="bdg no">Suspendu</span>':'<span class="bdg ok">Actif</span>'}<td class="nw">${manageable(u)&&can("rh.edit")?`<button class="btn sec sm" onclick="openM('user','${u.id}')">Modifier</button>`:""} ${manageable(u)&&can("rh.delete")?`<button class="btn gh sm" onclick="delUser('${u.id}')">Supprimer</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucun compte.</td></tr>`}</table></div>`}
  if(s=="grades"){const L=vals(S.grades).filter(g=>isDir()||g.role=="fonctionnaire"&&(g.dept==ME().dept)||g.dept==ME().dept).sort((a,b)=>Object.keys(ROLES).indexOf(b.role)-Object.keys(ROLES).indexOf(a.role)||(a.rank||0)-(b.rank||0));
   return h+`<div class="card inl" style="justify-content:space-between"><span class="mu">Un grade précise un rôle : il fixe l'intitulé, la rémunération et les permissions exactes de l'agent.</span><button class="btn" onclick="openM('grade')">${ic("plus")}Nouveau grade</button></div>
-  <div class="card tw"><table><tr><th>Grade<th>Rôle<th>Département<th>Permissions<th class="r">Par dossier<th class="r">Par heure<th class="r">Fixe<th>Agents<th></tr>${L.map(g=>`<tr><td><span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span><td>${esc(ROLES[g.role])}<td>${esc(g.dept||"Tous")}<td>${g.role=="direction"?"Toutes":Object.keys(g.perms||{}).filter(k=>g.perms[k]).length}<td class="r">${money(g.perDossier)}<td class="r">${money(g.perHour)}<td class="r">${money(g.fixe)}<td>${vals(S.users).filter(u=>u.gradeId==g.id).length}<td class="nw">${gradeEditable(g)?`<button class="btn sec sm" onclick="openM('grade','${g.id}')">Modifier</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun grade.</td></tr>`}</table></div>`}
+  <div class="card tw"><table><tr><th>Grade<th>Rôle<th>Département<th>Permissions<th class="r">Par dossier<th class="r">Fixe<th>Agents<th></tr>${L.map(g=>`<tr><td><span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span><td>${esc(ROLES[g.role])}<td>${esc(g.dept||"Tous")}<td>${g.role=="direction"?"Toutes":Object.keys(g.perms||{}).filter(k=>g.perms[k]).length}<td class="r">${money(g.perDossier)}<td class="r">${money(g.fixe)}<td>${vals(S.users).filter(u=>u.gradeId==g.id).length}<td class="nw">${gradeEditable(g)?`<button class="btn sec sm" onclick="openM('grade','${g.id}')">Modifier</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun grade.</td></tr>`}</table></div>`}
  return h};
 let openGrp=new Set([0]);
 function permEditor(lockOwn){const d=modal.draft||{},q=(keep.peq||"").trim().toLowerCase(),tot=ALLP.filter(k=>d[pk(k)]).length;
@@ -801,7 +783,7 @@ function MGrade(){const g=modal.id?S.grades[modal.id]:{role:"fonctionnaire",dept
  return {title:modal.id?"Édition d'un grade":"Création d'un grade",wide:1,body:`<div class="pe-card"><div class="form"><label class="f">Intitulé du grade<input id="gn" value="${esc(g.name||"")}" placeholder="Ex. : Ministre de la Justice"></label>
  <label class="f">Rattaché au rôle<select id="gr" onchange="keep.gr=this.value;render()" ${dir?"":"disabled"}>${opts(Object.entries(ROLES).filter(r=>r[0]!="entreprise"),role)}</select></label>
  <label class="f">Département<select id="gd" ${dir?"":"disabled"}>${opts([["","Tous les départements"]].concat(DEPTS().map(d=>[d,d])),g.dept||"")}</select></label></div>
- <details class="pe-pay"><summary>Rémunération et affichage</summary><div class="form" style="margin-top:10px"><label class="f">Salaire par dossier traité ($)<input id="gpd" type="number" min="0" value="${num(g.perDossier)}"></label><label class="f">Salaire par heure de service ($)<input id="gph" type="number" min="0" value="${num(g.perHour)}"></label><label class="f">Salaire fixe par période ($)<input id="gfx" type="number" min="0" value="${num(g.fixe)}"></label><label class="f">Ordre hiérarchique (0 = plus haut)<input id="grk" type="number" min="0" value="${num(g.rank)}"></label><label class="f">Couleur du badge<input id="gc" type="color" value="${esc(g.color||"#c9a24a")}"></label></div></details></div>
+ <details class="pe-pay"><summary>Rémunération et affichage</summary><div class="form" style="margin-top:10px"><label class="f">Salaire par dossier traité ($)<input id="gpd" type="number" min="0" value="${num(g.perDossier)}"></label><label class="f">Salaire fixe par période ($)<input id="gfx" type="number" min="0" value="${num(g.fixe)}"></label><label class="f">Ordre hiérarchique (0 = plus haut)<input id="grk" type="number" min="0" value="${num(g.rank)}"></label><label class="f">Couleur du badge<input id="gc" type="color" value="${esc(g.color||"#c9a24a")}"></label></div></details></div>
  ${role=="direction"?`<div class="pe-card"><p class="mu" style="margin:0">Le rôle Direction dispose automatiquement de toutes les permissions.</p></div>`:permEditor(!dir)}<p class="err" id="msg"></p>`,
  foot:`${modal.id&&(dir||gradeEditable(g))?`<button class="btn gh" style="margin-right:auto" onclick="delGrade('${modal.id}')">Supprimer</button>`:""}<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="saveGrade('${modal.id||""}')">Valider</button>`}}
 function MUser(u){if(!u||!manageable(u))return null;if(!modal.draft)modal.draft=Object.assign({},u.xperms||{});modal.lock=false;const dir=isDir();const role=keep.er||u.role,dept=dir?(keep.ed??u.dept??""):u.dept;
@@ -827,9 +809,9 @@ V.salaire=()=>{const F=payFolders(),T=[["moi","Mon salaire"]].concat(F.length?[[
 function myPayView(){const u=ME(),p=payInfo(u),key=deptKey(u.dept),dr=S.paie[key],my=dr&&dr.lines&&dr.lines[u.id];
  const A=vals(S.paiearch).filter(a=>a.lines&&a.lines[u.id]).sort((a,b)=>b.t-a.t);const H=vals(S.transactions).filter(t=>t.cat=="Salaires"&&t.user==u.id&&!t.paie).sort((a,b)=>b.t-a.t);
  const tot=A.reduce((s,a)=>s+lineTotal(a.lines[u.id]),0)+H.reduce((s,t)=>s+num(t.montant),0);
- return `<div class="kpis">${kpi("Paie en préparation",my?money(lineTotal(my)):"—","gold")}${kpi("Dossiers traités (période)",p.nd)}${kpi("Heures de service (période)",p.h.toFixed(1)+" h")}${kpi("Total perçu",money(tot))}</div>
+ return `<div class="kpis">${kpi("Paie en préparation",my?money(lineTotal(my)):"—","gold")}${kpi("Dossiers traités (période)",p.nd)}${kpi("Total perçu",money(tot))}</div>
  <div class="card"><h3>Ma paie en cours</h3>${my?`<div class="kv"><div class="k">Période</div><div>${esc(dr.periode||"—")}</div><div class="k">Statut</div><div>${bdg(PST,dr.st||"brouillon")}</div><div class="k">Salaire</div><div>${money(my.montant)}</div><div class="k">Prime</div><div>${money(my.prime)}</div>${my.note?`<div class="k">Commentaire</div><div>${esc(my.note)}</div>`:""}<div class="k">Total</div><div class="b" style="font-size:18px;color:var(--gold2)">${money(lineTotal(my))}</div></div>`:`<p class="mu">Votre ministre n'a pas encore saisi votre paie pour la période en cours.</p>`}
- <p class="mu sm" style="margin-top:10px">Activité depuis votre dernier versement${u.paidAt?" ("+fd(u.paidAt)+")":""} : ${p.nd} dossier(s) traité(s), ${p.h.toFixed(1)} h de service. Grade : ${esc(gname(u))}.</p></div>
+ <p class="mu sm" style="margin-top:10px">Activité depuis votre dernier versement${u.paidAt?" ("+fd(u.paidAt)+")":""}  : ${p.nd} dossier(s) traité(s). Grade : ${esc(gname(u))}.</p></div>
  <div class="card tw"><h3>Mes fiches de paie</h3><table><tr><th>Date<th>Période<th>Département<th class="r">Salaire<th class="r">Prime<th class="r">Total<th>Validé par</tr>${A.map(a=>{const l=a.lines[u.id];return `<tr><td class="nw">${fd(a.t)}<td>${esc(a.periode)}<td>${esc(a.deptNom)}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td class="r b">${money(lineTotal(l))}<td>${esc(a.byNom)}</tr>`}).join("")}${H.map(t=>`<tr><td class="nw">${fd(t.t)}<td class="mu" colspan="5">${esc(t.label)} — <b>${money(t.montant)}</b><td>${esc(t.byNom||"")}</tr>`).join("")}${!A.length&&!H.length?`<tr><td colspan="7" class="empty">Aucun versement reçu.</td></tr>`:""}</table></div>`}
 function payMgmtView(F){const cur=F.some(f=>f[0]==filt.pdk)?filt.pdk:F[0][0],nm=(F.find(f=>f[0]==cur)||[])[1],st=filt.pst||"cours";
  const side=`<aside class="ec-side card">${F.map(([k,n])=>{const d=S.paie[k];return `<button class="ec-c ${k==cur?"on":""}" onclick="filt.pdk='${k}';filt.pst='cours';keep={};render()"><span class="ec-h">${ic("folder")}</span><span class="ec-n">${esc(n)}</span>${d&&d.st=="soumise"?`<span class="bdg bl" style="font-size:10px">À valider</span>`:""}</button>`}).join("")}</aside>`;
@@ -840,7 +822,7 @@ function payDraftView(key,nm){const d=S.paie[key]||{st:"brouillon",lines:{}},L=d
  return `<div class="form" style="margin-top:12px"><label class="f">Période<input id="pper_${key}" data-nokeep value="${esc(d.periode||"")}" placeholder="Ex. : Semaine 41 — 2026" ${ed?"":"disabled"} onchange="paySetPeriod('${key}',this.value)"></label>
  <div class="f"><span class="mu sm">Statut</span><div style="margin-top:10px">${bdg(PST,d.st||"brouillon")}${d.updNom?` <span class="mu sm">· modifiée par ${esc(d.updNom)} le ${fd(d.updT)}</span>`:""}</div></div></div>
  ${d.st=="soumise"?`<p class="mu">Soumise par ${esc(d.subNom||"")} le ${fd(d.subT)}.${payGlobal()?" Vérifiez les montants puis validez le versement.":" En attente de validation par la gestion globale ; modification impossible."}</p>`:""}${d.retour?`<div class="card" style="border-color:var(--wa)"><b>Renvoyée pour correction</b> : ${esc(d.retour)}</div>`:""}
- <div class="tw"><table class="payt"><tr><th>Agent<th>Activité<th class="r">Indicatif<th>Salaire ($)<th>Prime ($)<th>Commentaire<th class="r">Total</tr>${L.map(u=>{const l=(d.lines||{})[u.id]||{},p=payInfo(u);return `<tr><td><b>${esc(u.nom)}</b><div class="mu sm">${esc(gname(u))}</div><td class="nw sm">${p.nd} dossier(s)<br>${p.h.toFixed(1)} h<td class="r mu" title="Calcul selon le barème du grade">${money(p.total)}
+ <div class="tw"><table class="payt"><tr><th>Agent<th>Activité<th class="r">Indicatif<th>Salaire ($)<th>Prime ($)<th>Commentaire<th class="r">Total</tr>${L.map(u=>{const l=(d.lines||{})[u.id]||{},p=payInfo(u);return `<tr><td><b>${esc(u.nom)}</b><div class="mu sm">${esc(gname(u))}</div><td class="nw sm">${p.nd} dossier(s)<td class="r mu" title="Calcul selon le barème du grade">${money(p.total)}
   <td>${ed?`<input type="number" min="0" data-nokeep value="${l.montant??""}" onchange="paySetLine('${key}','${u.id}','montant',this.value)">`:money(l.montant)}<td>${ed?`<input type="number" min="0" data-nokeep value="${l.prime??""}" onchange="paySetLine('${key}','${u.id}','prime',this.value)">`:money(l.prime)}
   <td>${ed?`<input data-nokeep value="${esc(l.note||"")}" onchange="paySetLine('${key}','${u.id}','note',this.value)" class="pnote">`:esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`}).join("")||`<tr><td colspan="7" class="empty">Aucun agent actif dans ce département.</td></tr>`}
  <tr><td colspan="6" class="r b">Total du département<td class="r b" style="color:var(--gold2)">${money(tot)}</tr></table></div>
@@ -852,7 +834,7 @@ function payArchView(key,nm){const A=vals(S.paiearch).filter(a=>a.dept==key).sor
  return `<div class="tw" style="margin-top:12px"><table><tr><th>Période<th>Versée le<th>Agents<th class="r">Total versé<th>Préparée par<th>Validée par</tr>${A.map(a=>`<tr class="click" onclick="openM('paiearch','${a.id}')"><td class="b">${esc(a.periode)}<td class="nw">${fd(a.t)}<td>${Object.keys(a.lines||{}).length}<td class="r b">${money(a.total)}<td>${esc(a.subNom||"—")}<td>${esc(a.byNom)}</tr>`).join("")||`<tr><td colspan="6" class="empty">Aucune paie archivée pour ce département.</td></tr>`}</table></div>`}
 function MPaieArch(a){if(!a)return null;const F=payFolders();if(!F.some(f=>f[0]==a.dept))return null;const L=Object.entries(a.lines||{}).map(([id,l])=>Object.assign({id},l)).sort((x,y)=>String(x.nom).localeCompare(y.nom));
  return {title:"Paie archivée — "+esc(a.deptNom)+" — "+esc(a.periode),wide:1,body:`<div class="kpis">${kpi("Agents payés",L.length)}${kpi("Total versé",money(a.total),"gold")}</div><p class="mu">Versée le ${fd(a.t)} · préparée par ${esc(a.subNom||"—")} · validée par ${esc(a.byNom)}</p>
- <div class="tw"><table><tr><th>Agent<th>Grade<th class="r">Dossiers<th class="r">Heures<th class="r">Salaire<th class="r">Prime<th>Commentaire<th class="r">Total</tr>${L.map(l=>`<tr><td class="b">${esc(l.nom)}<td>${esc(l.grade||"")}<td class="r">${num(l.nd)}<td class="r">${num(l.h).toFixed(1)} h<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td>${esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`).join("")}</table></div>`,
+ <div class="tw"><table><tr><th>Agent<th>Grade<th class="r">Dossiers<th class="r">Salaire<th class="r">Prime<th>Commentaire<th class="r">Total</tr>${L.map(l=>`<tr><td class="b">${esc(l.nom)}<td>${esc(l.grade||"")}<td class="r">${num(l.nd)}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td>${esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`).join("")}</table></div>`,
  foot:`${isDir()?`<button class="btn gh" style="margin-right:auto" onclick="openM('paiedel','${a.id}')">Supprimer l'archive</button>`:""}<button class="btn sec" onclick="payArchCSV('${a.id}')">Exporter (CSV)</button><button class="btn" onclick="closeM()">Fermer</button>`}}
 
 /* =================== JOURNAL =================== */
@@ -867,7 +849,7 @@ V.admin=()=>{const c=S.config,bn=c.banner||{},mt=c.maintenance||{},adm=can("adm.
  ${can("com.banner")?`<div class="card"><h3>Bandeau d'information défilant</h3><div class="form"><label class="f full">Texte<input id="bt" value="${esc(bn.txt||"")}"></label><label class="f">Niveau<select id="bl">${opts([["info","Information"],["warn","Avertissement"],["alert","Alerte"]],bn.lvl||"info")}</select></label><label class="f">Affichage<select id="bo">${opts([["1","Affiché"],["0","Masqué"]],bn.on?"1":"0")}</select></label></div><button class="btn" onclick="saveBanner()">Mettre à jour</button></div>`:""}
  ${adm?`<div class="card"><h3>Paramètres généraux</h3><div class="form"><label class="f">Nom du gouvernement<input id="sn" value="${esc(c.siteName||"")}"></label><label class="f">Sous-titre<input id="ss" value="${esc(c.subtitle||"")}"></label>
  <label class="f">Logo (fichier du dépôt ou lien https)<input id="slg" value="${esc(c.logo||"logo.png")}"></label><label class="f">Couleur d'accent<input id="sa" type="color" value="${esc(c.accent||"#c9a24a")}"></label><label class="f">Trésorerie initiale ($)<input id="st0" type="number" value="${num(c.treasuryStart)}"></label>
- <label class="f">Service obligatoire pour les fonctionnaires<select id="srs">${opts([["1","Oui"],["0","Non"]],c.requireService?"1":"0")}</select></label>
+ 
  <label class="f full">Départements (un par ligne)<textarea id="sdp" rows="6">${esc(DEPTS().join("\n"))}</textarea></label></div><button class="btn" onclick="saveSettings()">Enregistrer</button> <button class="btn gh" onclick="resetAccent()">Couleur par défaut</button></div>
  <div class="card"><h3>Mode maintenance</h3><p class="mu">Quand il est actif, seuls la Direction et les administrateurs peuvent utiliser l'intranet.</p><div class="form"><label class="f">État<select id="mo">${opts([["0","Désactivé"],["1","Activé"]],mt.on?"1":"0")}</select></label><label class="f full">Message affiché<textarea id="mm" rows="2">${esc(mt.msg||"")}</textarea></label></div><button class="btn" onclick="saveMaint()">Appliquer</button></div>
  <div class="card"><h3>Sauvegarde</h3><p class="mu">Exporte toutes les données dans un fichier JSON, ou restaure une sauvegarde (remplace toutes les données actuelles).</p><div class="inl"><button class="btn sec" onclick="exportData()">Télécharger une sauvegarde</button><label class="btn sec" style="cursor:pointer">Restaurer…<input type="file" accept=".json,application/json" style="display:none" onchange="importData(this)"></label></div></div>
@@ -936,10 +918,6 @@ async function changePw(){const u=ME();if(await hashPw(u.login,val("op"))!==u.ha
 function saveTel(){DBX.update("users/"+meId,{tel:tval("pt")});toast("Profil enregistré.")}
 
 /* Service */
-function toggleSvc(){const u=ME(),s=Object.assign({on:false,since:0,acc:0,total:0},u.svc||{}),now=Date.now();
- if(s.on){const st=Math.max(s.since,u.paidAt||0);s.acc=(s.acc||0)+(now-st);s.total=(s.total||0)+(now-s.since);DBX.set(`users/${u.id}/svcLog/${nid()}`,{a:s.since,b:now});s.on=false;log("Fin de service ("+dur(now-s.since)+")",u.dept,"Service");toast("Fin de service enregistrée.")}
- else{s.on=true;s.since=now;log("Prise de service",u.dept,"Service");toast("Vous êtes en service.")}
- DBX.update("users/"+u.id,{svc:s})}
 
 /* Dossiers */
 function addDem(){const u=ME(),o=tval("no"),t=tval("nt"),d=val("nd");if(!o||!t)return say("Renseignez l'objet et les détails.");
@@ -948,7 +926,7 @@ function addDem(){const u=ME(),o=tval("no"),t=tval("nt"),d=val("nd");if(!o||!t)r
 function dosComment(id){const t=tval("dc");if(!t)return;const u=ME();DBX.set(`dossiers/${id}/comments/${nid()}`,{t:Date.now(),u:u.id,nom:u.nom,txt:t,internal:!!val("dci")});clr("dc")}
 function dosTake(id){const d=S.dossiers[id];DBX.update("dossiers/"+id,{st:"cours",assign:meId});log("Prise en charge : "+d.num,d.dept,"Dossiers")}
 function dosAssign(id){const d=S.dossiers[id],a=val("das");DBX.update("dossiers/"+id,{assign:a||null,st:d.st=="attente"&&a?"cours":d.st});log(`Dossier ${d.num} assigné à ${a?uname(a):"personne"}`,d.dept,"Dossiers");toast("Assignation enregistrée.")}
-function dosTreat(id,st){const d=S.dossiers[id],u=ME();if(!canTreat(d))return toast("Action non autorisée (service ?).",1);
+function dosTreat(id,st){const d=S.dossiers[id],u=ME();if(!canTreat(d))return toast("Action non autorisée.",1);
  const mo=tval("dmo");if(st=="no"&&!mo)return say("Indiquez le motif du refus.");
  DBX.update("dossiers/"+id,{st,by:u.id,byNom:u.nom,tt:Date.now(),motif:mo||"",assign:d.assign||u.id});log((st=="ok"?"Dossier accepté : ":"Dossier refusé : ")+d.num+" — "+d.objet,d.dept,"Dossiers");toast(st=="ok"?"Dossier accepté.":"Dossier refusé.");closeM()}
 function dosReopen(id){const d=S.dossiers[id];DBX.update("dossiers/"+id,{st:"cours",by:null,byNom:null,tt:null});log("Dossier rouvert : "+d.num,d.dept,"Dossiers")}
@@ -1008,7 +986,6 @@ function setEntRate(uid,v){if(!can("fin.budget"))return;const u=S.users[uid],own
 function copyTaxes(){const t=taxText();const done=()=>toast("Récapitulatif copié : collez-le dans Discord.");
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t,done));else fallbackCopy(t,done)}
 function fallbackCopy(t,cb){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy");cb()}catch(e){toast("Copie impossible : sélectionnez le texte manuellement.",1)}a.remove()}
-function setBudget(i,v){const d=DEPTS()[i];DBX.update("config/budgets",{[d]:num(v)});log(`Budget ${d} : ${money(v)}`,"Finances","Finances")}
 
 /* Preuves de paiement */
 const proofCache={};
@@ -1076,8 +1053,8 @@ function payValidate(key,nm){if(!payGlobal())return;const d=S.paie[key]||{};if(!
  const tot=L.reduce((s,u)=>s+lineTotal(d.lines[u.id]),0);
  ask(`Valider et verser la paie « ${d.periode} » du département ${nm} : ${money(tot)} à ${L.length} agent(s) ? Les montants seront débités du Trésor et la paie archivée.`,()=>{
   const me=ME(),now=Date.now(),aid=nid(),lines={};
-  L.forEach(u=>{const l=d.lines[u.id],p=payInfo(u),t=lineTotal(l);lines[u.id]={nom:u.nom,grade:gname(u),montant:num(l.montant),prime:num(l.prime),note:l.note||"",nd:p.nd,h:Math.round(p.h*10)/10};
-   const s=Object.assign({},u.svc||{});s.acc=0;DBX.update("users/"+u.id,{paidAt:now,bonus:0,svc:s});const tid=nid();
+  L.forEach(u=>{const l=d.lines[u.id],p=payInfo(u),t=lineTotal(l);lines[u.id]={nom:u.nom,grade:gname(u),montant:num(l.montant),prime:num(l.prime),note:l.note||"",nd:p.nd};
+   DBX.update("users/"+u.id,{paidAt:now,bonus:0});const tid=nid();
    DBX.set("transactions/"+tid,{id:tid,t:now,type:"out",cat:"Salaires",dept:key=="_dir"?"":(u.dept||""),user:u.id,paie:aid,montant:t,label:`Salaire ${d.periode} — ${u.nom}`,by:me.id,byNom:me.nom})});
   DBX.set("paiearch/"+aid,{id:aid,dept:key,deptNom:nm,periode:d.periode,t:now,by:me.id,byNom:me.nom,subNom:d.subNom||d.updNom||"",total:tot,lines});
   DBX.set("paie/"+key,{st:"brouillon",lines:{},periode:""});
@@ -1138,19 +1115,18 @@ async function saveUser(id){const u=S.users[id],dir=isDir(),nom=tval("en");if(!n
  if(role!="entreprise"){up.gradeId=val("eg");up.matricule=tval("em")}else{up.gradeId="";up.taxCat=val("etc")||"";up.taxRate=tval("etr")!==""?Math.min(100,Math.max(0,num(val("etr")))):null;}
  const np=val("ep");if(np){up.hash=await hashPw(u.login,np);up.mustChange=true}
  if(dir&&(role=="fonctionnaire"||role=="encadrement"))up.xperms=finalPerms(null,false);
- if(up.active===false&&u.svc&&u.svc.on){up.svc=Object.assign({},u.svc,{on:false})}
  DBX.update("users/"+id,up);log(`Compte modifié : ${nom}${up.active===false?" (suspendu)":""}${np?" — mot de passe réinitialisé":""}`,up.dept,"Comptes");toast("Compte mis à jour.");closeM()}
 function delUser(id){const u=S.users[id];ask(`Supprimer le compte de ${u.nom} (${u.login}) ? Son historique reste dans le journal.`,()=>{DBX.remove("users/"+id);log("Compte supprimé : "+u.nom,u.dept,"Comptes")},"Supprimer")}
 function saveGrade(id){const dir=isDir(),name=tval("gn");if(!name)return say("Intitulé requis.");const old=id?S.grades[id]:null;
  const role=dir?val("gr"):"fonctionnaire",dept=dir?val("gd"):ME().dept;
- const g={name,role,dept,color:val("gc"),perDossier:num(val("gpd")),perHour:num(val("gph")),fixe:num(val("gfx")),rank:num(val("grk")),perms:role=="direction"?{}:finalPerms(old&&old.perms,!dir)};
+ const g={name,role,dept,color:val("gc"),perDossier:num(val("gpd")),fixe:num(val("gfx")),rank:num(val("grk")),perms:role=="direction"?{}:finalPerms(old&&old.perms,!dir)};
  if(id)DBX.update("grades/"+id,g);else{id=nid();g.id=id;DBX.set("grades/"+id,g)}
  log(`Grade ${old?"modifié":"créé"} : ${name}`,dept,"Grades");toast("Grade enregistré.");closeM()}
 function delGrade(id){const g=S.grades[id],n=vals(S.users).filter(u=>u.gradeId==id);ask(`Supprimer le grade « ${g.name} » ?${n.length?` ${n.length} agent(s) perdront ce grade.`:""}`,()=>{n.forEach(u=>DBX.update("users/"+u.id,{gradeId:""}));DBX.remove("grades/"+id);log("Grade supprimé : "+g.name,g.dept,"Grades");modal=null},"Supprimer")}
 /* Administration */
 function saveBanner(){DBX.update("config",{banner:{txt:tval("bt"),lvl:val("bl"),on:val("bo")=="1"}});log("Bandeau d'information mis à jour","Communication","Administration");toast("Bandeau mis à jour.")}
 function saveSettings(){const dp=val("sdp").split("\n").map(s=>s.trim()).filter(Boolean);if(!dp.length)return toast("Il faut au moins un département.",1);
- DBX.update("config",{siteName:tval("sn")||"Gouvernement de Los Santos",subtitle:tval("ss"),accent:val("sa"),logo:tval("slg")||"logo.png",treasuryStart:num(val("st0")),requireService:val("srs")=="1",depts:[...new Set(dp)]});applyTheme();log("Paramètres du site modifiés","","Administration");toast("Paramètres enregistrés.")}
+ DBX.update("config",{siteName:tval("sn")||"Gouvernement de Los Santos",subtitle:tval("ss"),accent:val("sa"),logo:tval("slg")||"logo.png",treasuryStart:num(val("st0")),depts:[...new Set(dp)]});applyTheme();log("Paramètres du site modifiés","","Administration");toast("Paramètres enregistrés.")}
 function resetAccent(){DBX.update("config",{accent:null});setTimeout(applyTheme,50);toast("Couleur par défaut rétablie.")}
 function saveMaint(){const on=val("mo")=="1";DBX.update("config",{maintenance:{on,msg:tval("mm")}});log("Maintenance "+(on?"activée":"désactivée"),"","Administration");toast("Maintenance "+(on?"activée":"désactivée")+".")}
 function exportData(){const data={config:S.config};COLS.forEach(c=>data[c]=S[c]);const b=new Blob([JSON.stringify(data,null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sauvegarde-intranet-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);log("Sauvegarde exportée","","Administration")}
