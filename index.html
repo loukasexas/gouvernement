@@ -204,7 +204,7 @@ const ROOT = "lsgov";
 /* ---------- Constantes ---------- */
 const DEF_DEPTS=["Finances","État-Civil","Justice","Intérieur","Communication","Sécurité"];
 const ROLES={entreprise:"Entreprise",fonctionnaire:"Fonctionnaire",encadrement:"Corps d'encadrement",direction:"Direction"};
-const COLS=["users","grades","dossiers","affaires","entreprises","identites","actes","transactions","factures","declarations","archives","paie","paiearch","annonces","messages","logs"];
+const COLS=["users","grades","dossiers","affaires","entreprises","identites","actes","transactions","factures","declarations","archives","paie","paiearch","patrouilles","patarch","annonces","messages","logs"];
 const DOS_TYPES={
  "Finances":["Déclaration fiscale","Demande de subvention","Contestation d'amende","Échéancier de paiement"],
  "État-Civil":["Enregistrement d'identité","Changement d'adresse","Acte de mariage","Acte de décès"],
@@ -225,6 +225,7 @@ const PERMS=[
  ["Communication",[["com.post","Peut publier des annonces"],["com.banner","Peut gérer le bandeau d'information"]],"megaphone"],
  ["Comptes du personnel",[["rh.view","Peut voir la liste des comptes"],["rh.create","Peut créer des comptes"],["rh.edit","Peut modifier et suspendre des comptes"],["rh.delete","Peut supprimer des comptes"],["rh.grades","Peut créer et modifier des grades"]],"users"],
  ["Salaires",[["pay.dept","Peut faire les salaires de son département"],["pay.all","Gestion globale des salaires (tous les départements, validation et versement)"]],"wallet"],
+ ["Sécurité",[["sec.archive","Peut archiver et supprimer les rapports de patrouille (département Sécurité)"]],"eye"],
  ["Logs",[["log.dept","Peut voir les logs de son département"],["log.all","Peut voir tous les logs"]],"list"],
  ["Administration",[["adm.site","Peut gérer les paramètres du site, la maintenance et les sauvegardes"]],"settings"]
 ];
@@ -280,6 +281,9 @@ function taxCatName(u){const c=u&&u.taxCat&&S.config.taxCats&&S.config.taxCats[u
 /* Comptabilité : seuls les départements Finances et Justice (et la Direction) peuvent émettre et traiter */
 const BILL_DEPTS=["Finances","Justice"];
 function canBill(){const u=ME();return can("fin.bill")&&(isDir()||!!(u&&BILL_DEPTS.includes(u.dept)))}
+/* Sécurité : visible uniquement par le département Sécurité (et la Direction) */
+function secOk(){const u=ME();return !!u&&(isDir()||(isAgent(u)&&u.dept=="Sécurité"))}
+function secArch(){return secOk()&&(isDir()||can("sec.archive"))}
 function gradeEditable(g){if(isDir())return true;const m=ME();return can("rh.grades")&&g.role=="fonctionnaire"&&g.dept==m.dept}
 
 /* ---------- Couche de données (Firebase ou local) ---------- */
@@ -332,7 +336,7 @@ function seedGrades(){
   ["Ministre de la Justice","encadrement","Justice",P(...base,"dash","dos.assign","jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","reg.cas.view","reg.cas.edit","reg.civ.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#8b5cf6"],
   ["Ministre des Finances","encadrement","Finances",P(...base,"dash","dos.assign","fin.view","fin.edit","fin.bill","fin.decl","fin.budget","reg.ent.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#22c55e"],
   ["Ministre de l'Intérieur","encadrement","Intérieur",P(...base,"dash","dos.assign","reg.ent.view","reg.ent.edit","reg.civ.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#3b82f6"],
-  ["Ministre de la Sécurité","encadrement","Sécurité",P(...base,"dash","dos.assign","reg.avis.view","reg.avis.edit","reg.cas.view","reg.civ.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#ef4444"],
+  ["Ministre de la Sécurité","encadrement","Sécurité",P(...base,"dash","dos.assign","sec.archive","reg.avis.view","reg.avis.edit","reg.cas.view","reg.civ.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#ef4444"],
   ["Ministre de la Communication","encadrement","Communication",P(...base,"dash","dos.assign","com.post","com.banner","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#f59e0b"],
   ["Ministre de l'État-Civil","encadrement","État-Civil",P(...base,"dash","dos.assign","reg.civ.view","reg.civ.edit","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#14b8a6"],
   ["Juge","fonctionnaire","Justice",P(...base,"jus.view","jus.instruct","jus.status","jus.verdict","reg.cas.view","reg.cas.edit","reg.civ.view"),50,300,0,"#a78bfa"],
@@ -389,7 +393,7 @@ function closeSide(){$(".side")&&$(".side").classList.remove("open");$(".scrim")
 document.addEventListener("keydown",e=>{if(e.key=="Escape"&&modal){modal.type=="confirm"?askNo():closeM()}});
 
 /* ---------- Icônes ---------- */
-const IC={home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
+const IC={home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
 function ic(n){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(IC[n]||"").split("|").map(p=>p[0]=="c"?(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`)(p.slice(1).split(",")):`<path d="${p}"/>`).join("")}</svg>`}
 function seal(){const src=(S.config&&S.config.logo)||"logo.png";return `<img class="logo" src="${esc(src)}" alt="Sceau du gouvernement" onerror="this.outerHTML=sealSvg()">`}
 function setFavicon(){let l=document.querySelector("link[rel=icon]");if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l)}l.href=(S.config&&S.config.logo)||"logo.png"}
@@ -429,6 +433,7 @@ function navItems(){const u=ME(),n=unread(),I=[];
  I.push(["accueil","Accueil","home"]);
  if(can("dos.view")){const p=vals(S.dossiers).filter(d=>myDepts().includes(d.dept)&&d.st=="attente").length;I.push(["dossiers","Dossiers","folder",p])}
  if(can("jus.view"))I.push(["justice","Justice","scale"]);
+ if(secOk())I.push(["securite","Sécurité","eye"]);
  if(["reg.ent.view","reg.civ.view"].some(can))I.push(["registres","Registres","book"]);
  if(["fin.view","fin.bill","fin.decl","fin.budget"].some(can))I.push(["finances","Finances","coins",canBill()?vals(S.factures).filter(f=>f.st=="verif").length:0]);
  I.push(["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n]);
@@ -648,6 +653,36 @@ function MActeEdit(){const a=modal.id?S.actes[modal.id]:null;if(modal.id&&!a||!c
  <input type="file" id="af" accept="image/*,application/pdf" multiple style="display:none" onchange="addActeFiles(this.files);this.value=''">
  ${modal.busy?`<p class="mu">Traitement des fichiers…</p>`:""}<p class="err" id="msg"></p>`,
  foot:`<button class="btn sec" onclick="${a?`openActe('${a.id}')`:"closeM()"}">Annuler</button><button class="btn" ${modal.busy?"disabled":""} onclick="saveActe('${a?a.id:""}')">${a?"Enregistrer les modifications":"Enregistrer l'acte"}</button>`}}
+
+/* =================== SÉCURITÉ : PATROUILLES =================== */
+const PAT_T=[["toit","Formulaire prise de toit","\u{1F3E2}"],["ronde","Ronde de surveillance","\u{1F526}"],["interne","Formulaire surveillance interne","\u{1F3DB}\u{FE0F}"],["aerienne","Formulaire Patrouille Aérienne","\u{1F681}"]];
+const PATL=Object.fromEntries(PAT_T.map(t=>[t[0],t]));
+const isoDay=d=>{const x=new Date(d);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+const addDays=(s,n)=>{const d=new Date(s+"T12:00");d.setDate(d.getDate()+n);return isoDay(d)};
+V.securite=()=>{if(!secOk())return empty("Espace réservé au département Sécurité.");const st=filt.sst||"cours";
+ return `<div class="ph"><h2>Sécurité — Patrouilles et rondes</h2></div><div class="tabs"><button class="${st=="cours"?"on":""}" onclick="filt.sst='cours';render()">Rapports</button><button class="${st=="arch"?"on":""}" onclick="filt.sst='arch';render()">Archives</button></div>${st=="arch"?patArchView():patView()}`};
+function patView(){const ty=filt.pty||"",q=filt.pq3||"",A=vals(S.patrouilles).filter(p=>!p.arch);
+ let L=A.filter(p=>!ty||p.type==ty).filter(p=>match(q,p.num,p.byNom,p.matricule,p.problemes,(PATL[p.type]||[])[1],fdd(p.date))).sort((a,b)=>(b.date+b.heure).localeCompare(a.date+a.heure)||b.t-a.t);
+ return `<div class="ec"><aside class="ec-side card"><button class="ec-c ${!ty?"on":""}" onclick="filt.pty='';render()"><span class="ec-e">\u{1F4CB}</span><span class="ec-n">Tous les rapports</span><span class="ec-k">${A.length}</span></button>
+ ${PAT_T.map(([k,l,e])=>`<button class="ec-c ${ty==k?"on":""}" onclick="filt.pty='${k}';render()"><span class="ec-e">${e}</span><span class="ec-n">${esc(l)}</span><span class="ec-k">${A.filter(p=>p.type==k).length}</span></button>`).join("")}</aside>
+ <div><div class="card"><div class="inl"><input id="q_pq3" placeholder="Rechercher : agent, matricule, n°, problème, date…" value="${esc(q)}" oninput="filt.pq3=this.value;render()" style="flex:1;min-width:200px"><button class="btn" onclick="openM('patNew',null,{ptype:'${ty||"ronde"}'})">${ic("plus")}Nouveau rapport${ty?" — "+esc(PATL[ty][1]):""}</button></div></div>
+ <div class="card tw"><table><tr><th>N°<th>Type<th>Date<th>Heure<th>Agent<th>Matricule<th>Problèmes</tr>${L.map(p=>`<tr class="click" onclick="openM('pat','${p.id}')"><td class="nw b">${esc(p.num)}<td class="nw">${(PATL[p.type]||["","?",""])[2]} ${esc((PATL[p.type]||["","?"])[1])}<td class="nw">${fdd(p.date)}<td class="nw">${esc(p.heure||"—")}<td>${esc(p.byNom)}<td class="nw">${esc(p.matricule||"—")}<td>${p.problemes?'<span class="bdg wa">Signalé</span>':'<span class="bdg ok">RAS</span>'}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucun rapport.</td></tr>`}</table></div></div></div>`}
+function patArchView(){const A=vals(S.patarch).sort((a,b)=>b.to.localeCompare(a.to)),end=keep.pae||isoDay(Date.now()),from=addDays(end,-6);
+ const n=vals(S.patrouilles).filter(p=>!p.arch&&p.date>=from&&p.date<=end).length;
+ return `${secArch()?`<div class="card"><h3>Archiver une période de 7 jours</h3><div class="inl"><label class="f">Dernier jour de la période<input id="pae" type="date" value="${esc(end)}" onchange="keep.pae=this.value;render()"></label><span class="mu">Du <b>${fdd(from)}</b> au <b>${fdd(end)}</b> : ${n} rapport(s) à archiver</span><button class="btn" ${n?"":"disabled"} onclick="patArchive('${from}','${end}')">Archiver ces 7 jours</button></div><p class="mu sm">Les rapports archivés disparaissent de la liste et restent consultables ici.</p></div>`:""}
+ <div class="card tw"><h3>Périodes archivées</h3><table><tr><th>Période<th>Rapports<th>Problèmes signalés<th>Archivée le<th>Par</tr>${A.map(a=>{const P=vals(S.patrouilles).filter(p=>p.arch==a.id);return `<tr class="click" onclick="openM('patarch','${a.id}')"><td class="b nw">${fdd(a.from)} → ${fdd(a.to)}<td>${P.length}<td>${P.filter(p=>p.problemes).length}<td class="nw">${fd(a.t)}<td>${esc(a.byNom)}</tr>`}).join("")||`<tr><td colspan="5" class="empty">Aucune archive.</td></tr>`}</table></div>`}
+function MPatNew(){if(!secOk())return null;const u=ME(),now=new Date();
+ return {title:"Nouveau rapport de patrouille",body:`<div class="pe-card"><div class="kv"><div class="k">Agent rédacteur</div><div class="b">${esc(u.nom)}</div><div class="k">Matricule</div><div>${esc(u.matricule||"—")}</div></div></div>
+ <div class="form"><label class="f full">Type de rapport *<select id="pty">${opts(PAT_T.map(t=>[t[0],t[2]+" "+t[1]]),modal.ptype)}</select></label><label class="f">Date de la patrouille / ronde *<input id="pdt" type="date" value="${isoDay(now)}"></label><label class="f">Heure *<input id="phr" type="time" value="${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}"></label>
+ <label class="f full">Problèmes rencontrés <span class="mu">(facultatif — laisser vide si rien à signaler)</span><textarea id="ppb" rows="4"></textarea></label></div><p class="err" id="msg"></p>`,
+ foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="patSave()">Enregistrer le rapport</button>`}}
+function MPat(p){if(!p||!secOk())return null;const t=PATL[p.type]||["","?",""],del=!p.arch&&(secArch()||p.by==meId);
+ return {title:`${t[2]} ${esc(t[1])} — ${esc(p.num)}`,body:`<div class="kv"><div class="k">Date</div><div>${fdd(p.date)} à ${esc(p.heure||"—")}</div><div class="k">Agent rédacteur</div><div class="b">${esc(p.byNom)}</div><div class="k">Matricule</div><div>${esc(p.matricule||"—")}</div><div class="k">Enregistré le</div><div>${fd(p.t)}</div><div class="k">Problèmes rencontrés</div><div class="pre">${p.problemes?esc(p.problemes):'<span class="bdg ok">Rien à signaler</span>'}</div>${p.arch?`<div class="k">Statut</div><div><span class="bdg mu">Archivé</span></div>`:""}</div>`,
+ foot:`${del?`<button class="btn gh" style="margin-right:auto" onclick="patDel('${p.id}')">Supprimer</button>`:""}<button class="btn" onclick="closeM()">Fermer</button>`}}
+function MPatArch(a){if(!a||!secOk())return null;const P=vals(S.patrouilles).filter(p=>p.arch==a.id).sort((x,y)=>(x.date+x.heure).localeCompare(y.date+y.heure));
+ return {title:`Archive des patrouilles — ${fdd(a.from)} → ${fdd(a.to)}`,wide:1,body:`<div class="kpis">${kpi("Rapports",P.length)}${PAT_T.map(t=>kpi(t[2]+" "+t[1].replace("Formulaire ",""),P.filter(p=>p.type==t[0]).length)).join("")}${kpi("Problèmes signalés",P.filter(p=>p.problemes).length)}</div><p class="mu">Archivée le ${fd(a.t)} par ${esc(a.byNom)}</p>
+ <div class="tw"><table><tr><th>N°<th>Type<th>Date<th>Heure<th>Agent<th>Matricule<th>Problèmes</tr>${P.map(p=>`<tr><td class="nw">${esc(p.num)}<td class="nw">${(PATL[p.type]||[])[2]||""} ${esc((PATL[p.type]||["","?"])[1])}<td class="nw">${fdd(p.date)}<td>${esc(p.heure||"")}<td>${esc(p.byNom)}<td>${esc(p.matricule||"—")}<td class="pre">${p.problemes?esc(p.problemes):"RAS"}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucun rapport.</td></tr>`}</table></div>`,
+ foot:`${isDir()?`<button class="btn gh" style="margin-right:auto" onclick="patArchDel('${a.id}')">Supprimer l'archive</button>`:""}<button class="btn sec" onclick="patArchCSV('${a.id}')">Exporter (CSV)</button><button class="btn" onclick="closeM()">Fermer</button>`}}
 
 /* =================== FINANCES =================== */
 function treasury(){return num(S.config.treasuryStart)+vals(S.transactions).reduce((s,t)=>s+(t.type=="in"?1:-1)*num(t.montant),0)}
@@ -895,6 +930,9 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="verif")m=MVerif(S.factures[modal.id]);
  else if(modal.type=="archive")m=MArchive(S.archives[modal.id]);
  else if(modal.type=="acte")m=MActe(S.actes[modal.id]);
+ else if(modal.type=="patNew")m=MPatNew();
+ else if(modal.type=="pat")m=MPat(S.patrouilles[modal.id]);
+ else if(modal.type=="patarch")m=MPatArch(S.patarch[modal.id]);
  else if(modal.type=="paiearch")m=MPaieArch(S.paiearch[modal.id]);
  else if(modal.type=="paiedel"){const a=S.paiearch[modal.id];m=a&&isDir()?{title:"Supprimer l'archive de paie",sm:1,body:`<p>Supprimer définitivement l'archive « <b>${esc(a.periode)}</b> » du département ${esc(a.deptNom)} (${money(a.total)}, ${Object.keys(a.lines||{}).length} agent(s)) ?</p><p class="mu sm">Si vous gardez les versements, ils restent dans le Trésor et dans l'historique des agents. Si vous les annulez, l'argent est recrédité et les fiches de paie disparaissent.</p><label class="ck"><input type="checkbox" id="pdtx"><span>Annuler aussi les versements dans le Trésor (le montant est recrédité)</span></label><p class="err" id="msg"></p>`,foot:`<button class="btn sec" onclick="openM('paiearch','${a.id}')">Annuler</button><button class="btn no" onclick="delPaieArch('${a.id}')">Supprimer</button>`}:null}
  else if(modal.type=="payret")m={title:"Renvoyer la paie pour correction",sm:1,body:`<label class="f">Ce qu'il faut corriger<textarea id="prm" rows="3"></textarea></label><p class="err" id="msg"></p>`,foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="payReturnDo()">Renvoyer</button>`};
@@ -1065,6 +1103,19 @@ function delPaieArch(id){if(!isDir())return;const a=S.paiearch[id];if(!a)return;
 function payArchCSV(id){const a=S.paiearch[id],q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
  const rows=[["Agent","Grade","Dossiers","Heures","Salaire","Prime","Commentaire","Total"]].concat(Object.values(a.lines||{}).map(l=>[l.nom,l.grade,num(l.nd),num(l.h),num(l.montant),num(l.prime),l.note||"",lineTotal(l)]));rows.push([],["Total","","","","","","",a.total]);
  const csv="﻿"+rows.map(r=>r.map(q).join(";")).join("\r\n"),b=new Blob([csv],{type:"text/csv;charset=utf-8"}),l=document.createElement("a");l.href=URL.createObjectURL(b);l.download=("paie-"+a.deptNom+"-"+a.periode).replace(/[^\w\-]+/g,"_")+".csv";document.body.appendChild(l);l.click();setTimeout(()=>{URL.revokeObjectURL(l.href);l.remove()},500)}
+
+/* Sécurité : patrouilles */
+function patSave(){if(!secOk())return;const u=ME(),ty=val("pty"),dt=val("pdt"),hr=val("phr");if(!dt||!hr)return say("Indiquez la date et l'heure de la patrouille.");
+ const id=nid();DBX.set("patrouilles/"+id,{id,num:nextNum("patrouilles","PAT"),type:ty,date:dt,heure:hr,problemes:tval("ppb"),t:Date.now(),by:u.id,byNom:u.nom,matricule:u.matricule||""});
+ log(`Rapport de patrouille : ${(PATL[ty]||[])[1]} du ${fdd(dt)} à ${hr}${tval("ppb")?" — problème signalé":""}`,"Sécurité","Sécurité");toast("Rapport enregistré.");closeM()}
+function patDel(id){const p=S.patrouilles[id];if(!p||p.arch||!(secArch()||p.by==meId))return;ask(`Supprimer le rapport ${p.num} ?`,()=>{DBX.remove("patrouilles/"+id);log(`Rapport de patrouille supprimé : ${p.num}`,"Sécurité","Sécurité");modal=null},"Supprimer")}
+function patArchive(from,to){if(!secArch())return;const P=vals(S.patrouilles).filter(p=>!p.arch&&p.date>=from&&p.date<=to);if(!P.length)return;
+ ask(`Archiver ${P.length} rapport(s) du ${fdd(from)} au ${fdd(to)} ?`,()=>{const u=ME(),id=nid();DBX.set("patarch/"+id,{id,from,to,t:Date.now(),by:u.id,byNom:u.nom,n:P.length});const up={};P.forEach(p=>up[p.id+"/arch"]=id);DBX.update("patrouilles",up);
+  log(`Patrouilles archivées : ${P.length} rapport(s) du ${fdd(from)} au ${fdd(to)}`,"Sécurité","Sécurité");toast("Période archivée.")},"Archiver")}
+function patArchDel(id){if(!isDir())return;const a=S.patarch[id],P=vals(S.patrouilles).filter(p=>p.arch==id);ask(`Supprimer définitivement l'archive du ${fdd(a.from)} au ${fdd(a.to)} et ses ${P.length} rapport(s) ?`,()=>{P.forEach(p=>DBX.remove("patrouilles/"+p.id));DBX.remove("patarch/"+id);log(`Archive de patrouilles supprimée (${fdd(a.from)} → ${fdd(a.to)})`,"Sécurité","Sécurité");modal=null},"Supprimer")}
+function patArchCSV(id){const a=S.patarch[id],q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';const P=vals(S.patrouilles).filter(p=>p.arch==id).sort((x,y)=>(x.date+x.heure).localeCompare(y.date+y.heure));
+ const rows=[["N°","Type","Date","Heure","Agent","Matricule","Problèmes"]].concat(P.map(p=>[p.num,(PATL[p.type]||["",""])[1],fdd(p.date),p.heure,p.byNom,p.matricule,p.problemes||"RAS"]));
+ const csv="﻿"+rows.map(r=>r.map(q).join(";")).join("\r\n"),b=new Blob([csv],{type:"text/csv;charset=utf-8"}),l=document.createElement("a");l.href=URL.createObjectURL(b);l.download="patrouilles-"+a.from+"_"+a.to+".csv";document.body.appendChild(l);l.click();setTimeout(()=>{URL.revokeObjectURL(l.href);l.remove()},500)}
 
 /* Archives fiscales */
 function closePeriod(){if(!can("fin.archive"))return;const name=tval("arn");if(!name)return say("Donnez un nom à la période (ex. : Semaine 41 — 2026).");
