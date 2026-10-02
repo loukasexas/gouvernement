@@ -1,103 +1,827 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Portail Gouvernemental</title>
+<title>Intranet — Gouvernement de Los Santos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <style>
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f3f4f8;--cd:#fff;--tx:#14182b;--mu:#6b7186;--pr:#1d3a8a;--ok:#16794a;--no:#b42318;--wa:#b7791f;--bd:#dde0ea}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1220;--cd:#171c2f;--tx:#e8ebf5;--mu:#98a0b8;--pr:#6c8cff;--ok:#3ecf8e;--no:#ff7b72;--wa:#e3b341;--bd:#2a3150}}
-:root[data-theme="dark"]{--bg:#0e1220;--cd:#171c2f;--tx:#e8ebf5;--mu:#98a0b8;--pr:#6c8cff;--ok:#3ecf8e;--no:#ff7b72;--wa:#e3b341;--bd:#2a3150}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 16px;background:var(--cd);border-bottom:1px solid var(--bd)}
-nav{display:flex;gap:6px;padding:10px 16px;overflow-x:auto}
-nav button{background:var(--cd);color:var(--tx);border:1px solid var(--bd);white-space:nowrap}
-nav button.on{background:var(--pr);color:#fff;border-color:var(--pr)}
-main{max-width:980px;margin:0 auto;padding:8px 16px 32px}
-.card{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:16px;margin:12px 0}
-h2,h3{margin:0 0 10px}
-.mu{color:var(--mu);font-size:13px}
-input,select,textarea{width:100%;box-sizing:border-box;padding:9px 10px;margin:4px 0 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
-td input{width:90px;margin:0}
-button{background:var(--pr);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
-button.ok{background:var(--ok)}button.no{background:var(--no)}button.gh{background:transparent;color:var(--mu);border:1px solid var(--bd)}
-.b{padding:2px 9px;border-radius:99px;font-size:12px;border:1px solid currentColor}
-.b.ok{color:var(--ok)}.b.no{color:var(--no)}.b.wa{color:var(--wa)}
-.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0 10px}
-.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0 12px}
-.st b{font-size:28px}
-.sc{overflow-x:auto}
+:root{--bg:#09101e;--bg2:#0d1628;--cd:#111c31;--cd2:#16243e;--tx:#e7ecf6;--mu:#8b98b4;--bd:#223252;--gold:#c9a24a;--gold2:#e5c97a;--on-gold:#1a1405;--blue:#4c7fe0;--ok:#35c27b;--no:#ef6363;--wa:#e3aa3d;--sh:0 8px 30px rgba(0,0,0,.35);color-scheme:dark}
+:root[data-theme="light"]{--bg:#eef1f6;--bg2:#e4e8f0;--cd:#ffffff;--cd2:#f5f7fb;--tx:#121a2b;--mu:#5b6782;--bd:#d6dce8;--gold:#9c7a24;--gold2:#7d6018;--on-gold:#fff;--blue:#2f5fc4;--ok:#17834f;--no:#c43030;--wa:#a86f0b;--sh:0 6px 24px rgba(20,30,60,.10);color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:14.5px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+a{color:var(--gold2)}
+h1,h2,h3,h4{margin:0 0 10px;line-height:1.25}
+h2{font-size:20px}h3{font-size:16px}h4{font-size:14px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}
+.serif{font-family:Cinzel,Georgia,serif;letter-spacing:.04em}
+.mu{color:var(--mu);font-size:13px}.sm{font-size:12px}.b{font-weight:600}.r{text-align:right}.nw{white-space:nowrap}
+.app{display:flex;min-height:100vh}
+.side{width:248px;flex:none;background:var(--bg2);border-right:1px solid var(--bd);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;z-index:30}
+.brand{display:flex;gap:10px;align-items:center;padding:16px 16px 14px;border-bottom:1px solid var(--bd)}
+.brand svg{width:44px;height:44px;flex:none}
+.brand .t1{font-family:Cinzel,serif;font-weight:700;font-size:13px;color:var(--gold2);line-height:1.2}
+.brand .t2{font-size:11px;color:var(--mu)}
+.nav{padding:10px 8px;flex:1}
+.nav button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:var(--mu);padding:9px 10px;border-radius:8px;font:inherit;font-weight:500;cursor:pointer;text-align:left}
+.nav button:hover{background:var(--cd);color:var(--tx)}
+.nav button.on{background:var(--cd2);color:var(--gold2);box-shadow:inset 3px 0 0 var(--gold)}
+.nav svg{width:18px;height:18px;flex:none}
+.nav .cnt{margin-left:auto;background:var(--no);color:#fff;border-radius:99px;font-size:11px;padding:0 7px;line-height:18px}
+.side-foot{padding:12px 16px;border-top:1px solid var(--bd);font-size:12px;color:var(--mu)}
+.wrap{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--cd);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:20}
+.top .who{margin-left:auto;text-align:right;line-height:1.25}
+.burger{display:none;background:none;border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:6px 8px;cursor:pointer}
+.ticker{overflow:hidden;white-space:nowrap;padding:7px 0;font-size:13px;font-weight:500;border-bottom:1px solid var(--bd)}
+.ticker span{display:inline-block;padding-left:100%;animation:tk 28s linear infinite;animation-delay:-5s}
+.ticker.info{background:rgba(76,127,224,.14);color:var(--tx)}.ticker.warn{background:rgba(227,170,61,.16)}.ticker.alert{background:rgba(239,99,99,.18)}
+@keyframes tk{to{transform:translateX(-100%)}}
+@media(prefers-reduced-motion:reduce){.ticker span{animation:none;padding-left:16px}}
+main{padding:20px;max-width:1240px;width:100%;margin:0 auto}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.ph h2{margin:0}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.card.click{cursor:pointer}.card.click:hover{border-color:var(--gold)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:14px 16px}
+.kpi .l{color:var(--mu);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.kpi .v{font-size:26px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .v.gold{color:var(--gold2)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:4px 14px}
+.form .full{grid-column:1/-1}
+label.f{display:block;font-size:12px;color:var(--mu);font-weight:500}
+input,select,textarea{width:100%;padding:9px 10px;margin:4px 0 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:-1px}
+input[type=checkbox]{width:auto;margin:0}
+input[type=color]{padding:2px;height:38px}
+textarea{resize:vertical;min-height:70px}
+.inl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.inl input,.inl select{width:auto;margin:0;min-width:150px}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:var(--on-gold);border:0;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sec{background:var(--cd2);color:var(--tx);border:1px solid var(--bd)}
+.btn.ok{background:var(--ok);color:#fff}.btn.no{background:var(--no);color:#fff}.btn.bl{background:var(--blue);color:#fff}
+.btn.gh{background:transparent;color:var(--mu);border:1px solid var(--bd)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn svg{width:16px;height:16px}
+.bdg{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;font-weight:600;border:1px solid currentColor;white-space:nowrap}
+.bdg.ok{color:var(--ok)}.bdg.no{color:var(--no)}.bdg.wa{color:var(--wa)}.bdg.bl{color:var(--blue)}.bdg.mu{color:var(--mu)}.bdg.gd{color:var(--gold2)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mu);margin-right:6px}.dot.ok{background:var(--ok)}.dot.no{background:var(--no)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--bd);margin-bottom:14px;overflow-x:auto}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--mu);padding:8px 14px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+.tabs button.on{color:var(--gold2);border-bottom-color:var(--gold)}
+.tw{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--bd);font-size:14px;vertical-align:middle}
-.ck{display:inline-flex;gap:3px;align-items:center;margin-right:8px;font-size:13px}.ck input{width:auto;margin:0}
-.lgn{max-width:360px;margin:12vh auto;padding:0 16px}
-.err{color:var(--no);min-height:1.2em}
-.lg{padding:5px 0;border-bottom:1px solid var(--bd);font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--bd);vertical-align:middle}
+th{font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;font-weight:600;white-space:nowrap}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--cd2)}
+td.r{white-space:nowrap}
+td input,td select{margin:0;width:110px;padding:5px 8px}
+.empty{color:var(--mu);text-align:center;padding:26px 10px}
+.pl{display:flex;flex-wrap:wrap;gap:4px 14px}
+.ck{display:inline-flex;gap:6px;align-items:center;font-size:13px;padding:3px 0;cursor:pointer}
+.ck input:disabled+span{opacity:.45}
+.pgrp{border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.pgrp h4{margin-bottom:6px}
+.tl{border-left:2px solid var(--bd);margin-left:6px;padding-left:16px}
+.tl .it{position:relative;padding:0 0 14px}
+.tl .it:before{content:"";position:absolute;left:-22px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--gold)}
+.tl .it.note:before{background:var(--blue)}.tl .it.decision:before{background:var(--ok)}.tl .it.audition:before{background:var(--wa)}
+.msgs{display:grid;grid-template-columns:280px 1fr;gap:14px;min-height:60vh}
+.conv{background:var(--cd);border:1px solid var(--bd);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.conv .ci{padding:10px 14px;border-bottom:1px solid var(--bd);cursor:pointer}
+.conv .ci.on{background:var(--cd2);box-shadow:inset 3px 0 0 var(--gold)}
+.thread{background:var(--cd);border:1px solid var(--bd);border-radius:12px;display:flex;flex-direction:column;min-height:60vh}
+.thread .body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;max-height:62vh}
+.bub{max-width:75%;padding:8px 12px;border-radius:12px;background:var(--cd2);border:1px solid var(--bd);white-space:pre-wrap;word-wrap:break-word}
+.bub.me{align-self:flex-end;background:rgba(201,162,74,.16);border-color:rgba(201,162,74,.4)}
+.thread .send{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd)}
+.thread .send textarea{margin:0;min-height:42px;height:42px}
+.ann{border-left:3px solid var(--gold)}.ann.pin{border-left-color:var(--no)}
+.pre{white-space:pre-wrap;word-wrap:break-word}
+.modal-bg{position:fixed;inset:0;background:rgba(3,6,14,.7);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:5vh 12px;overflow-y:auto}
+.modal{background:var(--cd);border:1px solid var(--bd);border-radius:14px;width:100%;max-width:760px;box-shadow:var(--sh)}
+.modal.sm{max-width:440px}
+.modal .mh{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--bd)}
+.modal .mh h3{margin:0}
+.modal .mb{padding:16px 18px}
+.modal .mf{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--bd)}
+.x{background:none;border:0;color:var(--mu);font-size:22px;cursor:pointer;line-height:1}
+.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--cd2);border:1px solid var(--bd);border-left:3px solid var(--gold);padding:10px 14px;border-radius:10px;box-shadow:var(--sh);max-width:340px;animation:fi .2s}
+.toast.err{border-left-color:var(--no)}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at top,#16264a 0%,var(--bg) 60%)}
+:root[data-theme="light"] .login{background:radial-gradient(ellipse at top,#dfe6f5 0%,var(--bg) 60%)}
+.login .box{width:100%;max-width:400px;text-align:center}
+.login .seal{width:120px;height:120px;margin:0 auto 12px}
+.login .card{text-align:left;margin-top:18px;padding:22px}
+.err{color:var(--no);min-height:1.3em;font-size:13px;margin:6px 0 0}
+.kv{display:grid;grid-template-columns:160px 1fr;gap:6px 14px;font-size:14px}
+.kv .k{color:var(--mu)}
+.svc{text-align:center;padding:28px 16px}
+.svc .clk{font-size:44px;font-weight:700;font-variant-numeric:tabular-nums;margin:10px 0}
+.photo{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--bd)}
+.bar{height:8px;background:var(--bg);border-radius:99px;overflow:hidden;border:1px solid var(--bd)}
+.bar i{display:block;height:100%;background:var(--gold)}
+.bar i.over{background:var(--no)}
+.conn{font-size:12px;color:var(--mu)}
+.scrim{display:none}
+@media(max-width:900px){
+ .side{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--sh)}
+ .side.open{transform:none}
+ .scrim.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:25}
+ .burger{display:inline-block}
+ main{padding:14px 16px}
+ .top{padding:10px 16px}
+ .msgs{grid-template-columns:1fr}
+ .kv{grid-template-columns:1fr}
+ .top .who .mu{display:none}
+}
 </style></head>
-<body><div id="root"></div>
+<body><div id="root"></div><div class="toasts" id="toasts"></div>
 <script>
-const D=["Finances","État-Civil","Justice","Intérieur","Communication","Sécurité"];
-const R={entreprise:"Entreprise",fonctionnaire:"Fonctionnaire",encadrement:"Corps d'encadrement",direction:"Direction"};
-const K="gov_rp_v1";let S,me=null,tab="",df="";
-try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
-if(!S)S={users:[{id:1,login:"direction",pw:"direction",role:"direction",nom:"Direction",dept:"",rate:0,perms:{}}],dem:[],logs:[],n:2};
+"use strict";
+/* =========================================================
+   CONFIGURATION — colle ici l'URL de ta Realtime Database Firebase
+   (laisser vide = mode local, données propres à chaque navigateur)
+   ========================================================= */
+const DB_URL = "https://gouvernement-6e3dd-default-rtdb.europe-west1.firebasedatabase.app";
+const ROOT = "lsgov";
+
+/* ---------- Constantes ---------- */
+const DEF_DEPTS=["Finances","État-Civil","Justice","Intérieur","Communication","Sécurité"];
+const ROLES={entreprise:"Entreprise",fonctionnaire:"Fonctionnaire",encadrement:"Corps d'encadrement",direction:"Direction"};
+const COLS=["users","grades","dossiers","affaires","entreprises","identites","casier","avis","transactions","factures","declarations","annonces","messages","logs"];
+const DOS_TYPES={
+ "Finances":["Déclaration fiscale","Demande de subvention","Contestation d'amende","Échéancier de paiement"],
+ "État-Civil":["Enregistrement d'identité","Changement d'adresse","Acte de mariage","Acte de décès"],
+ "Justice":["Dépôt de plainte","Demande d'audience","Recours","Médiation commerciale"],
+ "Intérieur":["Licence d'exploitation","Renouvellement de licence","Permis de construire","Autorisation d'événement"],
+ "Communication":["Communiqué de presse","Demande de partenariat","Accréditation presse"],
+ "Sécurité":["Licence de port d'arme","Agrément sécurité privée","Demande d'escorte"]
+};
+const DST={attente:["En attente","wa"],cours:["En cours","bl"],ok:["Acceptée","ok"],no:["Refusée","no"]};
+const AST={ouverte:["Ouverte","bl"],instruction:["En instruction","wa"],audience:["Audience fixée","gd"],jugee:["Jugée","ok"],classee:["Classée sans suite","mu"]};
+const PERMS=[
+ ["Général",[["dash","Tableau de bord global"],["annuaire","Annuaire des agents"]]],
+ ["Dossiers administratifs",[["dos.view","Consulter les dossiers"],["dos.treat","Accepter / refuser"],["dos.assign","Assigner aux agents"],["dos.all","Tous les départements"],["dos.delete","Supprimer un dossier"]]],
+ ["Justice",[["jus.view","Consulter les affaires"],["jus.open","Ouvrir une affaire"],["jus.instruct","Instruire (pièces, auditions, notes)"],["jus.status","Statut, juge, audience, clôture / réouverture"],["jus.verdict","Rendre un jugement"],["jus.secret","Voir les affaires confidentielles"],["jus.delete","Supprimer une affaire"]]],
+ ["Registres",[["reg.ent.view","Entreprises — consulter"],["reg.ent.edit","Entreprises — modifier"],["reg.civ.view","État civil — consulter"],["reg.civ.edit","État civil — modifier"],["reg.cas.view","Casier — consulter"],["reg.cas.edit","Casier — modifier"],["reg.avis.view","Avis de recherche — consulter"],["reg.avis.edit","Avis de recherche — modifier"]]],
+ ["Finances",[["fin.view","Consulter la trésorerie"],["fin.edit","Saisir des opérations"],["fin.bill","Émettre factures et amendes"],["fin.decl","Valider les déclarations fiscales"],["fin.budget","Budgets et taux d'imposition"]]],
+ ["Communication",[["com.post","Publier des annonces"],["com.banner","Gérer le bandeau d'information"]]],
+ ["Personnel",[["rh.view","Voir les comptes"],["rh.create","Créer des comptes"],["rh.edit","Modifier / suspendre des comptes"],["rh.delete","Supprimer des comptes"],["rh.grades","Gérer les grades"],["rh.pay.view","Voir les salaires"],["rh.pay.edit","Modifier les primes"],["rh.pay.do","Verser les salaires"]]],
+ ["Journal",[["log.dept","Journal du département"],["log.all","Journal complet"]]],
+ ["Administration",[["adm.site","Paramètres du site, maintenance, sauvegarde"]]]
+];
+const ALLP=PERMS.flatMap(g=>g[1].map(p=>p[0]));
+const PL=Object.fromEntries(PERMS.flatMap(g=>g[1]));
+
+/* ---------- État ---------- */
+let S={config:{}};COLS.forEach(c=>S[c]={});
+let ready=false,meId=null,view="accueil",sub="",modal=null,keep={},filt={},convWith=null,lastUnread=-1,connected=!DB_URL,bootErr="";
+let pendingCb=null;
+
+/* ---------- Utilitaires ---------- */
 const $=s=>document.querySelector(s);
+const val=id=>{const e=document.getElementById(id);return e?(e.type=="checkbox"?e.checked:e.value):""};
+const tval=id=>String(val(id)).trim();
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const U=id=>S.users.find(u=>u.id==id);
-const fd=t=>new Date(t).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"});
-const dur=ms=>{let m=Math.floor(ms/6e4);return Math.floor(m/60)+"h "+String(m%60).padStart(2,"0")+"min"};
-const money=n=>"$"+Math.round(n||0).toLocaleString("fr-FR");
-const opts=a=>a.map(x=>`<option>${x}</option>`).join("");
-const ST={attente:["En attente","wa"],ok:["Acceptée","ok"],no:["Refusée","no"]};
-const badge=s=>`<span class="b ${ST[s][1]}">${ST[s][0]}</span>`;
-const done=u=>S.dem.filter(d=>d.by==u.id).length;
-const pay=u=>done(u)*(u.rate||0)+(u.bonus||0);
-const scopeU=()=>S.users.filter(u=>u.id!=me.id&&(me.role=="direction"||u.role=="entreprise"||(u.role=="fonctionnaire"&&u.dept==me.dept)));
-const agents=()=>scopeU().filter(u=>u.role=="fonctionnaire"||u.role=="encadrement");
-function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
-function log(m,d){S.logs.unshift({t:Date.now(),u:me?me.nom:"—",m,d:d||""});S.logs=S.logs.slice(0,200)}
-function tabs(){const p=me.perms||{};
- if(me.role=="entreprise")return["Nouvelle demande","Mes demandes"];
- if(me.role=="fonctionnaire")return["Service","Dossiers","Salaire"];
- if(me.role=="encadrement")return["Dossiers"].concat(p.comptes?["Comptes"]:[],p.salaires?["Salaires"]:[],p.logs?["Journal"]:[]);
- return["Vue d'ensemble","Dossiers","Comptes","Salaires","Journal"]}
+const vals=o=>Object.values(o||{}).filter(x=>x&&typeof x=="object");
+const fd=t=>t?new Date(t).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}):"—";
+const fdd=s=>{if(!s)return"—";const d=new Date(s.length==10?s+"T12:00":s);return isNaN(d)?esc(s):d.toLocaleDateString("fr-FR")};
+const dur=ms=>{ms=Math.max(0,ms||0);const m=Math.floor(ms/6e4);return Math.floor(m/60)+" h "+String(m%60).padStart(2,"0")};
+const clock=ms=>{ms=Math.max(0,ms||0);const s=Math.floor(ms/1e3);return [Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(x=>String(x).padStart(2,"0")).join(":")};
+const money=n=>Math.round(+n||0).toLocaleString("fr-FR")+" $";
+const num=v=>{const n=parseFloat(String(v).replace(",","."));return isNaN(n)?0:n};
+const opts=(a,sel)=>a.map(x=>Array.isArray(x)?`<option value="${esc(x[0])}" ${x[0]==sel?"selected":""}>${esc(x[1])}</option>`:`<option ${x==sel?"selected":""}>${esc(x)}</option>`).join("");
+const bdg=(m,s)=>{const x=m[s]||[s,"mu"];return `<span class="bdg ${x[1]}">${esc(x[0])}</span>`};
+const nid=()=>DB_URL&&window.firebase?firebase.database().ref().push().key:(Date.now().toString(36)+Math.random().toString(36).slice(2,9));
+const DEPTS=()=>(S.config.depts&&S.config.depts.length?S.config.depts:DEF_DEPTS);
+const U=id=>S.users[id];
+const ME=()=>meId?S.users[meId]:null;
+const G=u=>u&&u.gradeId?S.grades[u.gradeId]:null;
+const uname=id=>{const u=U(id);return u?u.nom:"—"};
+const gname=u=>{const g=G(u);return g?g.name:ROLES[u.role]||""};
+const isAgent=u=>u&&u.role!="entreprise";
+const nextNum=(col,prefix)=>{const y=new Date().getFullYear();let mx=0;vals(S[col]).forEach(x=>{const m=String(x.num||"").match(/(\d+)$/);if(m)mx=Math.max(mx,+m[1])});return `${prefix}-${y}-${String(mx+1).padStart(4,"0")}`};
+async function sha(s){if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return "x"+h}
+const hashPw=(login,pw)=>sha("lsgov|"+login.toLowerCase()+"|"+pw);
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}
+
+/* ---------- Permissions ---------- */
+function can(p){const u=ME();if(!u||u.role=="entreprise")return false;if(u.role=="direction")return true;
+ const g=G(u);return !!((g&&g.perms&&g.perms[p])||(u.xperms&&u.xperms[p]))}
+const isDir=()=>{const u=ME();return u&&u.role=="direction"};
+function myDepts(){const u=ME();return (isDir()||can("dos.all"))?DEPTS():(u&&u.dept?[u.dept]:[])}
+function manageable(u){const m=ME();if(!m||!u||u.id==m.id)return false;if(isDir())return true;
+ return u.role=="entreprise"||(u.role=="fonctionnaire"&&u.dept&&u.dept==m.dept)}
+function gradeEditable(g){if(isDir())return true;const m=ME();return can("rh.grades")&&g.role=="fonctionnaire"&&g.dept==m.dept}
+
+/* ---------- Couche de données (Firebase ou local) ---------- */
+function setAt(path,v){const p=path.split("/");let o=S;for(let i=0;i<p.length-1;i++){if(!o[p[i]]||typeof o[p[i]]!="object")o[p[i]]={};o=o[p[i]]}
+ const k=p[p.length-1];if(v===null||v===undefined)delete o[k];else o[k]=JSON.parse(JSON.stringify(v))}
+const LKEY="lsgov_local_v2";
+let db=null;
+const DBX={
+ set(path,v){setAt(path,v);persist();schedule();if(db)return db.ref(ROOT+"/"+path).set(v===undefined?null:v).catch(fbErr);return Promise.resolve()},
+ update(path,obj){for(const k in obj)setAt(path+"/"+k,obj[k]);persist();schedule();if(db)return db.ref(ROOT+"/"+path).update(obj).catch(fbErr);return Promise.resolve()},
+ remove(path){return DBX.set(path,null)},
+ replaceAll(data){if(db)return db.ref(ROOT).set(data).catch(fbErr);S={config:{}};COLS.forEach(c=>S[c]={});Object.assign(S,data||{});S.config=S.config||{};COLS.forEach(c=>S[c]=S[c]||{});persist();schedule();return Promise.resolve()}
+};
+function persist(){if(!db)lsSet(LKEY,JSON.stringify(S))}
+function fbErr(e){console.error(e);toast("Erreur de synchronisation : "+(e&&e.message||e),1)}
+function startData(){
+ if(DB_URL&&window.firebase){
+  try{firebase.initializeApp({databaseURL:DB_URL});db=firebase.database()}catch(e){bootErr="Impossible d'initialiser Firebase : "+e.message;render();return}
+  const loaded=new Set(),all=[...COLS,"config"];
+  db.ref(".info/connected").on("value",s=>{connected=!!s.val();schedule()});
+  all.forEach(c=>{let r=db.ref(ROOT+"/"+c);if(c=="logs"||c=="messages")r=r.limitToLast(c=="logs"?800:1500);
+   r.on("value",s=>{S[c]=s.val()||{};if(!loaded.has(c)){loaded.add(c);if(loaded.size==all.length)boot()}schedule()},
+   e=>{bootErr="Accès à la base refusé : vérifie l'URL et les règles Firebase. ("+e.message+")";render()})});
+  setTimeout(()=>{if(!ready&&!bootErr){bootErr="La base Firebase ne répond pas. Vérifie l'URL dans le fichier et ta connexion.";render()}},15000);
+ }else{
+  if(DB_URL&&!window.firebase)bootErr="Le SDK Firebase n'a pas pu être chargé (connexion internet ?).";
+  try{const d=JSON.parse(lsGet(LKEY)||"null");if(d){S=d;S.config=S.config||{};COLS.forEach(c=>S[c]=S[c]||{})}}catch(e){}
+  window.addEventListener("storage",e=>{if(e.key==LKEY&&e.newValue){try{S=JSON.parse(e.newValue);schedule()}catch(x){}}});
+  boot();
+ }
+}
+async function boot(){
+ if(!Object.keys(S.users).length){
+  const id=nid();
+  await DBX.set("users/"+id,{id,login:"direction",hash:await hashPw("direction","direction"),nom:"Cabinet du Gouverneur",role:"direction",gradeId:"",dept:"",matricule:"DIR-001",active:true,mustChange:true,created:Date.now()});
+ }
+ if(!Object.keys(S.grades).length)seedGrades();
+ if(!S.config||!S.config.siteName)DBX.update("config",{siteName:"Gouvernement de Los Santos",subtitle:"État de San Andreas — Intranet officiel",depts:DEF_DEPTS,tax:8,requireService:true,treasuryStart:250000,budgets:{},banner:{on:true,txt:"Bienvenue sur l'intranet du Gouvernement de Los Santos. Pensez à prendre votre service avant de traiter les dossiers.",lvl:"info"},maintenance:{on:false,msg:""}});
+ const sid=lsGet("lsgov_session");if(sid&&S.users[sid]&&S.users[sid].active!==false)meId=sid;
+ ready=true;applyTheme();render();
+}
+function seedGrades(){
+ const P=(...a)=>Object.fromEntries(a.map(k=>[k,true]));
+ const base=["annuaire","dos.view","dos.treat"];
+ const L=[
+  ["Gouverneur","direction","",{},0,0,15000,"#c9a24a"],
+  ["Vice-Gouverneur","direction","",{},0,0,12000,"#c9a24a"],
+  ["Ministre de la Justice","encadrement","Justice",P(...base,"dash","dos.assign","jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","reg.cas.view","reg.cas.edit","reg.civ.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#8b5cf6"],
+  ["Ministre des Finances","encadrement","Finances",P(...base,"dash","dos.assign","fin.view","fin.edit","fin.bill","fin.decl","fin.budget","reg.ent.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#22c55e"],
+  ["Ministre de l'Intérieur","encadrement","Intérieur",P(...base,"dash","dos.assign","reg.ent.view","reg.ent.edit","reg.civ.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#3b82f6"],
+  ["Ministre de la Sécurité","encadrement","Sécurité",P(...base,"dash","dos.assign","reg.avis.view","reg.avis.edit","reg.cas.view","reg.civ.view","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#ef4444"],
+  ["Ministre de la Communication","encadrement","Communication",P(...base,"dash","dos.assign","com.post","com.banner","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#f59e0b"],
+  ["Ministre de l'État-Civil","encadrement","État-Civil",P(...base,"dash","dos.assign","reg.civ.view","reg.civ.edit","rh.view","rh.create","rh.edit","rh.pay.view","log.dept"),60,400,6000,"#14b8a6"],
+  ["Juge","fonctionnaire","Justice",P(...base,"jus.view","jus.instruct","jus.status","jus.verdict","reg.cas.view","reg.cas.edit","reg.civ.view"),50,300,0,"#a78bfa"],
+  ["Greffier","fonctionnaire","Justice",P(...base,"jus.view","jus.open","jus.instruct","reg.cas.view"),40,250,0,"#a78bfa"],
+  ["Agent du Trésor","fonctionnaire","Finances",P(...base,"fin.view","fin.bill","reg.ent.view"),40,250,0,"#4ade80"],
+  ["Officier d'état civil","fonctionnaire","État-Civil",P(...base,"reg.civ.view","reg.civ.edit"),40,250,0,"#2dd4bf"],
+  ["Agent de l'Intérieur","fonctionnaire","Intérieur",P(...base,"reg.ent.view","reg.ent.edit"),40,250,0,"#60a5fa"],
+  ["Agent de sécurité","fonctionnaire","Sécurité",P(...base,"reg.avis.view","reg.cas.view"),40,250,0,"#f87171"],
+  ["Chargé de communication","fonctionnaire","Communication",P(...base,"com.post"),40,250,0,"#fbbf24"]
+ ];
+ const o={};L.forEach(([name,role,dept,perms,perDossier,perHour,fixe,color],i)=>{const id=nid()+i;o[id]={id,name,role,dept,perms,perDossier,perHour,fixe,color,rank:i}});
+ DBX.update("grades",o);
+}
+
+/* ---------- Journal & notifications ---------- */
+function log(m,dept,cat){const id=nid(),u=ME();DBX.set("logs/"+id,{id,t:Date.now(),u:u?u.nom:"Système",uid:u?u.id:"",m,d:dept||"",cat:cat||"Général"})}
+function toast(t,err){const el=document.createElement("div");el.className="toast"+(err?" err":"");el.textContent=t;$("#toasts").appendChild(el);setTimeout(()=>el.remove(),err?6000:3500)}
+function say(t){const e=$("#msg");if(e)e.textContent=t;else toast(t,1)}
+
+/* ---------- Rendu ---------- */
+let schT=0;
+function schedule(){if(schT)return;schT=setTimeout(()=>{schT=0;if(ready)render()},40)}
+function render(){
+ const root=$("#root");if(!root)return;
+ const ae=document.activeElement;let fid=ae&&ae.id,ss=null,se=null;try{ss=ae.selectionStart;se=ae.selectionEnd}catch(e){}
+ root.querySelectorAll("input[id],textarea[id],select[id]").forEach(e=>{if(e.type!="checkbox"&&e.type!="file"&&!e.hasAttribute("data-nokeep"))keep[e.id]=e.value});
+ const mb=root.querySelector(".modal-bg"),ms=mb?mb.scrollTop:0,tb=root.querySelector(".thread .body"),ts=tb?tb.scrollTop:0,tAtEnd=tb?tb.scrollHeight-tb.scrollTop-tb.clientHeight<40:true;
+ let h;try{h=page()}catch(e){console.error(e);h=`<div class="login"><div class="box card"><h3>Erreur d'affichage</h3><p class="mu">${esc(e.message)}</p><button class="btn" onclick="modal=null;go('accueil')">Revenir à l'accueil</button></div></div>`}
+ root.innerHTML=h;
+ for(const id in keep){const e=document.getElementById(id);if(e&&e.type!="checkbox"&&!e.hasAttribute("data-nokeep")&&e.value!==keep[id]){if(e.tagName=="SELECT"&&![...e.options].some(o=>o.value==keep[id]))continue;e.value=keep[id]}}
+ if(fid){const e=document.getElementById(fid);if(e){e.focus({preventScroll:true});try{if(ss!=null)e.setSelectionRange(ss,se)}catch(x){}}}
+ const mb2=root.querySelector(".modal-bg");if(mb2)mb2.scrollTop=ms;
+ const tb2=root.querySelector(".thread .body");if(tb2)tb2.scrollTop=tAtEnd?tb2.scrollHeight:ts;
+ tickClocks();notify();
+ document.title=(unread()?"("+unread()+") ":"")+"Intranet — "+(S.config.siteName||"Gouvernement de Los Santos");
+}
+function clr(...ids){ids.forEach(id=>{delete keep[id];const e=document.getElementById(id);if(e){if(e.type=="checkbox")e.checked=false;else e.value=""}})}
+function go(v,s){view=v;sub=s||"";modal=null;keep={};closeSide();render();window.scrollTo(0,0)}
+function setSub(s){sub=s;keep={};render()}
+function openM(type,id,extra){modal=Object.assign({type,id},extra||{});keep={};render()}
+function closeM(){modal=null;keep={};render()}
+function ask(msg,cb,label){pendingCb=cb;modal={type:"confirm",msg,label:label||"Confirmer",prev:modal};render()}
+function askOk(){const cb=pendingCb;pendingCb=null;const p=modal&&modal.prev;modal=p||null;if(cb)cb();render()}
+function askNo(){pendingCb=null;modal=modal&&modal.prev||null;render()}
+function tickClocks(){document.querySelectorAll("[data-since]").forEach(e=>{e.textContent=clock(Date.now()-(+e.dataset.since)+(+e.dataset.base||0))})}
+setInterval(tickClocks,1000);
+function unread(){const m=ME();return m?vals(S.messages).filter(x=>x.to==m.id&&!x.read).length:0}
+function notify(){const n=unread();if(lastUnread>=0&&n>lastUnread&&!(view=="messages"))toast("Nouveau message reçu");lastUnread=n}
+function applyTheme(){const t=lsGet("lsgov_theme")||"dark";document.documentElement.setAttribute("data-theme",t);
+ const a=S.config&&S.config.accent;if(a&&/^#[0-9a-f]{6}$/i.test(a)){document.documentElement.style.setProperty("--gold",a);document.documentElement.style.setProperty("--gold2",a)}else{document.documentElement.style.removeProperty("--gold");document.documentElement.style.removeProperty("--gold2")}}
+function toggleTheme(){lsSet("lsgov_theme",(lsGet("lsgov_theme")||"dark")=="dark"?"light":"dark");applyTheme();render()}
+function openSide(){$(".side")&&$(".side").classList.add("open");$(".scrim")&&$(".scrim").classList.add("open")}
+function closeSide(){$(".side")&&$(".side").classList.remove("open");$(".scrim")&&$(".scrim").classList.remove("open")}
+document.addEventListener("keydown",e=>{if(e.key=="Escape"&&modal){modal.type=="confirm"?askNo():closeM()}});
+
+/* ---------- Icônes ---------- */
+const IC={home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
+function ic(n){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(IC[n]||"").split("|").map(p=>p[0]=="c"?(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`)(p.slice(1).split(",")):`<path d="${p}"/>`).join("")}</svg>`}
+function seal(){return `<svg viewBox="0 0 200 200" role="img" aria-label="Sceau"><defs><path id="sc" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0"/></defs>
+<circle cx="100" cy="100" r="97" fill="#0d1628" stroke="#c9a24a" stroke-width="5"/><circle cx="100" cy="100" r="86" fill="none" stroke="#c9a24a" stroke-width="1.5"/><circle cx="100" cy="100" r="58" fill="#132443" stroke="#c9a24a" stroke-width="2"/>
+<text font-family="Cinzel,Georgia,serif" font-size="15" font-weight="700" fill="#e5c97a" letter-spacing="2.5"><textPath href="#sc" startOffset="0">GOUVERNEMENT DE LOS SANTOS • SAN ANDREAS •</textPath></text>
+<path d="M100 56l10.6 21.5 23.7 3.4-17.1 16.7 4 23.6L100 110l-21.2 11.2 4-23.6-17.1-16.7 23.7-3.4z" fill="#c9a24a"/>
+<path d="M62 132q38 22 76 0" fill="none" stroke="#c9a24a" stroke-width="3"/><text x="100" y="150" text-anchor="middle" font-family="Cinzel,Georgia,serif" font-size="11" fill="#e5c97a" letter-spacing="2">MCMLXXXV</text></svg>`}
+</script>
+<script>
+/* =================== STRUCTURE =================== */
+function page(){
+ if(bootErr&&!ready)return `<div class="login"><div class="box"><div class="seal">${seal()}</div><div class="card"><h3>Connexion à la base impossible</h3><p class="err">${esc(bootErr)}</p></div></div></div>`;
+ if(!ready)return `<div class="login"><div class="box"><div class="seal">${seal()}</div><p class="mu">Connexion au serveur gouvernemental…</p></div></div>`;
+ const u=ME();
+ if(!u||u.active===false){meId=null;return loginPage()+modalH()}
+ if(u.mustChange)return pwChangePage();
+ const mt=S.config.maintenance||{};
+ if(mt.on&&!isDir()&&!can("adm.site"))return `<div class="login"><div class="box"><div class="seal">${seal()}</div><div class="card"><h3>Maintenance en cours</h3><p class="pre">${esc(mt.msg||"L'intranet est temporairement indisponible.")}</p><button class="btn sec" onclick="logout()">Se déconnecter</button></div></div></div>`;
+ const N=navItems();if(!N.some(n=>n[0]==view))view=N[0][0];
+ const bn=S.config.banner||{};
+ const svcOn=u.svc&&u.svc.on;
+ return `<div class="app"><div class="scrim" onclick="closeSide()"></div><aside class="side"><div class="brand">${seal()}<div><div class="t1">${esc(S.config.siteName||"Gouvernement de Los Santos")}</div><div class="t2">${esc(S.config.subtitle||"Intranet officiel")}</div></div></div>
+ <nav class="nav">${N.map(([k,l,i,c])=>`<button class="${k==view?"on":""}" onclick="go('${k}')">${ic(i)}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`).join("")}
+ <button onclick="logout()">${ic("logout")}<span>Déconnexion</span></button></nav>
+ <div class="side-foot">${DB_URL?(connected?'<span class="dot ok"></span>Synchronisé':'<span class="dot no"></span>Hors ligne — reconnexion…'):'<span class="dot"></span>Mode local (non partagé)'}</div></aside>
+ <div class="wrap"><div class="top"><button class="burger" onclick="openSide()" aria-label="Menu">${ic("menu").replace("<svg",'<svg width="20" height="20"')}</button>
+ ${isAgent(u)?`<button class="btn sm ${svcOn?"ok":"gh"}" onclick="toggleSvc()" title="Prise / fin de service">${svcOn?`En service · <span data-since="${u.svc.since}">--</span>`:"Hors service"}</button>`:""}
+ <div class="who"><div class="b">${esc(u.nom)}</div><div class="mu">${esc(gname(u))}${u.dept?" · "+esc(u.dept):""}</div></div>
+ <button class="btn gh sm" onclick="toggleTheme()" title="Thème clair / sombre" aria-label="Changer de thème">${ic("sun").replace("<svg",'<svg width="16" height="16"')}</button></div>
+ ${bn.on&&bn.txt?`<div class="ticker ${esc(bn.lvl||"info")}"><span>${esc(bn.txt)}</span></div>`:""}
+ <main>${(V[view]||V.accueil)()}</main></div></div>${modalH()}`;
+}
+function navItems(){const u=ME(),n=unread(),I=[];
+ if(u.role=="entreprise"){const imp=vals(S.factures).filter(f=>f.ent==u.id&&f.st=="due").length;
+  return [["accueil","Accueil","home"],["demande","Nouvelle demande","plus"],["mesdem","Mes demandes","folder"],["factures","Factures & impôts","wallet",imp],["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n],["profil","Mon profil","user"]]}
+ I.push(["accueil","Accueil","home"],["service","Prise de service","clock"]);
+ if(can("dos.view")){const p=vals(S.dossiers).filter(d=>myDepts().includes(d.dept)&&d.st=="attente").length;I.push(["dossiers","Dossiers","folder",p])}
+ if(can("jus.view"))I.push(["justice","Justice","scale"]);
+ if(["reg.ent.view","reg.civ.view","reg.cas.view","reg.avis.view"].some(can))I.push(["registres","Registres","book"]);
+ if(["fin.view","fin.bill","fin.decl","fin.budget"].some(can))I.push(["finances","Finances","coins"]);
+ I.push(["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n]);
+ if(can("annuaire"))I.push(["annuaire","Annuaire","users"]);
+ if(["rh.view","rh.grades","rh.pay.view"].some(can))I.push(["personnel","Personnel","shield"]);
+ I.push(["salaire","Mon salaire","wallet"]);
+ if(can("log.dept")||can("log.all"))I.push(["journal","Journal","list"]);
+ if(can("adm.site")||can("com.banner"))I.push(["admin","Administration","settings"]);
+ I.push(["profil","Mon profil","user"]);
+ return I}
+function loginPage(){const mt=S.config.maintenance||{};
+ return `<div class="login"><div class="box"><div class="seal">${seal()}</div><h1 class="serif" style="font-size:22px;color:var(--gold2)">${esc(S.config.siteName||"Gouvernement de Los Santos")}</h1><div class="mu">${esc(S.config.subtitle||"Intranet officiel")}</div>
+ <div class="card"><h3>Accès sécurisé</h3><p class="mu" style="margin-top:-4px">Réservé aux agents de l'État et aux entreprises enregistrées.</p>
+ ${mt.on?`<p class="bdg wa" style="margin-bottom:10px">Maintenance en cours</p>`:""}
+ <label class="f">Identifiant<input id="li" autocomplete="username" onkeydown="if(event.key=='Enter')$('#lp').focus()"></label>
+ <label class="f">Mot de passe<input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key=='Enter')login()"></label>
+ <button class="btn" style="width:100%;justify-content:center" onclick="login()">Se connecter</button><p class="err" id="msg"></p>
+ ${!DB_URL?`<p class="mu sm">Mode local : les données restent dans ce navigateur.</p>`:""}</div></div></div>`}
+function pwChangePage(){return `<div class="login"><div class="box"><div class="seal">${seal()}</div><div class="card"><h3>Définissez votre mot de passe</h3><p class="mu">Première connexion ou mot de passe réinitialisé : choisissez un nouveau mot de passe personnel.</p>
+ <label class="f">Nouveau mot de passe<input id="np1" type="password" autocomplete="new-password"></label><label class="f">Confirmation<input id="np2" type="password" autocomplete="new-password" onkeydown="if(event.key=='Enter')forcePw()"></label>
+ <button class="btn" onclick="forcePw()">Valider</button> <button class="btn gh" onclick="logout()">Annuler</button><p class="err" id="msg"></p></div></div></div>`}
+
 const V={};
-V["Nouvelle demande"]=()=>`<div class="card"><h3>Nouvelle demande</h3><label>Département<select id="nd">${opts(D)}</select></label><label>Objet<input id="no" maxlength="80"></label><label>Détails<textarea id="nt" rows="4" maxlength="500"></textarea></label><button onclick="addDem()">Envoyer</button><p class="err" id="msg"></p></div>`;
-V["Mes demandes"]=()=>{const L=S.dem.filter(d=>d.ent==me.id).sort((a,b)=>b.t-a.t);
- return L.map(d=>`<div class="card"><b>${esc(d.objet)}</b> ${badge(d.st)}<div class="mu">${d.dept} · ${fd(d.t)}</div><p>${esc(d.det)}</p>${d.st!="attente"?`<div class="mu">Traité par ${esc(d.byNom)} · ${fd(d.tt)}</div>`:""}</div>`).join("")||`<p class="mu">Aucune demande.</p>`};
-V.Service=()=>{const s=me.svc||{on:0,since:0,total:0};const t=s.total+(s.on?Date.now()-s.since:0);
- return `<div class="card"><h3>Service — ${me.dept}</h3><p>Statut : ${s.on?'<span class="b ok">En service</span>':'<span class="b no">Hors service</span>'}</p><p>Temps total : <b>${dur(t)}</b></p><button class="${s.on?"no":"ok"}" onclick="toggleSvc()">${s.on?"Se mettre hors service":"Se mettre en service"}</button></div>`};
-V.Dossiers=()=>{const ds=me.role=="direction"?(df?[df]:D):[me.dept];
- const L=S.dem.filter(d=>ds.includes(d.dept)).sort((a,b)=>(a.st=="attente"?0:1)-(b.st=="attente"?0:1)||b.t-a.t);
- const can=me.role!="fonctionnaire"||(me.svc&&me.svc.on);
- return (me.role=="direction"?`<select onchange="df=this.value;render()"><option value="">Tous les départements</option>${D.map(d=>`<option ${d==df?"selected":""}>${d}</option>`).join("")}</select>`:`<h3>Département : ${me.dept}</h3>`)
- +(can?"":`<p class="mu">Mettez-vous en service pour traiter les dossiers.</p>`)
- +(L.map(d=>`<div class="card"><b>${esc(d.objet)}</b> ${badge(d.st)}<div class="mu">${d.dept} · ${esc(d.entNom)} · ${fd(d.t)}</div><p>${esc(d.det)}</p>${d.st=="attente"?(can?`<button class="ok" onclick="treat(${d.id},'ok')">Accepter</button> <button class="no" onclick="treat(${d.id},'no')">Refuser</button>`:""):`<div class="mu">Traité par ${esc(d.byNom)} · ${fd(d.tt)}</div>`}</div>`).join("")||`<p class="mu">Aucun dossier.</p>`)};
-V.Salaire=()=>`<div class="card"><h3>Mon salaire</h3><p>Dossiers traités : <b>${done(me)}</b></p><p>Tarif par dossier : <b>${money(me.rate)}</b></p><p>Bonus / ajustement : ${money(me.bonus)}</p><p style="font-size:1.4em">Total : <b>${money(pay(me))}</b></p></div>`;
-V.Salaires=()=>`<div class="card"><h3>Gestion des salaires</h3><div class="sc"><table><tr><th>Agent<th>Dept<th>Dossiers<th>Tarif<th>Bonus<th>Total</tr>${agents().map(u=>`<tr><td>${esc(u.nom)}<td>${u.dept}<td>${done(u)}<td><input type="number" value="${u.rate||0}" onchange="setF(${u.id},'rate',this.value)"><td><input type="number" value="${u.bonus||0}" onchange="setF(${u.id},'bonus',this.value)"><td><b>${money(pay(u))}</b></tr>`).join("")}</table></div></div>`;
-V.Comptes=()=>{const dir=me.role=="direction";const rs=dir?["entreprise","fonctionnaire","encadrement","direction"]:["entreprise","fonctionnaire"];
- return `<div class="card"><h3>Créer un compte</h3><div class="g"><input id="cn" placeholder="Nom affiché"><input id="cl" placeholder="Identifiant"><input id="cp" placeholder="Mot de passe"><select id="cr">${rs.map(r=>`<option value="${r}">${R[r]}</option>`).join("")}</select>${dir?`<select id="cd">${opts(D)}</select>`:""}</div><button onclick="addUser()">Créer</button><p class="err" id="msg"></p></div>
- <div class="card"><h3>Comptes</h3><div class="sc"><table><tr><th>Nom<th>Identifiant<th>Rôle<th>Dept<th>Permissions<th></tr>${scopeU().map(u=>`<tr><td>${esc(u.nom)}<td>${esc(u.login)}<td>${R[u.role]}<td>${u.dept||"—"}<td>${dir&&u.role=="encadrement"?[["comptes","Comptes"],["salaires","Salaires"],["logs","Journal"]].map(([k,l])=>`<label class="ck"><input type="checkbox" ${u.perms&&u.perms[k]?"checked":""} onchange="perm(${u.id},'${k}',this.checked)">${l}</label>`).join(""):"—"}<td><button class="no" onclick="delU(${u.id})">Suppr.</button></tr>`).join("")}</table></div></div>`};
-V.Journal=()=>`<div class="card"><h3>Journal d'activité</h3>${S.logs.filter(l=>me.role=="direction"||l.d==me.dept).map(l=>`<div class="lg"><span class="mu">${fd(l.t)}</span> <b>${esc(l.u)}</b> — ${esc(l.m)}</div>`).join("")||`<p class="mu">Aucune activité.</p>`}</div>`;
-V["Vue d'ensemble"]=()=>{const c=s=>S.dem.filter(d=>d.st==s).length;
- return `<div class="g4">${[["En attente",c("attente")],["Acceptées",c("ok")],["Refusées",c("no")],["Agents en service",S.users.filter(u=>u.svc&&u.svc.on).length]].map(([l,n])=>`<div class="card st"><div class="mu">${l}</div><b>${n}</b></div>`).join("")}</div>
- <div class="card"><h3>Par département</h3><div class="sc"><table><tr><th>Département<th>Attente<th>Acceptées<th>Refusées<th>Agents</tr>${D.map(d=>{const f=s=>S.dem.filter(x=>x.dept==d&&x.st==s).length;return `<tr><td>${d}<td>${f("attente")}<td>${f("ok")}<td>${f("no")}<td>${S.users.filter(u=>u.dept==d&&(u.role=="fonctionnaire"||u.role=="encadrement")).length}</tr>`}).join("")}</table></div></div>`};
-function shell(){const T=tabs();if(!T.includes(tab))tab=T[0];
- return `<header><div><b>🏛️ Portail Gouvernemental</b><div class="mu">${esc(me.nom)} · ${R[me.role]}${me.dept?" · "+me.dept:""}</div></div><button class="gh" onclick="out()">Déconnexion</button></header><nav>${T.map((t,i)=>`<button class="${t==tab?"on":""}" onclick="tab=tabs()[${i}];render()">${t}</button>`).join("")}</nav><main>${V[tab]()}</main>`}
-function loginH(){return `<div class="lgn"><div class="card"><h2>🏛️ Portail Gouvernemental</h2><p class="mu">Connexion à l'espace sécurisé</p><input id="li" placeholder="Identifiant"><input id="lp" type="password" placeholder="Mot de passe" onkeydown="if(event.key=='Enter')login()"><button onclick="login()">Se connecter</button><p class="err" id="msg"></p><p class="mu">Compte initial : direction / direction</p></div></div>`}
-function render(){save();$("#root").innerHTML=me?shell():loginH()}
-function say(t){$("#msg").textContent=t}
-function login(){const u=S.users.find(x=>x.login==$("#li").value.trim()&&x.pw==$("#lp").value);if(!u)return say("Identifiant ou mot de passe incorrect.");me=u;tab="";render()}
-function out(){me=null;render()}
-function addDem(){const o=$("#no").value.trim(),t=$("#nt").value.trim();if(!o||!t)return say("Renseignez l'objet et les détails.");
- S.dem.push({id:S.n++,ent:me.id,entNom:me.nom,dept:$("#nd").value,objet:o,det:t,st:"attente",t:Date.now()});log("Nouvelle demande : "+o,$("#nd").value);tab="Mes demandes";render()}
-function treat(id,st){const d=S.dem.find(x=>x.id==id);d.st=st;d.by=me.id;d.byNom=me.nom;d.tt=Date.now();log((st=="ok"?"Acceptation : ":"Refus : ")+d.objet,d.dept);render()}
-function toggleSvc(){const s=me.svc=me.svc||{on:0,since:0,total:0};if(s.on){s.total+=Date.now()-s.since;s.on=0}else{s.on=1;s.since=Date.now()}log(s.on?"Prise de service":"Fin de service",me.dept);render()}
-function setF(id,f,v){const u=U(id);u[f]=+v||0;log(`${f=="rate"?"Tarif":"Bonus"} de ${u.nom} → ${money(u[f])}`,u.dept);render()}
-function addUser(){const nom=$("#cn").value.trim(),l=$("#cl").value.trim(),p=$("#cp").value,r=$("#cr").value;
- if(!nom||!l||!p)return say("Tous les champs sont requis.");if(S.users.some(u=>u.login==l))return say("Cet identifiant existe déjà.");
- const d=(r=="entreprise"||r=="direction")?"":(me.role=="direction"?$("#cd").value:me.dept);
- S.users.push({id:S.n++,login:l,pw:p,role:r,nom,dept:d,rate:0,perms:r=="encadrement"?{comptes:0,salaires:0,logs:0}:{}});log(`Compte créé : ${nom} (${R[r]})`,d);render()}
-function perm(id,k,v){const u=U(id);u.perms[k]=v;log(`Permission « ${k} » ${v?"accordée à":"retirée à"} ${u.nom}`,u.dept);save()}
-function delU(id){const u=U(id);S.users=S.users.filter(x=>x.id!=id);log("Compte supprimé : "+u.nom,u.dept);render()}
-render();
+const kpi=(l,v,c)=>`<div class="kpi"><div class="l">${l}</div><div class="v ${c||""}">${v}</div></div>`;
+const empty=t=>`<div class="empty">${t}</div>`;
+function tabsH(list,cur){return `<div class="tabs">${list.map(([k,l])=>`<button class="${k==cur?"on":""}" onclick="setSub('${k}')">${l}</button>`).join("")}</div>`}
+function search(key,ph){return `<input id="q_${key}" placeholder="${ph||"Rechercher…"}" value="${esc(filt[key]||"")}" oninput="filt['${key}']=this.value;render()" style="max-width:260px">`}
+function fsel(key,list,all){return `<select id="s_${key}" onchange="filt['${key}']=this.value;render()"><option value="">${all}</option>${opts(list,filt[key]||"")}</select>`}
+const match=(q,...f)=>!q||f.join(" ").toLowerCase().includes(q.toLowerCase());
+function visibleAnn(){const u=ME();return vals(S.annonces).filter(a=>{if(u.role=="entreprise")return a.cible=="all"||a.cible=="entreprises";if(isDir()||can("com.post"))return true;return a.cible=="all"||a.cible=="agents"||a.cible==u.dept}).sort((a,b)=>(b.pin?1:0)-(a.pin?1:0)||b.t-a.t)}
+function annCard(a){return `<div class="card ann ${a.pin?"pin":""}"><div class="inl" style="justify-content:space-between"><h3 style="margin:0">${a.pin?"📌 ":""}${esc(a.titre)}</h3>${(can("com.post")&&(isDir()||a.by==meId))?`<button class="btn gh sm" onclick="delAnn('${a.id}')">Supprimer</button>`:""}</div>
+ <div class="mu" style="margin:4px 0 8px">${esc(a.nom)} · ${fd(a.t)} · ${a.cible=="all"?"Tous":a.cible=="agents"?"Tous les agents":a.cible=="entreprises"?"Entreprises":esc(a.cible)}</div><div class="pre">${esc(a.txt)}</div></div>`}
+
+/* =================== ACCUEIL =================== */
+V.accueil=()=>{const u=ME();
+ if(u.role=="entreprise"){const D=vals(S.dossiers).filter(d=>d.ent==u.id),F=vals(S.factures).filter(f=>f.ent==u.id&&f.st=="due"),E=vals(S.entreprises).filter(e=>e.compte==u.id);
+  return `<div class="ph"><h2>Bienvenue, ${esc(u.nom)}</h2><button class="btn" onclick="go('demande')">${ic("plus")}Nouvelle demande</button></div>
+  <div class="kpis">${kpi("Demandes en cours",D.filter(d=>d.st=="attente"||d.st=="cours").length)}${kpi("Demandes acceptées",D.filter(d=>d.st=="ok").length)}${kpi("Factures à régler",F.length,F.length?"":"")}${kpi("Montant dû",money(F.reduce((s,f)=>s+num(f.montant),0)),"gold")}</div>
+  ${E.length?`<div class="card"><h3>Mes licences</h3><div class="tw"><table><tr><th>Entreprise<th>Licence<th>Statut<th>Expiration</tr>${E.map(e=>`<tr><td>${esc(e.nom)}<td>${esc(e.licence)}<td>${licB(e.licSt)}<td>${fdd(e.exp)}</tr>`).join("")}</table></div></div>`:""}
+  <div class="grid g2"><div><h4>Annonces</h4>${visibleAnn().slice(0,4).map(annCard).join("")||`<div class="card">${empty("Aucune annonce.")}</div>`}</div>
+  <div><h4>Demandes récentes</h4><div class="card">${D.sort((a,b)=>b.t-a.t).slice(0,6).map(d=>`<div class="inl" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd);cursor:pointer" onclick="openM('dossier','${d.id}')"><span>${esc(d.objet)}<div class="mu">${esc(d.num)} · ${esc(d.dept)}</div></span>${bdg(DST,d.st)}</div>`).join("")||empty("Aucune demande.")}</div></div></div>`}
+ const md=myDepts(),Dall=vals(S.dossiers),ag=vals(S.users).filter(isAgent),svcU=ag.filter(x=>x.svc&&x.svc.on),pi=payInfo(u);
+ const glob=can("dash");
+ let h=`<div class="ph"><div><h2>Bonjour, ${esc(u.nom)}</h2><div class="mu">${esc(gname(u))}${u.dept?" · Département "+esc(u.dept):""} · ${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div></div>
+ <button class="btn ${u.svc&&u.svc.on?"no":"ok"}" onclick="toggleSvc()">${ic("clock")}${u.svc&&u.svc.on?"Fin de service":"Prendre mon service"}</button></div>`;
+ h+=`<div class="kpis">${kpi("Dossiers en attente"+(glob?"":" (mon dép.)"),Dall.filter(d=>(glob||md.includes(d.dept))&&d.st=="attente").length)}
+ ${can("jus.view")?kpi("Affaires en cours",vals(S.affaires).filter(a=>!["jugee","classee"].includes(a.st)).length):kpi("Mes dossiers traités",Dall.filter(d=>d.by==u.id).length)}
+ ${kpi("Agents en service",glob?svcU.length:svcU.filter(x=>x.dept==u.dept).length)}
+ ${can("fin.view")?kpi("Trésorerie",money(treasury()),"gold"):kpi("Salaire en cours",money(pi.total),"gold")}
+ ${kpi("Messages non lus",unread())}</div>`;
+ h+=`<div class="grid g2"><div><h4>Annonces</h4>${visibleAnn().slice(0,4).map(annCard).join("")||`<div class="card">${empty("Aucune annonce.")}</div>`}</div><div>`;
+ if(glob){h+=`<h4>Activité par département</h4><div class="card tw"><table><tr><th>Département<th>Attente<th>En cours<th>Traités<th>En service</tr>${DEPTS().map(d=>{const f=s=>Dall.filter(x=>x.dept==d&&x.st==s).length;return `<tr><td>${esc(d)}<td>${f("attente")}<td>${f("cours")}<td>${f("ok")+f("no")}<td>${svcU.filter(x=>x.dept==d).length}</tr>`}).join("")}</table></div>`}
+ h+=`<h4>Agents en service</h4><div class="card">${(glob?svcU:svcU.filter(x=>x.dept==u.dept||!x.dept)).map(x=>`<div class="inl" style="justify-content:space-between;padding:5px 0"><span><span class="dot ok"></span>${esc(x.nom)} <span class="mu">· ${esc(gname(x))}${x.dept?" · "+esc(x.dept):""}</span></span><span class="mu" data-since="${x.svc.since}">--</span></div>`).join("")||empty("Personne n'est en service.")}</div></div></div>`;
+ return h};
+
+/* =================== SERVICE =================== */
+V.service=()=>{const u=ME(),s=u.svc||{},on=!!s.on,pi=payInfo(u);
+ const hist=(u.svcLog?vals(u.svcLog):[]).sort((a,b)=>b.a-a.a).slice(0,15);
+ const col=vals(S.users).filter(x=>isAgent(x)&&x.svc&&x.svc.on&&x.id!=u.id&&(isDir()||x.dept==u.dept));
+ return `<div class="ph"><h2>Prise de service</h2></div><div class="grid g2"><div class="card svc"><div>${on?'<span class="bdg ok">En service</span>':'<span class="bdg no">Hors service</span>'}</div>
+ <div class="clk">${on?`<span data-since="${s.since}">--</span>`:"00:00:00"}</div><div class="mu">${on?"Depuis "+fd(s.since):"Vous n'êtes pas en service."}</div>
+ <p><button class="btn ${on?"no":"ok"}" style="font-size:16px;padding:12px 26px" onclick="toggleSvc()">${on?"Terminer mon service":"Prendre mon service"}</button></p>
+ ${S.config.requireService&&u.role=="fonctionnaire"?`<p class="mu sm">Le service est requis pour traiter les dossiers.</p>`:""}</div>
+ <div class="card"><h3>Mon temps de service</h3><div class="kv"><div class="k">Période en cours</div><div class="b">${dur(pi.ms)}</div><div class="k">Total depuis l'embauche</div><div class="b">${dur((s.total||0)+(on?Date.now()-s.since:0))}</div><div class="k">Dernier versement</div><div>${u.paidAt?fd(u.paidAt):"Jamais"}</div></div>
+ <h3 style="margin-top:16px">Collègues en service</h3>${col.map(x=>`<div style="padding:4px 0"><span class="dot ok"></span>${esc(x.nom)} <span class="mu">· ${esc(gname(x))}</span></div>`).join("")||`<p class="mu">Aucun.</p>`}</div></div>
+ <div class="card"><h3>Historique des services</h3><div class="tw"><table><tr><th>Début<th>Fin<th>Durée</tr>${hist.map(x=>`<tr><td>${fd(x.a)}<td>${fd(x.b)}<td>${dur(x.b-x.a)}</tr>`).join("")||`<tr><td colspan="3" class="empty">Aucun service terminé.</td></tr>`}</table></div></div>`};
+
+/* =================== DOSSIERS =================== */
+function dosList(){const md=myDepts();let L=vals(S.dossiers).filter(d=>md.includes(d.dept));
+ if(filt.dd)L=L.filter(d=>d.dept==filt.dd);if(filt.ds)L=L.filter(d=>d.st==filt.ds);if(filt.dm=="me")L=L.filter(d=>d.assign==meId);
+ L=L.filter(d=>match(filt.dq,d.num,d.objet,d.entNom,d.type,d.det));
+ const pr={haute:0,normale:1,basse:2};return L.sort((a,b)=>((a.st=="attente"||a.st=="cours")?0:1)-((b.st=="attente"||b.st=="cours")?0:1)||(pr[a.prio]||1)-(pr[b.prio]||1)||b.t-a.t)}
+V.dossiers=()=>{const md=myDepts(),L=dosList(),u=ME();
+ const blocked=u.role=="fonctionnaire"&&S.config.requireService&&!(u.svc&&u.svc.on);
+ return `<div class="ph"><div><h2>Dossiers administratifs</h2><div class="mu">${md.length==DEPTS().length?"Tous les départements":"Département : "+esc(md.join(", "))}</div></div></div>
+ ${blocked?`<div class="card" style="border-color:var(--wa)">Vous êtes hors service : vous pouvez consulter les dossiers mais pas les traiter. <button class="btn sm ok" onclick="toggleSvc()">Prendre mon service</button></div>`:""}
+ <div class="card inl">${search("dq","N°, objet, entreprise…")}${md.length>1?fsel("dd",md,"Tous les départements"):""}${fsel("ds",Object.entries(DST).map(([k,v])=>[k,v[0]]),"Tous les statuts")}<select id="s_dm" onchange="filt.dm=this.value;render()"><option value="">Tous les dossiers</option><option value="me" ${filt.dm=="me"?"selected":""}>Assignés à moi</option></select></div>
+ <div class="card tw"><table><tr><th>N°<th>Objet<th>Demandeur<th>Département<th>Priorité<th>Assigné<th>Statut<th>Déposé</tr>
+ ${L.map(d=>`<tr class="click" onclick="openM('dossier','${d.id}')"><td class="nw">${esc(d.num)}<td>${esc(d.objet)}<div class="mu">${esc(d.type||"")}</div><td>${esc(d.entNom)}<td>${esc(d.dept)}<td>${prioB(d.prio)}<td>${d.assign?esc(uname(d.assign)):'<span class="mu">—</span>'}<td>${bdg(DST,d.st)}<td class="nw">${fd(d.t)}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucun dossier.</td></tr>`}</table></div>`};
+const prioB=p=>p=="haute"?'<span class="bdg no">Haute</span>':p=="basse"?'<span class="bdg mu">Basse</span>':'<span class="bdg bl">Normale</span>';
+function canTreat(d){const u=ME();if(!can("dos.treat")||!myDepts().includes(d.dept))return false;if(u.role=="fonctionnaire"&&S.config.requireService&&!(u.svc&&u.svc.on))return false;return true}
+function MDossier(d){if(!d)return null;const u=ME(),ent=u.role=="entreprise",open=d.st=="attente"||d.st=="cours",tr=!ent&&canTreat(d);
+ const C=vals(d.comments).filter(c=>!ent||!c.internal).sort((a,b)=>a.t-b.t);
+ const agentsD=vals(S.users).filter(x=>isAgent(x)&&x.active!==false&&(x.dept==d.dept||x.role=="direction"));
+ return {title:`${esc(d.num)} — ${esc(d.objet)}`,body:`<div class="inl" style="margin-bottom:12px">${bdg(DST,d.st)} ${prioB(d.prio)} <span class="bdg mu">${esc(d.dept)}</span></div>
+ <div class="kv"><div class="k">Demandeur</div><div>${esc(d.entNom)}</div><div class="k">Type</div><div>${esc(d.type||"—")}</div><div class="k">Déposé le</div><div>${fd(d.t)}</div>${d.assign?`<div class="k">Agent assigné</div><div>${esc(uname(d.assign))}</div>`:""}${!open?`<div class="k">Décision</div><div>${bdg(DST,d.st)} par ${esc(d.byNom)} le ${fd(d.tt)}</div>${d.motif?`<div class="k">Motif</div><div class="pre">${esc(d.motif)}</div>`:""}`:""}</div>
+ <div class="card" style="margin:14px 0;background:var(--bg)"><div class="pre">${esc(d.det)}</div></div>
+ <h4>Échanges</h4><div class="tl">${C.map(c=>`<div class="it ${c.internal?"note":""}"><b>${esc(c.nom)}</b> <span class="mu">${fd(c.t)}${c.internal?" · note interne":""}</span><div class="pre">${esc(c.txt)}</div></div>`).join("")||`<p class="mu">Aucun échange.</p>`}</div>
+ <label class="f">Ajouter un message<textarea id="dc" rows="2"></textarea></label>
+ <div class="inl">${!ent?`<label class="ck"><input type="checkbox" id="dci"><span>Note interne (invisible pour l'entreprise)</span></label>`:""}<button class="btn sec sm" onclick="dosComment('${d.id}')">Envoyer</button></div>
+ ${tr&&open?`<hr style="border:0;border-top:1px solid var(--bd);margin:16px 0"><h4>Traitement</h4>
+ ${can("dos.assign")?`<div class="inl"><select id="das" data-nokeep>${`<option value="">— Non assigné —</option>`+agentsD.map(x=>`<option value="${x.id}" ${x.id==d.assign?"selected":""}>${esc(x.nom)} (${esc(gname(x))})</option>`).join("")}</select><button class="btn sec sm" onclick="dosAssign('${d.id}')">Assigner</button></div>`:""}
+ <label class="f">Motif de la décision (visible par le demandeur)<textarea id="dmo" rows="2"></textarea></label>`:""}`,
+ foot:`${!ent&&can("dos.delete")?`<button class="btn gh" onclick="dosDel('${d.id}')">Supprimer</button>`:""}${!ent&&d.dept=="Justice"&&can("jus.open")?`<button class="btn sec" onclick="openM('affaireNew',null,{from:'${d.id}'})">Ouvrir une affaire</button>`:""}
+ ${tr&&open&&d.st=="attente"?`<button class="btn bl" onclick="dosTake('${d.id}')">Prendre en charge</button>`:""}${tr&&open?`<button class="btn no" onclick="dosTreat('${d.id}','no')">Refuser</button><button class="btn ok" onclick="dosTreat('${d.id}','ok')">Accepter</button>`:""}${tr&&!open?`<button class="btn sec" onclick="dosReopen('${d.id}')">Rouvrir</button>`:""}`}}
+
+/* =================== ESPACE ENTREPRISE =================== */
+V.demande=()=>{const d=keep.nd||DEPTS()[0];const types=(DOS_TYPES[d]||[]).concat(["Autre"]);
+ return `<div class="ph"><h2>Nouvelle demande</h2></div><div class="card"><div class="form"><label class="f">Département<select id="nd" onchange="keep.nd=this.value;render()">${opts(DEPTS(),d)}</select></label>
+ <label class="f">Type de demande<select id="ny">${opts(types)}</select></label><label class="f">Priorité<select id="np">${opts([["normale","Normale"],["haute","Haute"],["basse","Basse"]])}</select></label>
+ <label class="f full">Objet<input id="no" maxlength="100" placeholder="Ex. : Licence d'exploitation — Bean Machine Vinewood"></label><label class="f full">Détails<textarea id="nt" rows="6" maxlength="3000" placeholder="Décrivez votre demande, joignez les liens vers vos justificatifs…"></textarea></label></div>
+ <button class="btn" onclick="addDem()">Déposer la demande</button><p class="err" id="msg"></p></div>`};
+V.mesdem=()=>{const L=vals(S.dossiers).filter(d=>d.ent==meId).sort((a,b)=>b.t-a.t);
+ return `<div class="ph"><h2>Mes demandes</h2><button class="btn" onclick="go('demande')">${ic("plus")}Nouvelle demande</button></div><div class="card tw"><table><tr><th>N°<th>Objet<th>Département<th>Statut<th>Déposée<th>Messages</tr>
+ ${L.map(d=>`<tr class="click" onclick="openM('dossier','${d.id}')"><td class="nw">${esc(d.num)}<td>${esc(d.objet)}<div class="mu">${esc(d.type||"")}</div><td>${esc(d.dept)}<td>${bdg(DST,d.st)}<td class="nw">${fd(d.t)}<td>${vals(d.comments).filter(c=>!c.internal).length}</tr>`).join("")||`<tr><td colspan="6" class="empty">Aucune demande déposée.</td></tr>`}</table></div>`};
+const FST={due:["À payer","wa"],payee:["Payée","ok"],annulee:["Annulée","mu"]};
+V.factures=()=>{const u=ME(),F=vals(S.factures).filter(f=>f.ent==u.id).sort((a,b)=>b.t-a.t),Dc=vals(S.declarations).filter(d=>d.ent==u.id).sort((a,b)=>b.t-a.t),tx=num(S.config.tax);
+ return `<div class="ph"><h2>Factures & impôts</h2></div><div class="grid g2"><div class="card"><h3>Déclarer mon chiffre d'affaires</h3><p class="mu">Taux d'imposition en vigueur : <b>${tx} %</b>. Une facture d'impôt est générée automatiquement.</p>
+ <div class="form"><label class="f">Période<input id="dp" placeholder="Ex. : Semaine 40 — 2026"></label><label class="f">Chiffre d'affaires ($)<input id="dca" type="number" min="0" oninput="keep.dca=this.value;document.getElementById('dimp').textContent=money(num(this.value)*${tx}/100)"></label></div>
+ <p>Impôt estimé : <b id="dimp">${money(num(keep.dca)*tx/100)}</b></p><button class="btn" onclick="declare()">Envoyer la déclaration</button><p class="err" id="msg"></p></div>
+ <div class="card"><h3>Mes déclarations</h3><div class="tw"><table><tr><th>Période<th>CA<th>Impôt<th>Statut</tr>${Dc.map(d=>`<tr><td>${esc(d.periode)}<td>${money(d.ca)}<td>${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">En vérification</span>'}</tr>`).join("")||`<tr><td colspan="4" class="empty">Aucune déclaration.</td></tr>`}</table></div></div></div>
+ <div class="card tw"><h3>Mes factures et amendes</h3><table><tr><th>N°<th>Nature<th>Motif<th>Montant<th>Échéance<th>Statut<th></tr>${F.map(f=>`<tr><td class="nw">${esc(f.num)}<td>${kindL(f.kind)}<td>${esc(f.motif)}<td class="b">${money(f.montant)}<td>${fdd(f.ech)}<td>${bdg(FST,f.st)}<td>${f.st=="due"?`<button class="btn sm ok" onclick="payFact('${f.id}')">Payer</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune facture.</td></tr>`}</table></div>`};
+const kindL=k=>({facture:"Facture",amende:"Amende",taxe:"Impôt"}[k]||k);
+const licB=s=>`<span class="bdg ${({Active:"ok",Suspendue:"wa",Expirée:"mu",Révoquée:"no","En demande":"bl"}[s]||"mu")}">${esc(s||"—")}</span>`;
+
+/* =================== JUSTICE =================== */
+function affVisible(a){return !a.secret||can("jus.secret")||a.juge==meId||a.by==meId||isDir()}
+V.justice=()=>{const s=sub||"affaires";let h=`<div class="ph"><h2>Justice</h2>${can("jus.open")?`<button class="btn" onclick="openM('affaireNew')">${ic("plus")}Ouvrir une affaire</button>`:""}</div>${tabsH([["affaires","Affaires"],["audiences","Audiences à venir"],["mes","Mes affaires"]],s)}`;
+ let L=vals(S.affaires).filter(affVisible);
+ if(s=="audiences"){L=L.filter(a=>a.audience&&a.st=="audience").sort((a,b)=>a.audience.localeCompare(b.audience));
+  return h+`<div class="card tw"><table><tr><th>Date<th>Affaire<th>Parties<th>Juge</tr>${L.map(a=>`<tr class="click" onclick="openM('affaire','${a.id}')"><td class="nw b">${fd(a.audience)}<td>${esc(a.num)} — ${esc(a.titre)}<td>${esc(a.plaignant||"—")} c/ ${esc(a.accuse||"—")}<td>${esc(uname(a.juge))}</tr>`).join("")||`<tr><td colspan="4" class="empty">Aucune audience programmée.</td></tr>`}</table></div>`}
+ if(s=="mes")L=L.filter(a=>a.juge==meId||a.by==meId);
+ if(filt.as)L=L.filter(a=>a.st==filt.as);if(filt.at)L=L.filter(a=>a.type==filt.at);
+ L=L.filter(a=>match(filt.aq,a.num,a.titre,a.plaignant,a.accuse)).sort((a,b)=>b.t-a.t);
+ const all=vals(S.affaires).filter(affVisible);
+ return h+`<div class="kpis">${kpi("Ouvertes",all.filter(a=>a.st=="ouverte").length)}${kpi("En instruction",all.filter(a=>a.st=="instruction").length)}${kpi("Audiences fixées",all.filter(a=>a.st=="audience").length)}${kpi("Jugées",all.filter(a=>a.st=="jugee").length)}</div>
+ <div class="card inl">${search("aq","N°, titre, partie…")}${fsel("as",Object.entries(AST).map(([k,v])=>[k,v[0]]),"Tous les statuts")}${fsel("at",["Pénale","Civile","Commerciale","Administrative"],"Tous les types")}</div>
+ <div class="card tw"><table><tr><th>N°<th>Intitulé<th>Type<th>Plaignant<th>Mis en cause<th>Juge<th>Statut<th>Ouverte</tr>${L.map(a=>`<tr class="click" onclick="openM('affaire','${a.id}')"><td class="nw">${esc(a.num)}${a.secret?' <span class="bdg no">Confidentiel</span>':""}<td>${esc(a.titre)}<td>${esc(a.type)}<td>${esc(a.plaignant||"—")}<td>${esc(a.accuse||"—")}<td>${a.juge?esc(uname(a.juge)):'<span class="mu">—</span>'}<td>${bdg(AST,a.st)}<td class="nw">${fd(a.t)}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune affaire.</td></tr>`}</table></div>`};
+function judges(){return vals(S.users).filter(x=>isAgent(x)&&x.active!==false&&(x.role=="direction"||(G(x)&&G(x).perms&&G(x).perms["jus.verdict"])||(x.xperms&&x.xperms["jus.verdict"])))}
+function MAffaireNew(){const f=modal.from?S.dossiers[modal.from]:null;
+ return {title:"Ouvrir une affaire judiciaire",body:`<div class="form"><label class="f full">Intitulé<input id="an" value="${f?esc(f.objet):""}"></label>
+ <label class="f">Type<select id="aty">${opts(["Pénale","Civile","Commerciale","Administrative"])}</select></label><label class="f">Juge assigné<select id="aj"><option value="">— À désigner —</option>${judges().map(x=>`<option value="${x.id}">${esc(x.nom)}</option>`).join("")}</select></label>
+ <label class="f">Plaignant / partie civile<input id="apl" value="${f?esc(f.entNom):""}"></label><label class="f">Mis en cause / défendeur<input id="aac"></label>
+ <label class="f full">Exposé des faits<textarea id="ade" rows="5">${f?esc(f.det):""}</textarea></label><label class="ck full"><input type="checkbox" id="ase"><span>Affaire confidentielle (visible uniquement par le juge, l'auteur et les habilités)</span></label></div><p class="err" id="msg"></p>`,
+ foot:`<button class="btn gh" onclick="closeM()">Annuler</button><button class="btn" onclick="affCreate()">Ouvrir l'affaire</button>`}}
+const PK={note:"Note d'instruction",piece:"Pièce à conviction",audition:"Audition / témoignage",decision:"Décision / ordonnance"};
+function MAffaire(a){if(!a||!affVisible(a))return null;const closed=a.st=="jugee"||a.st=="classee";
+ const P=vals(a.pieces).sort((x,y)=>x.t-y.t);
+ return {title:`${esc(a.num)} — ${esc(a.titre)}`,body:`<div class="inl" style="margin-bottom:12px">${bdg(AST,a.st)} <span class="bdg mu">${esc(a.type)}</span>${a.secret?' <span class="bdg no">Confidentiel</span>':""}</div>
+ <div class="kv"><div class="k">Plaignant</div><div>${esc(a.plaignant||"—")}</div><div class="k">Mis en cause</div><div>${esc(a.accuse||"—")}</div><div class="k">Juge</div><div>${a.juge?esc(uname(a.juge)):"À désigner"}</div><div class="k">Audience</div><div>${a.audience?fd(a.audience):"—"}</div><div class="k">Ouverte par</div><div>${esc(uname(a.by))} le ${fd(a.t)}</div></div>
+ <div class="card" style="margin:14px 0;background:var(--bg)"><h4>Exposé des faits</h4><div class="pre">${esc(a.desc||"—")}</div></div>
+ ${a.verdict?`<div class="card" style="border-color:var(--ok)"><h4>Jugement — ${fd(a.verdict.t)}</h4><div class="pre">${esc(a.verdict.txt)}</div><div class="kv" style="margin-top:8px"><div class="k">Peine</div><div>${esc(a.verdict.peine||"—")}</div><div class="k">Amende</div><div>${money(a.verdict.amende)}</div><div class="k">Prononcé par</div><div>${esc(a.verdict.nom)}</div></div></div>`:""}
+ <h4>Instruction (${P.length})</h4><div class="tl">${P.map(p=>`<div class="it ${p.kind}"><b>${PK[p.kind]||p.kind}</b> · ${esc(p.nom)} <span class="mu">${fd(p.t)}</span><div class="pre">${esc(p.txt)}</div>${p.link?`<a href="${esc(p.link)}" target="_blank" rel="noopener">Voir la pièce jointe</a>`:""}</div>`).join("")||`<p class="mu">Aucune pièce versée au dossier.</p>`}</div>
+ ${can("jus.instruct")&&!closed?`<div class="card" style="background:var(--bg)"><h4>Verser au dossier</h4><div class="form"><label class="f">Nature<select id="pk">${opts(Object.entries(PK))}</select></label><label class="f">Lien (image, document)<input id="pli" placeholder="https://…"></label><label class="f full">Contenu<textarea id="ptx" rows="3"></textarea></label></div><button class="btn sec sm" onclick="affPiece('${a.id}')">Ajouter</button></div>`:""}
+ ${can("jus.status")?`<div class="card" style="background:var(--bg)"><h4>Gestion de l'affaire</h4><div class="form"><label class="f">Statut<select id="ast2" data-nokeep>${opts(Object.entries(AST).map(([k,v])=>[k,v[0]]),a.st)}</select></label>
+ <label class="f">Juge<select id="aj2" data-nokeep><option value="">— À désigner —</option>${judges().map(x=>`<option value="${x.id}" ${x.id==a.juge?"selected":""}>${esc(x.nom)}</option>`).join("")}</select></label>
+ <label class="f">Date d'audience<input id="aau2" type="datetime-local" data-nokeep value="${esc(a.audience||"")}"></label></div><button class="btn sec sm" onclick="affManage('${a.id}')">Enregistrer</button></div>`:""}
+ ${can("jus.verdict")&&!closed?`<div class="card" style="background:var(--bg)"><h4>Rendre le jugement</h4><label class="f">Dispositif du jugement<textarea id="vtx" rows="3"></textarea></label><div class="form"><label class="f">Peine prononcée<input id="vpe" placeholder="Ex. : 30 jours de prison, relaxe…"></label><label class="f">Amende ($)<input id="vam" type="number" min="0"></label></div>
+ <label class="ck"><input type="checkbox" id="vca" checked><span>Inscrire au casier judiciaire du mis en cause</span></label><br><label class="ck"><input type="checkbox" id="vfa" checked><span>Émettre l'amende au Trésor</span></label><p><button class="btn ok" onclick="affVerdict('${a.id}')">Prononcer le jugement</button></p></div>`:""}<p class="err" id="msg"></p>`,
+ foot:`${can("jus.delete")?`<button class="btn gh" onclick="affDel('${a.id}')">Supprimer</button>`:""}${can("jus.status")&&closed?`<button class="btn sec" onclick="affReopen('${a.id}')">Rouvrir l'affaire</button>`:""}<button class="btn sec" onclick="closeM()">Fermer</button>`}}
+</script>
+<script>
+/* =================== REGISTRES =================== */
+const REG={
+ entreprises:{t:"Entreprises",p:"reg.ent",cols:["nom","gerant","secteur","licence","licSt","exp"],f:[
+  {k:"nom",l:"Raison sociale",req:1},{k:"gerant",l:"Gérant"},{k:"secteur",l:"Secteur",type:"select",o:["Commerce","Restauration","Automobile","Transport","Sécurité privée","Divertissement","Immobilier","Industrie","Média","Santé","Autre"]},
+  {k:"adresse",l:"Adresse"},{k:"tel",l:"Téléphone"},{k:"licence",l:"Type de licence"},{k:"licSt",l:"Statut de la licence",type:"select",o:["En demande","Active","Suspendue","Expirée","Révoquée"]},{k:"exp",l:"Expiration de la licence",type:"date"},
+  {k:"compte",l:"Compte entreprise lié",type:"account"},{k:"notes",l:"Notes",type:"area"}]},
+ identites:{t:"État civil",p:"reg.civ",cols:["nom","prenom","naiss","sexe","statut","tel"],f:[
+  {k:"nom",l:"Nom",req:1},{k:"prenom",l:"Prénom",req:1},{k:"naiss",l:"Date de naissance",type:"date"},{k:"lieu",l:"Lieu de naissance"},{k:"sexe",l:"Sexe",type:"select",o:["Homme","Femme","Autre"]},{k:"nat",l:"Nationalité"},
+  {k:"adresse",l:"Adresse"},{k:"tel",l:"Téléphone"},{k:"profession",l:"Profession"},{k:"statut",l:"Situation",type:"select",o:["Célibataire","Marié(e)","Pacsé(e)","Divorcé(e)","Veuf(ve)","Décédé(e)"]},{k:"photo",l:"Photo (lien URL)"},{k:"notes",l:"Mentions marginales",type:"area"}]},
+ casier:{t:"Casier judiciaire",p:"reg.cas",cols:["nom","date","infraction","cat","peine","amende"],f:[
+  {k:"nom",l:"Nom complet",req:1},{k:"date",l:"Date des faits",type:"date"},{k:"infraction",l:"Infraction",req:1},{k:"cat",l:"Catégorie",type:"select",o:["Contravention","Délit","Crime"]},
+  {k:"peine",l:"Peine prononcée"},{k:"amende",l:"Amende ($)",type:"number"},{k:"affaire",l:"N° d'affaire"},{k:"notes",l:"Notes",type:"area"}]},
+ avis:{t:"Avis de recherche",p:"reg.avis",cols:["nom","motif","danger","prime","st"],f:[
+  {k:"nom",l:"Nom / signalement",req:1},{k:"motif",l:"Motif",req:1},{k:"danger",l:"Dangerosité",type:"select",o:["Faible","Modérée","Élevée","Extrême"]},{k:"prime",l:"Prime ($)",type:"number"},
+  {k:"st",l:"Statut",type:"select",o:["Actif","Levé"]},{k:"photo",l:"Photo (lien URL)"},{k:"desc",l:"Description / signes distinctifs",type:"area"}]}
+};
+const regLabel=(R,k)=>(R.f.find(x=>x.k==k)||{}).l||k;
+function regCell(k,v){if(k=="licSt")return licB(v);if(k=="exp"||k=="naiss"||k=="date")return fdd(v);if(k=="amende"||k=="prime")return v?money(v):"—";
+ if(k=="danger")return `<span class="bdg ${({Faible:"mu",Modérée:"bl",Élevée:"wa",Extrême:"no"}[v]||"mu")}">${esc(v||"—")}</span>`;if(k=="st")return `<span class="bdg ${v=="Levé"?"mu":"no"}">${esc(v||"Actif")}</span>`;return esc(v||"—")}
+V.registres=()=>{const avail=Object.entries(REG).filter(([k,R])=>can(R.p+".view"));if(!avail.length)return empty("Aucun registre accessible.");
+ const s=avail.some(a=>a[0]==sub)?sub:avail[0][0],R=REG[s];
+ let L=vals(S[s]).filter(r=>match(filt["r_"+s],...R.f.map(f=>r[f.k]))).sort((a,b)=>(a.nom||"").localeCompare(b.nom||""));
+ return `<div class="ph"><h2>Registres officiels</h2>${can(R.p+".edit")?`<button class="btn" onclick="openM('reg',null,{reg:'${s}'})">${ic("plus")}Nouvelle fiche</button>`:""}</div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}
+ <div class="card inl">${search("r_"+s)}<span class="mu">${L.length} fiche(s)</span></div>
+ <div class="card tw"><table><tr>${R.cols.map(c=>`<th>${esc(regLabel(R,c))}`).join("")}</tr>${L.map(r=>`<tr class="click" onclick="openM('reg','${r.id}',{reg:'${s}'})">${R.cols.map(c=>`<td>${regCell(c,r[c])}`).join("")}</tr>`).join("")||`<tr><td colspan="${R.cols.length}" class="empty">Registre vide.</td></tr>`}</table></div>`};
+function fieldH(f,v,ro){const id="rf_"+f.k;v=v==null?"":v;
+ if(ro)return `<div class="k">${esc(f.l)}</div><div class="pre">${f.type=="account"?esc(v?uname(v):"—"):f.type=="date"?fdd(v):f.type=="number"&&v!==""?money(v):esc(v||"—")}</div>`;
+ const cls=f.type=="area"?"f full":"f";let inp;
+ if(f.type=="select")inp=`<select id="${id}">${opts([""].concat(f.o),v)}</select>`;
+ else if(f.type=="area")inp=`<textarea id="${id}" rows="3">${esc(v)}</textarea>`;
+ else if(f.type=="account")inp=`<select id="${id}"><option value="">— Aucun —</option>${vals(S.users).filter(u=>u.role=="entreprise").map(u=>`<option value="${u.id}" ${u.id==v?"selected":""}>${esc(u.nom)} (${esc(u.login)})</option>`).join("")}</select>`;
+ else inp=`<input id="${id}" type="${f.type||"text"}" value="${esc(v)}">`;
+ return `<label class="${cls}">${esc(f.l)}${f.req?" *":""}${inp}</label>`}
+function MReg(){const s=modal.reg,R=REG[s],r=modal.id?S[s][modal.id]:{},ed=can(R.p+".edit");if(modal.id&&!r)return null;
+ let extra="";
+ if(s=="identites"&&modal.id){const full=(r.prenom+" "+r.nom).toLowerCase(),full2=(r.nom+" "+r.prenom).toLowerCase(),m=x=>{const n=(x.nom||"").toLowerCase();return n==full||n==full2};
+  if(can("reg.cas.view")){const C=vals(S.casier).filter(m);extra+=`<h4 style="margin-top:14px">Casier judiciaire (${C.length})</h4>${C.map(c=>`<div class="mu">• ${fdd(c.date)} — ${esc(c.infraction)} (${esc(c.cat||"")}) ${c.peine?"· "+esc(c.peine):""}</div>`).join("")||`<p class="mu">Casier vierge.</p>`}`}
+  if(can("reg.avis.view")){const A=vals(S.avis).filter(x=>m(x)&&x.st!="Levé");if(A.length)extra+=`<p><span class="bdg no">Fait l'objet de ${A.length} avis de recherche actif(s)</span></p>`}}
+ const ph=r.photo&&/^https?:\/\//.test(r.photo)?`<img class="photo" src="${esc(r.photo)}" alt="Photo" style="float:right;margin:0 0 10px 10px">`:"";
+ return {title:(modal.id?"":"Nouvelle fiche — ")+esc(R.t)+(r.nom?" — "+esc((r.prenom?r.prenom+" ":"")+r.nom):""),
+ body:ed?`${ph}<div class="form">${R.f.map(f=>fieldH(f,r[f.k])).join("")}</div>${modal.id?`<p class="mu sm">Créée par ${esc(uname(r.by))} le ${fd(r.t)}${r.mt?" · modifiée le "+fd(r.mt):""}</p>`:""}${extra}<p class="err" id="msg"></p>`:`${ph}<div class="kv">${R.f.map(f=>fieldH(f,r[f.k],1)).join("")}</div>${extra}`,
+ foot:`${ed&&modal.id?`<button class="btn gh" onclick="regDel('${s}','${modal.id}')">Supprimer</button>`:""}<button class="btn sec" onclick="closeM()">${ed?"Annuler":"Fermer"}</button>${ed?`<button class="btn" onclick="regSave('${s}','${modal.id||""}')">Enregistrer</button>`:""}`}}
+
+/* =================== FINANCES =================== */
+function treasury(){return num(S.config.treasuryStart)+vals(S.transactions).reduce((s,t)=>s+(t.type=="in"?1:-1)*num(t.montant),0)}
+V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);if(can("fin.bill")||can("fin.view"))T.push(["fact","Factures & amendes"]);if(can("fin.decl")||can("fin.view"))T.push(["decl","Déclarations fiscales"]);if(can("fin.budget")||can("fin.view"))T.push(["budget","Budgets & fiscalité"]);
+ const s=T.some(t=>t[0]==sub)?sub:T[0][0];let h=`<div class="ph"><h2>Finances publiques</h2></div>${tabsH(T,s)}`;
+ const X=vals(S.transactions),inS=X.filter(t=>t.type=="in").reduce((a,t)=>a+num(t.montant),0),outS=X.filter(t=>t.type=="out").reduce((a,t)=>a+num(t.montant),0),due=vals(S.factures).filter(f=>f.st=="due");
+ if(s=="tresor"){let L=X;if(filt.tt)L=L.filter(t=>t.type==filt.tt);if(filt.tc)L=L.filter(t=>t.cat==filt.tc);if(filt.td)L=L.filter(t=>t.dept==filt.td);L=L.filter(t=>match(filt.tq,t.label,t.cat,t.dept)).sort((a,b)=>b.t-a.t);
+  return h+`<div class="kpis">${kpi("Solde du Trésor",money(treasury()),"gold")}${kpi("Recettes",money(inS))}${kpi("Dépenses",money(outS))}${kpi("Créances impayées",money(due.reduce((a,f)=>a+num(f.montant),0)))}</div>
+  ${can("fin.edit")?`<div class="card"><h3>Saisir une opération</h3><div class="form"><label class="f">Sens<select id="ft">${opts([["in","Recette"],["out","Dépense"]])}</select></label><label class="f">Catégorie<select id="fc">${opts(CATS)}</select></label><label class="f">Département<select id="fdp">${opts(["Général"].concat(DEPTS()))}</select></label><label class="f">Montant ($)<input id="fm" type="number" min="0"></label><label class="f full">Libellé<input id="fl"></label></div><button class="btn" onclick="addTx()">Enregistrer</button><p class="err" id="msg"></p></div>`:""}
+  <div class="card inl">${search("tq","Libellé…")}${fsel("tt",[["in","Recettes"],["out","Dépenses"]],"Recettes et dépenses")}${fsel("tc",CATS,"Toutes catégories")}${fsel("td",["Général"].concat(DEPTS()),"Tous départements")}</div>
+  <div class="card tw"><table><tr><th>Date<th>Libellé<th>Catégorie<th>Département<th>Saisi par<th class="r">Montant<th></tr>${L.slice(0,300).map(t=>`<tr><td class="nw">${fd(t.t)}<td>${esc(t.label)}<td>${esc(t.cat)}<td>${esc(t.dept||"—")}<td>${esc(t.byNom||"")}<td class="r b nw" style="color:var(--${t.type=="in"?"ok":"no"})">${t.type=="in"?"+":"−"} ${money(t.montant)}<td>${can("fin.edit")?`<button class="btn gh sm" onclick="delTx('${t.id}')">×</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune opération.</td></tr>`}</table></div>`}
+ if(s=="fact"){let L=vals(S.factures);if(filt.fs)L=L.filter(f=>f.st==filt.fs);if(filt.fk)L=L.filter(f=>f.kind==filt.fk);L=L.filter(f=>match(filt.fq,f.num,f.entNom,f.motif)).sort((a,b)=>b.t-a.t);
+  return h+(can("fin.bill")?`<div class="card"><h3>Émettre une facture ou une amende</h3><div class="form"><label class="f">Nature<select id="bk">${opts([["facture","Facture"],["amende","Amende"],["taxe","Impôt / taxe"]])}</select></label>
+  <label class="f">Destinataire (compte entreprise)<select id="be"><option value="">— Personne / entité sans compte —</option>${vals(S.users).filter(u=>u.role=="entreprise").map(u=>`<option value="${u.id}">${esc(u.nom)}</option>`).join("")}</select></label>
+  <label class="f">ou nom du destinataire<input id="bn" placeholder="Si pas de compte"></label><label class="f">Montant ($)<input id="bm" type="number" min="0"></label><label class="f">Échéance<input id="bd" type="date"></label><label class="f">Département<select id="bdp">${opts(DEPTS(),"Finances")}</select></label><label class="f full">Motif<input id="bmo"></label></div><button class="btn" onclick="addBill()">Émettre</button><p class="err" id="msg"></p></div>`:"")+
+  `<div class="card inl">${search("fq","N°, destinataire, motif…")}${fsel("fs",Object.entries(FST).map(([k,v])=>[k,v[0]]),"Tous statuts")}${fsel("fk",[["facture","Factures"],["amende","Amendes"],["taxe","Impôts"]],"Toutes natures")}</div>
+  <div class="card tw"><table><tr><th>N°<th>Nature<th>Destinataire<th>Motif<th class="r">Montant<th>Échéance<th>Statut<th></tr>${L.map(f=>`<tr><td class="nw">${esc(f.num)}<td>${kindL(f.kind)}<td>${esc(f.entNom)}<td>${esc(f.motif)}<td class="r b nw">${money(f.montant)}<td>${fdd(f.ech)}${f.st=="due"&&f.ech&&f.ech<new Date().toISOString().slice(0,10)?' <span class="bdg no">Retard</span>':""}<td>${bdg(FST,f.st)}<td class="nw">${can("fin.bill")&&f.st=="due"?`<button class="btn sm ok" onclick="payFact('${f.id}')">Encaisser</button> <button class="btn sm gh" onclick="cancelFact('${f.id}')">Annuler</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune facture.</td></tr>`}</table></div>`}
+ if(s=="decl"){const L=vals(S.declarations).sort((a,b)=>(a.st=="validee")-(b.st=="validee")||b.t-a.t);
+  return h+`<div class="card tw"><table><tr><th>Date<th>Entreprise<th>Période<th class="r">CA déclaré<th>Taux<th class="r">Impôt<th>Statut<th></tr>${L.map(d=>`<tr><td class="nw">${fd(d.t)}<td>${esc(d.entNom)}<td>${esc(d.periode)}<td class="r">${money(d.ca)}<td>${d.taux} %<td class="r b">${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">À vérifier</span>'}<td>${can("fin.decl")&&d.st!="validee"?`<button class="btn sm ok" onclick="validDecl('${d.id}')">Valider</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune déclaration.</td></tr>`}</table></div>`}
+ const B=S.config.budgets||{},ed=can("fin.budget");
+ return h+`<div class="card"><h3>Fiscalité</h3><div class="inl"><label class="f">Taux d'imposition sur le CA (%)<input id="ctax" type="number" min="0" max="100" step="0.5" value="${num(S.config.tax)}" ${ed?"":"disabled"} style="width:120px"></label>${ed?`<button class="btn sec sm" onclick="setTax()">Appliquer</button>`:""}</div></div>
+ <div class="card tw"><h3>Budgets par département</h3><table><tr><th>Département<th class="r">Budget alloué<th class="r">Dépensé<th style="width:30%">Consommation<th class="r">Reste</tr>${DEPTS().map((d,i)=>{const b=num(B[d]),sp=X.filter(t=>t.type=="out"&&t.dept==d).reduce((a,t)=>a+num(t.montant),0),p=b?Math.min(100,sp/b*100):0;
+  return `<tr><td>${esc(d)}<td class="r">${ed?`<input type="number" min="0" value="${b}" onchange="setBudget(${i},this.value)">`:money(b)}<td class="r">${money(sp)}<td><div class="bar"><i class="${b&&sp>b?"over":""}" style="width:${b?p:0}%"></i></div><td class="r ${b-sp<0?"":"b"}" style="${b-sp<0?"color:var(--no)":""}">${money(b-sp)}</tr>`}).join("")}</table></div>`};
+const CATS=["Impôts","Amendes","Factures","Salaires","Subventions","Fonctionnement","Investissement","Sécurité","Événements","Autre"];
+
+/* =================== ANNONCES & MESSAGERIE =================== */
+V.annonces=()=>`<div class="ph"><h2>Annonces officielles</h2></div>${can("com.post")?`<div class="card"><h3>Publier une annonce</h3><div class="form"><label class="f full">Titre<input id="at1" maxlength="120"></label><label class="f full">Contenu<textarea id="at2" rows="4"></textarea></label>
+ <label class="f">Destinataires<select id="at3">${opts([["all","Tout le monde"],["agents","Tous les agents"],["entreprises","Entreprises"]].concat(DEPTS().map(d=>[d,"Département "+d])))}</select></label><label class="ck" style="margin-top:22px"><input type="checkbox" id="at4"><span>Épingler en haut</span></label></div><button class="btn" onclick="addAnn()">Publier</button><p class="err" id="msg"></p></div>`:""}
+ ${visibleAnn().map(annCard).join("")||`<div class="card">${empty("Aucune annonce.")}</div>`}`;
+function convs(){const m=meId,o={};vals(S.messages).forEach(x=>{if(x.from!=m&&x.to!=m)return;const w=x.from==m?x.to:x.from;if(!o[w])o[w]={w,last:0,n:0,txt:""};if(x.t>o[w].last){o[w].last=x.t;o[w].txt=x.txt}if(x.to==m&&!x.read)o[w].n++});return Object.values(o).sort((a,b)=>b.last-a.last)}
+V.messages=()=>{const C=convs(),me=ME();if(!convWith&&C.length)convWith=C[0].w;
+ const rec=vals(S.users).filter(u=>u.id!=meId&&u.active!==false&&(me.role!="entreprise"||isAgent(u))).sort((a,b)=>a.nom.localeCompare(b.nom));
+ const M=convWith?vals(S.messages).filter(x=>(x.from==meId&&x.to==convWith)||(x.to==meId&&x.from==convWith)).sort((a,b)=>a.t-b.t):[];
+ const toRead=M.filter(x=>x.to==meId&&!x.read);if(toRead.length&&view=="messages"){const up={};toRead.forEach(x=>up[x.id+"/read"]=true);setTimeout(()=>DBX.update("messages",up),0)}
+ const w=convWith&&U(convWith);
+ return `<div class="ph"><h2>Messagerie</h2><div class="inl"><select id="mto" style="max-width:280px"><option value="">Nouvelle conversation avec…</option>${rec.map(u=>`<option value="${u.id}">${esc(u.nom)} — ${esc(gname(u))}${u.dept?" ("+esc(u.dept)+")":""}</option>`).join("")}</select><button class="btn sec" onclick="if(val('mto')){convWith=val('mto');keep.mto='';render()}">Ouvrir</button></div></div>
+ <div class="msgs"><div class="conv">${C.map(c=>`<div class="ci ${c.w==convWith?"on":""}" onclick="convWith='${c.w}';render()"><div class="inl" style="justify-content:space-between"><b>${esc(uname(c.w))}</b>${c.n?`<span class="bdg no">${c.n}</span>`:""}</div><div class="mu" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.txt)}</div></div>`).join("")||`<div class="empty">Aucune conversation.</div>`}</div>
+ <div class="thread">${w?`<div style="padding:12px 14px;border-bottom:1px solid var(--bd)"><b>${esc(w.nom)}</b> <span class="mu">· ${esc(gname(w))}${w.dept?" · "+esc(w.dept):""}</span></div><div class="body">${M.map(x=>`<div class="bub ${x.from==meId?"me":""}">${esc(x.txt)}<div class="mu sm" style="margin-top:2px">${fd(x.t)}${x.from==meId&&x.read?" · lu":""}</div></div>`).join("")||`<div class="empty">Démarrez la conversation.</div>`}</div>
+ <div class="send"><textarea id="mtx" placeholder="Votre message…" onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea><button class="btn" onclick="sendMsg()">Envoyer</button></div>`:`<div class="empty" style="margin:auto">Sélectionnez ou démarrez une conversation.</div>`}</div></div>`};
+
+/* =================== ANNUAIRE =================== */
+V.annuaire=()=>{let L=vals(S.users).filter(u=>isAgent(u)&&u.active!==false);if(filt.ud)L=L.filter(u=>u.dept==filt.ud);L=L.filter(u=>match(filt.uq,u.nom,gname(u),u.matricule,u.tel)).sort((a,b)=>((G(a)||{}).rank??99)-((G(b)||{}).rank??99)||a.nom.localeCompare(b.nom));
+ return `<div class="ph"><h2>Annuaire des agents</h2></div><div class="card inl">${search("uq","Nom, grade, matricule…")}${fsel("ud",DEPTS(),"Tous départements")}</div>
+ <div class="card tw"><table><tr><th>Agent<th>Grade<th>Département<th>Matricule<th>Téléphone<th>Statut<th></tr>${L.map(u=>{const g=G(u);return `<tr><td class="b">${esc(u.nom)}<td>${g?`<span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span>`:esc(ROLES[u.role])}<td>${esc(u.dept||"—")}<td>${esc(u.matricule||"—")}<td>${esc(u.tel||"—")}<td>${u.svc&&u.svc.on?'<span class="dot ok"></span>En service':'<span class="dot"></span><span class="mu">Hors service</span>'}<td>${u.id!=meId?`<button class="btn gh sm" onclick="convWith='${u.id}';go('messages')">Écrire</button>`:""}</tr>`}).join("")||`<tr><td colspan="7" class="empty">Aucun agent.</td></tr>`}</table></div>`};
+
+/* =================== PERSONNEL =================== */
+function payInfo(u){const g=G(u)||{},since=u.paidAt||0,s=u.svc||{};
+ const nd=vals(S.dossiers).filter(d=>d.by==u.id&&(d.st=="ok"||d.st=="no")&&(d.tt||0)>since).length;
+ const ms=(s.acc||0)+(s.on?Date.now()-Math.max(s.since||0,since):0);const h=ms/36e5;
+ const pd=num(g.perDossier),ph=num(g.perHour),fx=num(g.fixe),bo=num(u.bonus);
+ return {nd,ms,h,pd,ph,fx,bo,total:Math.round(nd*pd+h*ph+fx+bo)}}
+function scopeUsers(){return vals(S.users).filter(u=>u.id==meId||isDir()||manageable(u)||(can("rh.view")&&u.dept==ME().dept&&ME().dept))}
+V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(can("rh.grades")||isDir())T.push(["grades","Grades & permissions"]);if(can("rh.pay.view"))T.push(["paie","Salaires"]);
+ const s=T.some(t=>t[0]==sub)?sub:T[0][0];let h=`<div class="ph"><h2>Gestion du personnel</h2></div>${tabsH(T,s)}`;
+ if(s=="comptes"){const dir=isDir(),rs=dir?Object.keys(ROLES):["entreprise","fonctionnaire"],cr=keep.cr||rs[0],cd=dir?(keep.cd||""):ME().dept;
+  const gl=vals(S.grades).filter(g=>g.role==cr&&(!g.dept||!cd||g.dept==cd)&&(dir||g.role=="fonctionnaire")).sort((a,b)=>(a.rank||0)-(b.rank||0));
+  let L=scopeUsers().filter(u=>u.id!=meId);if(filt.pr)L=L.filter(u=>u.role==filt.pr);if(filt.pd)L=L.filter(u=>u.dept==filt.pd);L=L.filter(u=>match(filt.pq,u.nom,u.login,u.matricule,gname(u))).sort((a,b)=>a.nom.localeCompare(b.nom));
+  return h+(can("rh.create")?`<div class="card"><h3>Créer un compte</h3><div class="form"><label class="f">Nom affiché<input id="cn" placeholder="Ex. : John Smith / Bean Machine"></label><label class="f">Identifiant<input id="cl" autocomplete="off"></label><label class="f">Mot de passe provisoire<input id="cp" autocomplete="off"></label>
+  <label class="f">Rôle<select id="cr" onchange="keep.cr=this.value;render()">${opts(rs.map(r=>[r,ROLES[r]]),cr)}</select></label>
+  ${cr=="fonctionnaire"||cr=="encadrement"?`<label class="f">Département${dir?`<select id="cd" onchange="keep.cd=this.value;render()">${opts([["","— Choisir —"]].concat(DEPTS().map(d=>[d,d])),cd)}</select>`:`<input value="${esc(cd)}" disabled>`}</label>`:""}
+  ${cr!="entreprise"?`<label class="f">Grade<select id="cg"><option value="">— Aucun —</option>${gl.map(g=>`<option value="${g.id}">${esc(g.name)}${g.dept?" ("+esc(g.dept)+")":""}</option>`).join("")}</select></label><label class="f">Matricule<input id="cm" placeholder="Ex. : JUS-014"></label>`:""}
+  <label class="f">Téléphone<input id="ct"></label></div><button class="btn" onclick="addUser()">Créer le compte</button><p class="err" id="msg"></p><p class="mu sm">L'utilisateur devra changer son mot de passe à la première connexion.</p></div>`:"")+
+  `<div class="card inl">${search("pq","Nom, identifiant, grade…")}${fsel("pr",Object.entries(ROLES),"Tous rôles")}${fsel("pd",DEPTS(),"Tous départements")}</div>
+  <div class="card tw"><table><tr><th>Nom<th>Identifiant<th>Rôle<th>Grade<th>Département<th>État<th></tr>${L.map(u=>`<tr><td class="b">${esc(u.nom)}<td>${esc(u.login)}<td>${esc(ROLES[u.role])}<td>${esc(G(u)?G(u).name:"—")}<td>${esc(u.dept||"—")}<td>${u.active===false?'<span class="bdg no">Suspendu</span>':'<span class="bdg ok">Actif</span>'}<td class="nw">${manageable(u)&&can("rh.edit")?`<button class="btn sec sm" onclick="openM('user','${u.id}')">Modifier</button>`:""} ${manageable(u)&&can("rh.delete")?`<button class="btn gh sm" onclick="delUser('${u.id}')">Supprimer</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucun compte.</td></tr>`}</table></div>`}
+ if(s=="grades"){const L=vals(S.grades).filter(g=>isDir()||g.role=="fonctionnaire"&&(g.dept==ME().dept)||g.dept==ME().dept).sort((a,b)=>Object.keys(ROLES).indexOf(b.role)-Object.keys(ROLES).indexOf(a.role)||(a.rank||0)-(b.rank||0));
+  return h+`<div class="card inl" style="justify-content:space-between"><span class="mu">Un grade précise un rôle : il fixe l'intitulé, la rémunération et les permissions exactes de l'agent.</span><button class="btn" onclick="openM('grade')">${ic("plus")}Nouveau grade</button></div>
+  <div class="card tw"><table><tr><th>Grade<th>Rôle<th>Département<th>Permissions<th class="r">Par dossier<th class="r">Par heure<th class="r">Fixe<th>Agents<th></tr>${L.map(g=>`<tr><td><span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span><td>${esc(ROLES[g.role])}<td>${esc(g.dept||"Tous")}<td>${g.role=="direction"?"Toutes":Object.keys(g.perms||{}).filter(k=>g.perms[k]).length}<td class="r">${money(g.perDossier)}<td class="r">${money(g.perHour)}<td class="r">${money(g.fixe)}<td>${vals(S.users).filter(u=>u.gradeId==g.id).length}<td class="nw">${gradeEditable(g)?`<button class="btn sec sm" onclick="openM('grade','${g.id}')">Modifier</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun grade.</td></tr>`}</table></div>`}
+ const L=vals(S.users).filter(u=>isAgent(u)&&(isDir()||manageable(u))).sort((a,b)=>(a.dept||"").localeCompare(b.dept||"")||a.nom.localeCompare(b.nom)),P=L.map(u=>[u,payInfo(u)]);
+ const hist=vals(S.transactions).filter(t=>t.cat=="Salaires"&&t.user).sort((a,b)=>b.t-a.t).slice(0,40);
+ return h+`<div class="kpis">${kpi("Masse salariale due",money(P.reduce((s,[u,p])=>s+p.total,0)),"gold")}${kpi("Agents",L.length)}${kpi("Solde du Trésor",can("fin.view")?money(treasury()):"—")}</div>
+ <div class="card tw"><div class="inl" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Salaires de la période</h3>${can("rh.pay.do")?`<button class="btn" onclick="payAll()">Verser tous les salaires</button>`:""}</div>
+ <table><tr><th>Agent<th>Grade<th>Dossiers<th>Heures<th class="r">Fixe<th>Prime / ajustement<th class="r">Total<th>Dernier versement<th></tr>${P.map(([u,p])=>`<tr><td class="b">${esc(u.nom)}<div class="mu">${esc(u.dept||"")}</div><td>${esc(gname(u))}<td>${p.nd} × ${money(p.pd)}<td>${p.h.toFixed(1)} h × ${money(p.ph)}<td class="r">${money(p.fx)}<td>${can("rh.pay.edit")?`<input type="number" value="${num(u.bonus)}" onchange="setBonus('${u.id}',this.value)">`:money(p.bo)}<td class="r b">${money(p.total)}<td class="nw">${u.paidAt?fd(u.paidAt):"—"}<td>${can("rh.pay.do")&&p.total>0?`<button class="btn ok sm" onclick="payUser('${u.id}')">Verser</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun agent.</td></tr>`}</table></div>
+ <div class="card tw"><h3>Historique des versements</h3><table><tr><th>Date<th>Agent<th>Détail<th class="r">Montant<th>Par</tr>${hist.map(t=>`<tr><td class="nw">${fd(t.t)}<td>${esc(uname(t.user))}<td class="mu">${esc(t.label)}<td class="r b">${money(t.montant)}<td>${esc(t.byNom)}</tr>`).join("")||`<tr><td colspan="5" class="empty">Aucun versement.</td></tr>`}</table></div>`};
+function permBoxes(prefix,cur,lockOwn){return PERMS.map(([gn,ps])=>`<div class="pgrp"><h4>${gn}</h4><div class="pl">${ps.map(([k,l])=>{const dis=lockOwn&&!can(k);return `<label class="ck"><input type="checkbox" id="${prefix}${k.replace(/\./g,"_")}" ${cur&&cur[k]?"checked":""} ${dis?"disabled":""}><span>${esc(l)}</span></label>`}).join("")}</div></div>`).join("")}
+function readPerms(prefix,base,lockOwn){const o={};ALLP.forEach(k=>{const e=document.getElementById(prefix+k.replace(/\./g,"_"));if(!e)return;if(lockOwn&&!can(k)){if(base&&base[k])o[k]=true;return}if(e.checked)o[k]=true});return o}
+function MGrade(){const g=modal.id?S.grades[modal.id]:{role:"fonctionnaire",dept:isDir()?"":ME().dept,perms:{},color:"#c9a24a"};if(modal.id&&!g)return null;const dir=isDir();const role=keep.gr||g.role;
+ return {title:modal.id?"Modifier le grade":"Nouveau grade",body:`<div class="form"><label class="f">Intitulé du grade<input id="gn" value="${esc(g.name||"")}" placeholder="Ex. : Ministre de la Justice"></label>
+ <label class="f">Rôle associé<select id="gr" onchange="keep.gr=this.value;render()" ${dir?"":"disabled"}>${opts(Object.entries(ROLES).filter(r=>r[0]!="entreprise"),role)}</select></label>
+ <label class="f">Département<select id="gd" ${dir?"":"disabled"}>${opts([["","Tous"]].concat(DEPTS().map(d=>[d,d])),g.dept||"")}</select></label><label class="f">Couleur<input id="gc" type="color" value="${esc(g.color||"#c9a24a")}"></label>
+ <label class="f">Salaire par dossier traité ($)<input id="gpd" type="number" min="0" value="${num(g.perDossier)}"></label><label class="f">Salaire par heure de service ($)<input id="gph" type="number" min="0" value="${num(g.perHour)}"></label><label class="f">Salaire fixe par période ($)<input id="gfx" type="number" min="0" value="${num(g.fixe)}"></label><label class="f">Ordre hiérarchique (0 = plus haut)<input id="grk" type="number" min="0" value="${num(g.rank)}"></label></div>
+ ${role=="direction"?`<p class="mu">Le rôle Direction dispose automatiquement de toutes les permissions.</p>`:`<h4>Permissions du grade</h4>${!dir?`<p class="mu sm">Vous ne pouvez accorder que les permissions dont vous disposez.</p>`:""}${permBoxes("gp_",g.perms,!dir)}`}<p class="err" id="msg"></p>`,
+ foot:`${modal.id&&(dir||gradeEditable(g))?`<button class="btn gh" onclick="delGrade('${modal.id}')">Supprimer</button>`:""}<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="saveGrade('${modal.id||""}')">Enregistrer</button>`}}
+function MUser(u){if(!u||!manageable(u))return null;const dir=isDir();const role=keep.er||u.role,dept=dir?(keep.ed??u.dept??""):u.dept;
+ const gl=vals(S.grades).filter(g=>g.role==role&&(!g.dept||!dept||g.dept==dept)&&(dir||g.role=="fonctionnaire"));
+ return {title:"Modifier — "+esc(u.nom),body:`<div class="form"><label class="f">Nom affiché<input id="en" value="${esc(u.nom)}"></label><label class="f">Identifiant<input value="${esc(u.login)}" disabled></label>
+ <label class="f">Rôle<select id="er" onchange="keep.er=this.value;render()" ${dir?"":"disabled"}>${opts(Object.entries(ROLES),role)}</select></label>
+ ${role=="fonctionnaire"||role=="encadrement"?`<label class="f">Département<select id="ed" onchange="keep.ed=this.value;render()" ${dir?"":"disabled"}>${opts([["","— Choisir —"]].concat(DEPTS().map(d=>[d,d])),dept)}</select></label>`:""}
+ ${role!="entreprise"?`<label class="f">Grade<select id="eg"><option value="">— Aucun —</option>${gl.map(g=>`<option value="${g.id}" ${g.id==u.gradeId?"selected":""}>${esc(g.name)}</option>`).join("")}</select></label><label class="f">Matricule<input id="em" value="${esc(u.matricule||"")}"></label>`:""}
+ <label class="f">Téléphone<input id="et" value="${esc(u.tel||"")}"></label><label class="f">État du compte<select id="ea">${opts([["1","Actif"],["0","Suspendu"]],u.active===false?"0":"1")}</select></label>
+ <label class="f">Nouveau mot de passe provisoire<input id="ep" placeholder="Laisser vide pour ne pas changer" autocomplete="off"></label></div>
+ ${dir&&(role=="fonctionnaire"||role=="encadrement")?`<details><summary class="b" style="cursor:pointer;margin-bottom:8px">Permissions supplémentaires individuelles (en plus du grade)</summary>${permBoxes("ex_",u.xperms||{})}</details>`:""}<p class="err" id="msg"></p>`,
+ foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="saveUser('${u.id}')">Enregistrer</button>`}}
+V.salaire=()=>{const u=ME(),p=payInfo(u),H=vals(S.transactions).filter(t=>t.cat=="Salaires"&&t.user==u.id).sort((a,b)=>b.t-a.t);
+ return `<div class="ph"><h2>Mon salaire</h2></div><div class="kpis">${kpi("Salaire en cours",money(p.total),"gold")}${kpi("Dossiers traités",p.nd)}${kpi("Heures de service",p.h.toFixed(1)+" h")}${kpi("Total perçu",money(H.reduce((s,t)=>s+num(t.montant),0)))}</div>
+ <div class="card"><h3>Détail de la période${u.paidAt?" (depuis le "+fd(u.paidAt)+")":""}</h3><div class="kv"><div class="k">Grade</div><div>${esc(gname(u))}</div><div class="k">Dossiers</div><div>${p.nd} × ${money(p.pd)} = <b>${money(p.nd*p.pd)}</b></div><div class="k">Service</div><div>${p.h.toFixed(2)} h × ${money(p.ph)} = <b>${money(p.h*p.ph)}</b></div><div class="k">Fixe</div><div>${money(p.fx)}</div><div class="k">Prime / ajustement</div><div>${money(p.bo)}</div><div class="k">Total</div><div class="b" style="font-size:18px;color:var(--gold2)">${money(p.total)}</div></div></div>
+ <div class="card tw"><h3>Mes fiches de paie</h3><table><tr><th>Date<th>Détail<th class="r">Montant</tr>${H.map(t=>`<tr><td>${fd(t.t)}<td class="mu">${esc(t.label)}<td class="r b">${money(t.montant)}</tr>`).join("")||`<tr><td colspan="3" class="empty">Aucun versement reçu.</td></tr>`}</table></div>`};
+
+/* =================== JOURNAL =================== */
+V.journal=()=>{const all=can("log.all"),u=ME();let L=vals(S.logs).filter(l=>all||l.d==u.dept);if(filt.lc)L=L.filter(l=>l.cat==filt.lc);if(filt.ld)L=L.filter(l=>l.d==filt.ld);L=L.filter(l=>match(filt.lq,l.u,l.m)).sort((a,b)=>b.t-a.t).slice(0,400);
+ const cats=[...new Set(vals(S.logs).map(l=>l.cat).filter(Boolean))].sort();
+ return `<div class="ph"><h2>Journal d'activité</h2><span class="mu">${all?"Toutes les activités":"Département "+esc(u.dept)}</span></div><div class="card inl">${search("lq","Agent, action…")}${fsel("lc",cats,"Toutes catégories")}${all?fsel("ld",DEPTS(),"Tous départements"):""}</div>
+ <div class="card tw"><table><tr><th>Date<th>Agent<th>Catégorie<th>Département<th>Action</tr>${L.map(l=>`<tr><td class="nw mu">${fd(l.t)}<td class="b">${esc(l.u)}<td>${esc(l.cat||"")}<td>${esc(l.d||"—")}<td>${esc(l.m)}</tr>`).join("")||`<tr><td colspan="5" class="empty">Aucune activité.</td></tr>`}</table></div>`};
+
+/* =================== ADMINISTRATION =================== */
+V.admin=()=>{const c=S.config,bn=c.banner||{},mt=c.maintenance||{},adm=can("adm.site");
+ return `<div class="ph"><h2>Administration</h2></div>
+ ${can("com.banner")?`<div class="card"><h3>Bandeau d'information défilant</h3><div class="form"><label class="f full">Texte<input id="bt" value="${esc(bn.txt||"")}"></label><label class="f">Niveau<select id="bl">${opts([["info","Information"],["warn","Avertissement"],["alert","Alerte"]],bn.lvl||"info")}</select></label><label class="f">Affichage<select id="bo">${opts([["1","Affiché"],["0","Masqué"]],bn.on?"1":"0")}</select></label></div><button class="btn" onclick="saveBanner()">Mettre à jour</button></div>`:""}
+ ${adm?`<div class="card"><h3>Paramètres généraux</h3><div class="form"><label class="f">Nom du gouvernement<input id="sn" value="${esc(c.siteName||"")}"></label><label class="f">Sous-titre<input id="ss" value="${esc(c.subtitle||"")}"></label>
+ <label class="f">Couleur d'accent<input id="sa" type="color" value="${esc(c.accent||"#c9a24a")}"></label><label class="f">Trésorerie initiale ($)<input id="st0" type="number" value="${num(c.treasuryStart)}"></label>
+ <label class="f">Service obligatoire pour les fonctionnaires<select id="srs">${opts([["1","Oui"],["0","Non"]],c.requireService?"1":"0")}</select></label>
+ <label class="f full">Départements (un par ligne)<textarea id="sdp" rows="6">${esc(DEPTS().join("\n"))}</textarea></label></div><button class="btn" onclick="saveSettings()">Enregistrer</button> <button class="btn gh" onclick="resetAccent()">Couleur par défaut</button></div>
+ <div class="card"><h3>Mode maintenance</h3><p class="mu">Quand il est actif, seuls la Direction et les administrateurs peuvent utiliser l'intranet.</p><div class="form"><label class="f">État<select id="mo">${opts([["0","Désactivé"],["1","Activé"]],mt.on?"1":"0")}</select></label><label class="f full">Message affiché<textarea id="mm" rows="2">${esc(mt.msg||"")}</textarea></label></div><button class="btn" onclick="saveMaint()">Appliquer</button></div>
+ <div class="card"><h3>Sauvegarde</h3><p class="mu">Exporte toutes les données dans un fichier JSON, ou restaure une sauvegarde (remplace toutes les données actuelles).</p><div class="inl"><button class="btn sec" onclick="exportData()">Télécharger une sauvegarde</button><label class="btn sec" style="cursor:pointer">Restaurer…<input type="file" accept=".json,application/json" style="display:none" onchange="importData(this)"></label></div></div>
+ <div class="card" style="border-color:var(--no)"><h3>Zone dangereuse</h3><p class="mu">Supprime définitivement toutes les données (comptes, dossiers, registres, finances…). Le compte direction / direction sera recréé.</p><button class="btn no" onclick="wipeAll()">Tout réinitialiser</button></div>`:""}`};
+
+/* =================== PROFIL =================== */
+V.profil=()=>{const u=ME();return `<div class="ph"><h2>Mon profil</h2></div><div class="grid g2"><div class="card"><h3>Informations</h3><div class="kv"><div class="k">Nom</div><div>${esc(u.nom)}</div><div class="k">Identifiant</div><div>${esc(u.login)}</div><div class="k">Rôle</div><div>${esc(ROLES[u.role])}</div>${isAgent(u)?`<div class="k">Grade</div><div>${esc(gname(u))}</div><div class="k">Département</div><div>${esc(u.dept||"—")}</div><div class="k">Matricule</div><div>${esc(u.matricule||"—")}</div>`:""}<div class="k">Compte créé le</div><div>${fd(u.created)}</div></div>
+ <label class="f" style="margin-top:12px">Téléphone<input id="pt" value="${esc(u.tel||"")}"></label><button class="btn sec" onclick="saveTel()">Enregistrer</button>
+ ${isAgent(u)&&!isDir()?`<h4 style="margin-top:16px">Mes permissions</h4><div class="pl">${ALLP.filter(can).map(k=>`<span class="bdg mu">${esc(PL[k])}</span>`).join("")||`<span class="mu">Aucune permission particulière.</span>`}</div>`:""}</div>
+ <div class="card"><h3>Changer de mot de passe</h3><label class="f">Mot de passe actuel<input id="op" type="password" autocomplete="current-password"></label><label class="f">Nouveau mot de passe<input id="np1" type="password" autocomplete="new-password"></label><label class="f">Confirmation<input id="np2" type="password" autocomplete="new-password"></label><button class="btn" onclick="changePw()">Modifier</button><p class="err" id="msg"></p></div></div>`};
+
+/* =================== MODALES =================== */
+function modalH(){if(!modal)return "";let m=null;
+ if(modal.type=="confirm")m={title:"Confirmation",sm:1,body:`<p class="pre">${esc(modal.msg)}</p>`,foot:`<button class="btn sec" onclick="askNo()">Annuler</button><button class="btn no" onclick="askOk()">${esc(modal.label)}</button>`};
+ else if(modal.type=="dossier")m=MDossier(S.dossiers[modal.id]);
+ else if(modal.type=="affaire")m=MAffaire(S.affaires[modal.id]);
+ else if(modal.type=="affaireNew")m=MAffaireNew();
+ else if(modal.type=="reg")m=MReg();
+ else if(modal.type=="grade")m=MGrade();
+ else if(modal.type=="user")m=MUser(S.users[modal.id]);
+ if(!m){modal=null;return ""}
+ return `<div class="modal-bg" onclick="if(event.target===this)${modal.type=="confirm"?"askNo()":"closeM()"}"><div class="modal ${m.sm?"sm":""}" role="dialog" aria-modal="true"><div class="mh"><h3>${m.title}</h3><button class="x" onclick="${modal.type=="confirm"?"askNo()":"closeM()"}" aria-label="Fermer">×</button></div><div class="mb">${m.body}</div>${m.foot?`<div class="mf">${m.foot}</div>`:""}</div></div>`}
+</script>
+<script>
+/* =================== ACTIONS =================== */
+async function login(){const l=tval("li"),p=val("lp");if(!l||!p)return say("Renseignez l'identifiant et le mot de passe.");
+ const u=vals(S.users).find(x=>x.login.toLowerCase()==l.toLowerCase());
+ if(!u||u.hash!==await hashPw(u.login,p))return say("Identifiant ou mot de passe incorrect.");
+ if(u.active===false)return say("Ce compte est suspendu. Contactez votre hiérarchie.");
+ meId=u.id;lsSet("lsgov_session",u.id);view="accueil";keep={};lastUnread=-1;DBX.update("users/"+u.id,{lastLogin:Date.now()});log("Connexion à l'intranet",u.dept,"Connexion");render()}
+function logout(){meId=null;lsSet("lsgov_session",null);modal=null;keep={};convWith=null;render()}
+async function forcePw(){const a=val("np1"),b=val("np2");if(a.length<4)return say("Au moins 4 caractères.");if(a!==b)return say("Les deux mots de passe diffèrent.");
+ const u=ME();if(await hashPw(u.login,a)==u.hash)return say("Choisissez un mot de passe différent de l'ancien.");
+ await DBX.update("users/"+u.id,{hash:await hashPw(u.login,a),mustChange:false});keep={};toast("Mot de passe défini.");render()}
+async function changePw(){const u=ME();if(await hashPw(u.login,val("op"))!==u.hash)return say("Mot de passe actuel incorrect.");const a=val("np1");if(a.length<4)return say("Au moins 4 caractères.");if(a!==val("np2"))return say("Les deux mots de passe diffèrent.");
+ DBX.update("users/"+u.id,{hash:await hashPw(u.login,a)});clr("op","np1","np2");toast("Mot de passe modifié.");log("Changement de mot de passe",u.dept,"Comptes")}
+function saveTel(){DBX.update("users/"+meId,{tel:tval("pt")});toast("Profil enregistré.")}
+
+/* Service */
+function toggleSvc(){const u=ME(),s=Object.assign({on:false,since:0,acc:0,total:0},u.svc||{}),now=Date.now();
+ if(s.on){const st=Math.max(s.since,u.paidAt||0);s.acc=(s.acc||0)+(now-st);s.total=(s.total||0)+(now-s.since);DBX.set(`users/${u.id}/svcLog/${nid()}`,{a:s.since,b:now});s.on=false;log("Fin de service ("+dur(now-s.since)+")",u.dept,"Service");toast("Fin de service enregistrée.")}
+ else{s.on=true;s.since=now;log("Prise de service",u.dept,"Service");toast("Vous êtes en service.")}
+ DBX.update("users/"+u.id,{svc:s})}
+
+/* Dossiers */
+function addDem(){const u=ME(),o=tval("no"),t=tval("nt"),d=val("nd");if(!o||!t)return say("Renseignez l'objet et les détails.");
+ const id=nid();DBX.set("dossiers/"+id,{id,num:nextNum("dossiers","DOS"),ent:u.id,entNom:u.nom,dept:d,type:val("ny"),prio:val("np")||"normale",objet:o,det:t,st:"attente",t:Date.now()});
+ log("Dépôt du dossier : "+o,d,"Dossiers");clr("no","nt");toast("Demande déposée.");go("mesdem")}
+function dosComment(id){const t=tval("dc");if(!t)return;const u=ME();DBX.set(`dossiers/${id}/comments/${nid()}`,{t:Date.now(),u:u.id,nom:u.nom,txt:t,internal:!!val("dci")});clr("dc")}
+function dosTake(id){const d=S.dossiers[id];DBX.update("dossiers/"+id,{st:"cours",assign:meId});log("Prise en charge : "+d.num,d.dept,"Dossiers")}
+function dosAssign(id){const d=S.dossiers[id],a=val("das");DBX.update("dossiers/"+id,{assign:a||null,st:d.st=="attente"&&a?"cours":d.st});log(`Dossier ${d.num} assigné à ${a?uname(a):"personne"}`,d.dept,"Dossiers");toast("Assignation enregistrée.")}
+function dosTreat(id,st){const d=S.dossiers[id],u=ME();if(!canTreat(d))return toast("Action non autorisée (service ?).",1);
+ const mo=tval("dmo");if(st=="no"&&!mo)return say("Indiquez le motif du refus.");
+ DBX.update("dossiers/"+id,{st,by:u.id,byNom:u.nom,tt:Date.now(),motif:mo||"",assign:d.assign||u.id});log((st=="ok"?"Dossier accepté : ":"Dossier refusé : ")+d.num+" — "+d.objet,d.dept,"Dossiers");toast(st=="ok"?"Dossier accepté.":"Dossier refusé.");closeM()}
+function dosReopen(id){const d=S.dossiers[id];DBX.update("dossiers/"+id,{st:"cours",by:null,byNom:null,tt:null});log("Dossier rouvert : "+d.num,d.dept,"Dossiers")}
+function dosDel(id){const d=S.dossiers[id];ask("Supprimer définitivement le dossier "+d.num+" ?",()=>{DBX.remove("dossiers/"+id);log("Dossier supprimé : "+d.num,d.dept,"Dossiers");modal=null},"Supprimer")}
+
+/* Justice */
+function affCreate(){const t=tval("an");if(!t)return say("Indiquez l'intitulé de l'affaire.");const id=nid(),u=ME(),j=val("aj");
+ DBX.set("affaires/"+id,{id,num:nextNum("affaires","AFF"),titre:t,type:val("aty"),juge:j||"",plaignant:tval("apl"),accuse:tval("aac"),desc:tval("ade"),secret:!!val("ase"),st:"ouverte",t:Date.now(),by:u.id,from:modal.from||""});
+ if(modal.from){const d=S.dossiers[modal.from];if(d&&(d.st=="attente"||d.st=="cours"))DBX.set(`dossiers/${d.id}/comments/${nid()}`,{t:Date.now(),u:u.id,nom:u.nom,txt:"Une affaire judiciaire a été ouverte suite à ce dossier.",internal:false})}
+ log("Ouverture de l'affaire : "+t,"Justice","Justice");toast("Affaire ouverte.");modal={type:"affaire",id};keep={};render()}
+function affPiece(id){const t=tval("ptx");if(!t)return say("Rédigez le contenu de la pièce.");const u=ME(),a=S.affaires[id],k=val("pk"),li=tval("pli");if(li&&!/^https?:\/\//.test(li))return say("Le lien doit commencer par http:// ou https://");
+ DBX.set(`affaires/${id}/pieces/${nid()}`,{t:Date.now(),u:u.id,nom:u.nom,kind:k,txt:t,link:li});if(a.st=="ouverte")DBX.update("affaires/"+id,{st:"instruction"});
+ log(`${PK[k]} versée à l'affaire ${a.num}`,"Justice","Justice");clr("ptx","pli");toast("Pièce versée au dossier.")}
+function affManage(id){const a=S.affaires[id],st=val("ast2"),j=val("aj2"),au=val("aau2");const up={st,juge:j,audience:au};if(au&&st=="ouverte"||au&&st=="instruction")up.st="audience";
+ DBX.update("affaires/"+id,up);log(`Affaire ${a.num} : statut « ${AST[up.st][0]} »${j?", juge "+uname(j):""}${au?", audience le "+fd(au):""}`,"Justice","Justice");toast("Affaire mise à jour.")}
+function affVerdict(id){const a=S.affaires[id],u=ME(),tx=tval("vtx");if(!tx)return say("Rédigez le dispositif du jugement.");const pe=tval("vpe"),am=num(val("vam"));
+ DBX.update("affaires/"+id,{st:"jugee",verdict:{txt:tx,peine:pe,amende:am,t:Date.now(),by:u.id,nom:u.nom}});
+ if(val("vca")&&a.accuse){const cid=nid();DBX.set("casier/"+cid,{id:cid,nom:a.accuse,date:new Date().toISOString().slice(0,10),infraction:a.titre,cat:a.type=="Pénale"?"Délit":"Contravention",peine:pe,amende:am,affaire:a.num,t:Date.now(),by:u.id})}
+ if(val("vfa")&&am>0){const fid=nid(),acc=vals(S.users).find(x=>x.role=="entreprise"&&x.nom.toLowerCase()==(a.accuse||"").toLowerCase());DBX.set("factures/"+fid,{id:fid,num:nextNum("factures","FAC"),kind:"amende",ent:acc?acc.id:"",entNom:a.accuse||"—",motif:"Jugement "+a.num+" — "+a.titre,montant:am,ech:"",dept:"Justice",st:"due",t:Date.now(),by:u.id,byNom:u.nom})}
+ log(`Jugement rendu dans l'affaire ${a.num}${pe?" : "+pe:""}`,"Justice","Justice");toast("Jugement prononcé.")}
+function affReopen(id){const a=S.affaires[id];DBX.update("affaires/"+id,{st:"instruction"});log("Réouverture de l'affaire "+a.num,"Justice","Justice")}
+function affDel(id){const a=S.affaires[id];ask("Supprimer définitivement l'affaire "+a.num+" et toutes ses pièces ?",()=>{DBX.remove("affaires/"+id);log("Affaire supprimée : "+a.num,"Justice","Justice");modal=null},"Supprimer")}
+
+/* Registres */
+const REGD={entreprises:"Intérieur",identites:"État-Civil",casier:"Justice",avis:"Sécurité"};
+function regSave(s,id){const R=REG[s],o={};for(const f of R.f){let v=tval("rf_"+f.k);if(f.type=="number")v=v===""?"":num(v);if(f.req&&v==="")return say("Champ requis : "+f.l);o[f.k]=v}
+ if(o.photo&&!/^https?:\/\//.test(o.photo))return say("Le lien de la photo doit commencer par http(s)://");
+ if(id){o.mt=Date.now();DBX.update(`${s}/${id}`,o)}else{id=nid();Object.assign(o,{id,t:Date.now(),by:meId});DBX.set(`${s}/${id}`,o)}
+ log(`${R.t} : fiche « ${(o.prenom?o.prenom+" ":"")+o.nom} » ${modal.id?"modifiée":"créée"}`,REGD[s],"Registres");toast("Fiche enregistrée.");closeM()}
+function regDel(s,id){const r=S[s][id];ask("Supprimer la fiche « "+r.nom+" » ?",()=>{DBX.remove(`${s}/${id}`);log(`${REG[s].t} : fiche « ${r.nom} » supprimée`,REGD[s],"Registres");modal=null},"Supprimer")}
+
+/* Finances */
+function addTx(){const m=num(val("fm")),l=tval("fl");if(m<=0||!l)return say("Montant et libellé requis.");const id=nid(),u=ME(),dp=val("fdp");
+ DBX.set("transactions/"+id,{id,t:Date.now(),type:val("ft"),cat:val("fc"),dept:dp=="Général"?"":dp,montant:m,label:l,by:u.id,byNom:u.nom});log(`Opération ${val("ft")=="in"?"recette":"dépense"} : ${l} (${money(m)})`,"Finances","Finances");clr("fm","fl");toast("Opération enregistrée.")}
+function delTx(id){const t=S.transactions[id];ask("Supprimer l'opération « "+t.label+" » ("+money(t.montant)+") ?",()=>{DBX.remove("transactions/"+id);log("Opération supprimée : "+t.label,"Finances","Finances")},"Supprimer")}
+function addBill(){const m=num(val("bm")),mo=tval("bmo"),e=val("be"),n=tval("bn");if(m<=0||!mo)return say("Montant et motif requis.");if(!e&&!n)return say("Choisissez un compte ou saisissez un nom.");
+ const id=nid(),u=ME();DBX.set("factures/"+id,{id,num:nextNum("factures","FAC"),kind:val("bk"),ent:e,entNom:e?uname(e):n,motif:mo,montant:m,ech:val("bd"),dept:val("bdp"),st:"due",t:Date.now(),by:u.id,byNom:u.nom});
+ log(`${kindL(val("bk"))} émise à ${e?uname(e):n} : ${money(m)}`,"Finances","Finances");clr("bm","bmo","bn","bd");toast("Émise.")}
+function payFact(id){const f=S.factures[id],u=ME();ask(`${u.role=="entreprise"?"Payer":"Encaisser"} ${kindL(f.kind).toLowerCase()} ${f.num} de ${money(f.montant)} ?`,()=>{
+ DBX.update("factures/"+id,{st:"payee",paidT:Date.now()});const tid=nid();DBX.set("transactions/"+tid,{id:tid,t:Date.now(),type:"in",cat:f.kind=="amende"?"Amendes":f.kind=="taxe"?"Impôts":"Factures",dept:f.dept||"Finances",montant:num(f.montant),label:`${f.num} — ${f.entNom} — ${f.motif}`,by:u.id,byNom:u.nom});
+ log(`Paiement ${f.num} (${money(f.montant)}) par ${f.entNom}`,"Finances","Finances");toast("Paiement enregistré.")},u.role=="entreprise"?"Payer":"Encaisser")}
+function cancelFact(id){const f=S.factures[id];ask("Annuler "+f.num+" ?",()=>{DBX.update("factures/"+id,{st:"annulee"});log("Annulation "+f.num,"Finances","Finances")},"Annuler la facture")}
+function declare(){const p=tval("dp"),ca=num(val("dca"));if(!p||ca<=0)return say("Indiquez la période et un chiffre d'affaires.");const u=ME(),tx=num(S.config.tax),imp=Math.round(ca*tx/100),id=nid(),fid=nid();
+ DBX.set("declarations/"+id,{id,ent:u.id,entNom:u.nom,periode:p,ca,taux:tx,impot:imp,st:"declaree",t:Date.now(),fac:fid});
+ if(imp>0)DBX.set("factures/"+fid,{id:fid,num:nextNum("factures","FAC"),kind:"taxe",ent:u.id,entNom:u.nom,motif:"Impôt sur le CA — "+p,montant:imp,ech:new Date(Date.now()+7*864e5).toISOString().slice(0,10),dept:"Finances",st:"due",t:Date.now(),by:u.id,byNom:u.nom});
+ log(`Déclaration fiscale de ${u.nom} (${p}) : CA ${money(ca)}`,"Finances","Finances");clr("dp","dca");delete keep.dca;toast("Déclaration envoyée. Facture d'impôt générée.")}
+function validDecl(id){const d=S.declarations[id];DBX.update("declarations/"+id,{st:"validee",vby:meId,vt:Date.now()});log("Déclaration validée : "+d.entNom+" ("+d.periode+")","Finances","Finances")}
+function setTax(){const t=Math.min(100,Math.max(0,num(val("ctax"))));DBX.update("config",{tax:t});log("Taux d'imposition fixé à "+t+" %","Finances","Finances");toast("Taux appliqué.")}
+function setBudget(i,v){const d=DEPTS()[i];DBX.update("config/budgets",{[d]:num(v)});log(`Budget ${d} : ${money(v)}`,"Finances","Finances")}
+
+/* Communication */
+function addAnn(){const t=tval("at1"),x=tval("at2");if(!t||!x)return say("Titre et contenu requis.");const id=nid(),u=ME();
+ DBX.set("annonces/"+id,{id,titre:t,txt:x,cible:val("at3"),pin:!!val("at4"),t:Date.now(),by:u.id,nom:u.nom+" — "+gname(u)});log("Annonce publiée : "+t,u.dept,"Communication");clr("at1","at2","at4");toast("Annonce publiée.")}
+function delAnn(id){const a=S.annonces[id];ask("Supprimer l'annonce « "+a.titre+" » ?",()=>{DBX.remove("annonces/"+id);log("Annonce supprimée : "+a.titre,ME().dept,"Communication")},"Supprimer")}
+function sendMsg(){const t=tval("mtx");if(!t||!convWith)return;const id=nid();DBX.set("messages/"+id,{id,from:meId,to:convWith,txt:t,t:Date.now(),read:false});clr("mtx");setTimeout(()=>{const e=$("#mtx");e&&e.focus()},60)}
+
+/* Personnel */
+async function addUser(){const dir=isDir(),nom=tval("cn"),l=tval("cl"),p=val("cp"),r=val("cr");
+ if(!nom||!l||!p)return say("Nom, identifiant et mot de passe requis.");if(!/^[\w.\-@]{3,32}$/.test(l))return say("Identifiant : 3 à 32 caractères (lettres, chiffres, . - _ @).");
+ if(vals(S.users).some(u=>u.login.toLowerCase()==l.toLowerCase()))return say("Cet identifiant existe déjà.");
+ if(!dir&&!["entreprise","fonctionnaire"].includes(r))return say("Rôle non autorisé.");
+ const dept=(r=="fonctionnaire"||r=="encadrement")?(dir?val("cd"):ME().dept):"";if((r=="fonctionnaire"||r=="encadrement")&&!dept)return say("Choisissez un département.");
+ const id=nid();await DBX.set("users/"+id,{id,login:l,hash:await hashPw(l,p),nom,role:r,dept,gradeId:r=="entreprise"?"":val("cg"),matricule:r=="entreprise"?"":tval("cm"),tel:tval("ct"),active:true,mustChange:true,created:Date.now(),createdBy:meId});
+ log(`Compte créé : ${nom} (${ROLES[r]}${dept?", "+dept:""})`,dept,"Comptes");clr("cn","cl","cp","cm","ct");toast("Compte créé. Identifiant : "+l)}
+async function saveUser(id){const u=S.users[id],dir=isDir(),nom=tval("en");if(!nom)return say("Nom requis.");
+ const role=dir?val("er"):u.role,up={nom,tel:tval("et"),active:val("ea")=="1"};up.role=role;
+ if(role=="fonctionnaire"||role=="encadrement"){up.dept=dir?val("ed"):u.dept;if(!up.dept)return say("Choisissez un département.")}else up.dept="";
+ if(role!="entreprise"){up.gradeId=val("eg");up.matricule=tval("em")}else{up.gradeId="";}
+ const np=val("ep");if(np){up.hash=await hashPw(u.login,np);up.mustChange=true}
+ if(dir&&(role=="fonctionnaire"||role=="encadrement"))up.xperms=readPerms("ex_");
+ if(up.active===false&&u.svc&&u.svc.on){up.svc=Object.assign({},u.svc,{on:false})}
+ DBX.update("users/"+id,up);log(`Compte modifié : ${nom}${up.active===false?" (suspendu)":""}${np?" — mot de passe réinitialisé":""}`,up.dept,"Comptes");toast("Compte mis à jour.");closeM()}
+function delUser(id){const u=S.users[id];ask(`Supprimer le compte de ${u.nom} (${u.login}) ? Son historique reste dans le journal.`,()=>{DBX.remove("users/"+id);log("Compte supprimé : "+u.nom,u.dept,"Comptes")},"Supprimer")}
+function saveGrade(id){const dir=isDir(),name=tval("gn");if(!name)return say("Intitulé requis.");const old=id?S.grades[id]:null;
+ const role=dir?val("gr"):"fonctionnaire",dept=dir?val("gd"):ME().dept;
+ const g={name,role,dept,color:val("gc"),perDossier:num(val("gpd")),perHour:num(val("gph")),fixe:num(val("gfx")),rank:num(val("grk")),perms:role=="direction"?{}:readPerms("gp_",old&&old.perms,!dir)};
+ if(id)DBX.update("grades/"+id,g);else{id=nid();g.id=id;DBX.set("grades/"+id,g)}
+ log(`Grade ${old?"modifié":"créé"} : ${name}`,dept,"Grades");toast("Grade enregistré.");closeM()}
+function delGrade(id){const g=S.grades[id],n=vals(S.users).filter(u=>u.gradeId==id);ask(`Supprimer le grade « ${g.name} » ?${n.length?` ${n.length} agent(s) perdront ce grade.`:""}`,()=>{n.forEach(u=>DBX.update("users/"+u.id,{gradeId:""}));DBX.remove("grades/"+id);log("Grade supprimé : "+g.name,g.dept,"Grades");modal=null},"Supprimer")}
+function setBonus(id,v){const u=S.users[id];DBX.update("users/"+id,{bonus:num(v)});log(`Prime de ${u.nom} : ${money(v)}`,u.dept,"Salaires")}
+function doPay(u,now){const p=payInfo(u),me=ME();if(p.total<=0)return 0;const s=Object.assign({},u.svc||{});s.acc=0;if(s.on)s.since=s.since||now;
+ DBX.update("users/"+u.id,{paidAt:now,bonus:0,svc:s});const tid=nid();
+ DBX.set("transactions/"+tid,{id:tid,t:now,type:"out",cat:"Salaires",dept:u.dept||"",user:u.id,montant:p.total,label:`Salaire ${u.nom} — ${p.nd} dossier(s), ${p.h.toFixed(1)} h${p.fx?", fixe "+money(p.fx):""}${p.bo?", prime "+money(p.bo):""}`,by:me.id,byNom:me.nom});
+ log(`Salaire versé à ${u.nom} : ${money(p.total)}`,u.dept,"Salaires");return p.total}
+function payUser(id){const u=S.users[id],p=payInfo(u);ask(`Verser ${money(p.total)} à ${u.nom} ?`,()=>{doPay(u,Date.now());toast("Salaire versé.")},"Verser")}
+function payAll(){const L=vals(S.users).filter(u=>isAgent(u)&&(isDir()||manageable(u))&&payInfo(u).total>0),tot=L.reduce((s,u)=>s+payInfo(u).total,0);if(!L.length)return toast("Aucun salaire à verser.");
+ ask(`Verser ${money(tot)} à ${L.length} agent(s) ?`,()=>{const now=Date.now();L.forEach(u=>doPay(u,now));toast("Salaires versés.")},"Tout verser")}
+
+/* Administration */
+function saveBanner(){DBX.update("config",{banner:{txt:tval("bt"),lvl:val("bl"),on:val("bo")=="1"}});log("Bandeau d'information mis à jour","Communication","Administration");toast("Bandeau mis à jour.")}
+function saveSettings(){const dp=val("sdp").split("\n").map(s=>s.trim()).filter(Boolean);if(!dp.length)return toast("Il faut au moins un département.",1);
+ DBX.update("config",{siteName:tval("sn")||"Gouvernement de Los Santos",subtitle:tval("ss"),accent:val("sa"),treasuryStart:num(val("st0")),requireService:val("srs")=="1",depts:[...new Set(dp)]});applyTheme();log("Paramètres du site modifiés","","Administration");toast("Paramètres enregistrés.")}
+function resetAccent(){DBX.update("config",{accent:null});setTimeout(applyTheme,50);toast("Couleur par défaut rétablie.")}
+function saveMaint(){const on=val("mo")=="1";DBX.update("config",{maintenance:{on,msg:tval("mm")}});log("Maintenance "+(on?"activée":"désactivée"),"","Administration");toast("Maintenance "+(on?"activée":"désactivée")+".")}
+function exportData(){const data={config:S.config};COLS.forEach(c=>data[c]=S[c]);const b=new Blob([JSON.stringify(data,null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sauvegarde-intranet-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);log("Sauvegarde exportée","","Administration")}
+function importData(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let d;try{d=JSON.parse(r.result)}catch(e){return toast("Fichier invalide.",1)}if(!d||!d.users)return toast("Ce fichier n'est pas une sauvegarde de l'intranet.",1);
+ ask("Restaurer cette sauvegarde ? Toutes les données actuelles seront remplacées.",()=>{DBX.replaceAll(d).then(()=>{toast("Sauvegarde restaurée.");setTimeout(()=>log("Sauvegarde restaurée","","Administration"),500)})},"Restaurer")};r.readAsText(f);inp.value=""}
+function wipeAll(){ask("Tout effacer définitivement ? Cette action est irréversible.",()=>{DBX.replaceAll({}).then(()=>{meId=null;lsSet("lsgov_session",null);ready=false;S={config:{}};COLS.forEach(c=>S[c]={});setTimeout(boot,600)})},"Tout effacer")}
+
+/* Démarrage */
+applyTheme();render();startData();
 </script></body></html>
