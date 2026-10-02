@@ -150,7 +150,8 @@ td input,td select{margin:0;width:110px;padding:5px 8px}
 .ec-c{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--mu);padding:7px 10px;border-radius:7px;font:inherit;font-weight:600;cursor:pointer;text-align:left}
 .ec-c:hover{background:var(--cd2);color:var(--tx)}.ec-c.on{background:var(--cd2);color:var(--tx)}
 .ec-h{font-size:18px;opacity:.7;font-weight:400;display:inline-flex}.ec-h svg{width:17px;height:17px}
-.payt td input{width:95px}.payt td input.pnote{width:130px}.ec-s{opacity:.5}.ec-n{flex:1}.ec-k{font-size:11px;background:var(--bg);border:1px solid var(--bd);border-radius:99px;padding:0 7px;color:var(--mu)}
+.payt td input{width:95px}
+.payt td input.pn{width:64px;padding:6px 8px}.payt td select.pn{width:74px;padding:6px}.payt td select.pst{width:118px;padding:6px}.payt td.pag{min-width:190px}.payt td{padding-left:6px;padding-right:6px}.pfold{display:flex;flex-wrap:wrap;gap:6px;padding:10px}.pfold .ec-c{width:auto;flex:0 0 auto}.payt td select{padding-left:6px;padding-right:6px}.payt td.c,.payt th.c{text-align:center}.payt th{vertical-align:bottom;white-space:normal;min-width:60px}.payt td input[type=checkbox]{width:18px;height:18px}.payt td input.pnote{width:130px}.ec-s{opacity:.5}.ec-n{flex:1}.ec-k{font-size:11px;background:var(--bg);border:1px solid var(--bd);border-radius:99px;padding:0 7px;color:var(--mu)}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .ftile{border:1px solid var(--bd);border-radius:10px;padding:8px;background:var(--bg2);text-align:center}
 .ftile.rm{opacity:.4;border-style:dashed}.ftile.new{border-color:var(--gold)}
@@ -821,10 +822,6 @@ V.annuaire=()=>{let L=vals(S.users).filter(u=>isAgent(u)&&u.active!==false);if(f
  <div class="card tw"><table><tr><th>Agent<th>Grade<th>Département<th>Matricule<th>Téléphone<th></tr>${L.map(u=>{const g=G(u);return `<tr><td class="b">${esc(u.nom)}<td>${g?`<span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span>`:esc(ROLES[u.role])}<td>${esc(u.dept||"—")}<td>${esc(u.matricule||"—")}<td>${esc(u.tel||"—")}<td>${u.id!=meId?`<button class="btn gh sm" onclick="convWith='${u.id}';go('messages')">Écrire</button>`:""}</tr>`}).join("")||`<tr><td colspan="7" class="empty">Aucun agent.</td></tr>`}</table></div>`};
 
 /* =================== PERSONNEL =================== */
-function payInfo(u){const g=G(u)||{},since=u.paidAt||0;
- const nd=vals(S.dossiers).filter(d=>d.by==u.id&&(d.st=="ok"||d.st=="no")&&(d.tt||0)>since).length;
- const pd=num(g.perDossier),fx=num(g.fixe),bo=num(u.bonus);
- return {nd,pd,fx,bo,total:Math.round(nd*pd+fx+bo)}}
 function scopeUsers(){return vals(S.users).filter(u=>u.id==meId||isDir()||manageable(u)||(can("rh.view")&&u.dept==ME().dept&&ME().dept))}
 V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(can("rh.grades")||isDir())T.push(["grades","Grades & permissions"]);
  const s=T.some(t=>t[0]==sub)?sub:T[0][0];let h=`<div class="ph"><h2>Gestion du personnel</h2></div>${tabsH(T,s)}`;
@@ -840,8 +837,8 @@ V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(c
   `<div class="card inl">${search("pq","Nom, identifiant, grade…")}${fsel("pr",Object.entries(ROLES),"Tous rôles")}${fsel("pd",DEPTS(),"Tous départements")}</div>
   <div class="card tw"><table><tr><th>Nom<th>Identifiant<th>Rôle<th>Grade<th>Département<th>État<th></tr>${L.map(u=>`<tr><td class="b">${esc(u.nom)}<td>${esc(u.login)}<td>${esc(ROLES[u.role])}<td>${esc(G(u)?G(u).name:"—")}<td>${esc(u.dept||"—")}<td>${u.active===false?'<span class="bdg no">Suspendu</span>':'<span class="bdg ok">Actif</span>'}<td class="nw">${manageable(u)&&can("rh.edit")?`<button class="btn sec sm" onclick="openM('user','${u.id}')">Modifier</button>`:""} ${manageable(u)&&can("rh.delete")?`<button class="btn gh sm" onclick="delUser('${u.id}')">Supprimer</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucun compte.</td></tr>`}</table></div>`}
  if(s=="grades"){const L=vals(S.grades).filter(g=>isDir()||g.role=="fonctionnaire"&&(g.dept==ME().dept)||g.dept==ME().dept).sort((a,b)=>Object.keys(ROLES).indexOf(b.role)-Object.keys(ROLES).indexOf(a.role)||(a.rank||0)-(b.rank||0));
-  return h+`<div class="card inl" style="justify-content:space-between"><span class="mu">Un grade précise un rôle : il fixe l'intitulé, la rémunération et les permissions exactes de l'agent.</span><button class="btn" onclick="openM('grade')">${ic("plus")}Nouveau grade</button></div>
-  <div class="card tw"><table><tr><th>Grade<th>Rôle<th>Département<th>Permissions<th class="r">Par dossier<th class="r">Fixe<th>Agents<th></tr>${L.map(g=>`<tr><td><span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span><td>${esc(ROLES[g.role])}<td>${esc(g.dept||"Tous")}<td>${g.role=="direction"?"Toutes":Object.keys(g.perms||{}).filter(k=>g.perms[k]).length}<td class="r">${money(g.perDossier)}<td class="r">${money(g.fixe)}<td>${vals(S.users).filter(u=>u.gradeId==g.id).length}<td class="nw">${gradeEditable(g)?`<button class="btn sec sm" onclick="openM('grade','${g.id}')">Modifier</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun grade.</td></tr>`}</table></div>`}
+  return h+`<div class="card inl" style="justify-content:space-between"><span class="mu">Un grade précise un rôle : il fixe l'intitulé, la rémunération (grille salariale) et les permissions exactes de l'agent.</span><span class="inl">${isDir()?`<button class="btn sec" onclick="gridSync()">Créer les grades de la grille</button>`:""}<button class="btn" onclick="openM('grade')">${ic("plus")}Nouveau grade</button></span></div>
+  <div class="card tw"><table><tr><th>Grade<th>Rôle<th>Département<th>Permissions<th class="r">Salaire de base<th class="r">Maximal<th class="r">Taux h. sup.<th>Agents<th></tr>${L.map(g=>`<tr><td><span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span><td>${esc(ROLES[g.role])}<td>${esc(g.dept||"Tous")}<td>${g.role=="direction"?"Toutes":Object.keys(g.perms||{}).filter(k=>g.perms[k]).length}${(c=>c?`<td class="r nw">${money(c.base)}<td class="r nw">${c.max>c.base?money(c.max):"—"}<td class="r nw">${c.max>c.base?money(c.rate):"—"}${c.src=="grille"?"":` <span class="mu sm" title="Valeurs propres au grade">*</span>`}`:`<td colspan="3" class="mu sm">Hors grille salariale</td>`)(payCfg(g))}<td>${vals(S.users).filter(u=>u.gradeId==g.id).length}<td class="nw">${gradeEditable(g)?`<button class="btn sec sm" onclick="openM('grade','${g.id}')">Modifier</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun grade.</td></tr>`}</table></div>`}
  return h};
 let openGrp=new Set([0]);
 function permEditor(lockOwn){const d=modal.draft||{},q=(keep.peq||"").trim().toLowerCase(),tot=ALLP.filter(k=>d[pk(k)]).length;
@@ -862,7 +859,7 @@ function MGrade(){const g=modal.id?S.grades[modal.id]:{role:"fonctionnaire",dept
  return {title:modal.id?"Édition d'un grade":"Création d'un grade",wide:1,body:`<div class="pe-card"><div class="form"><label class="f">Intitulé du grade<input id="gn" value="${esc(g.name||"")}" placeholder="Ex. : Ministre de la Justice"></label>
  <label class="f">Rattaché au rôle<select id="gr" onchange="keep.gr=this.value;render()" ${dir?"":"disabled"}>${opts(Object.entries(ROLES).filter(r=>r[0]!="entreprise"),role)}</select></label>
  <label class="f">Département<select id="gd" ${dir?"":"disabled"}>${opts([["","Tous les départements"]].concat(DEPTS().map(d=>[d,d])),g.dept||"")}</select></label></div>
- <details class="pe-pay"><summary>Rémunération et affichage</summary><div class="form" style="margin-top:10px"><label class="f">Salaire par dossier traité ($)<input id="gpd" type="number" min="0" value="${num(g.perDossier)}"></label><label class="f">Salaire fixe par période ($)<input id="gfx" type="number" min="0" value="${num(g.fixe)}"></label><label class="f">Ordre hiérarchique (0 = plus haut)<input id="grk" type="number" min="0" value="${num(g.rank)}"></label><label class="f">Couleur du badge<input id="gc" type="color" value="${esc(g.color||"#c9a24a")}"></label></div></details></div>
+ <details class="pe-pay" open><summary>Rémunération et affichage</summary>${(()=>{const r=modal.id?gridRow(g):null,own=g.pBase!=null&&g.pBase!=="";return `<p class="mu sm" style="margin:10px 0 0">${r?`Grille salariale : <b>${esc(GRILLE[gradeCode(g)][0])} — ${esc(r[0])}</b> · base ${money(r[1])}${r[2]?` · maximal ${money(r[2])} · ${money(r[3])}/h sup.`:" (fixe)"} — laissez les champs vides pour appliquer la grille.`:`Ce grade ne correspond à aucune ligne de la grille salariale : renseignez sa rémunération, sinon son salaire sera nul.`}${dir?"":" Seule la Direction peut modifier la rémunération."}</p><div class="form" style="margin-top:10px"><label class="f">Salaire de base ($)<input id="gpb" type="number" min="0" value="${own?num(g.pBase):""}" placeholder="${r?r[1]:""}" ${dir?"":"disabled"}></label><label class="f">Salaire maximal ($, vide = fixe)<input id="gpm" type="number" min="0" value="${own&&num(g.pMax)?num(g.pMax):""}" placeholder="${r&&r[2]?r[2]:""}" ${dir?"":"disabled"}></label><label class="f">Taux horaire heures sup. ($)<input id="gpr" type="number" min="0" value="${own&&num(g.pRate)?num(g.pRate):""}" placeholder="${r&&r[3]?r[3]:""}" ${dir?"":"disabled"}></label>`})()}<label class="f">Ordre hiérarchique (0 = plus haut)<input id="grk" type="number" min="0" value="${num(g.rank)}"></label><label class="f">Couleur du badge<input id="gc" type="color" value="${esc(g.color||"#c9a24a")}"></label></div></details></div>
  ${role=="direction"?`<div class="pe-card"><p class="mu" style="margin:0">Le rôle Direction dispose automatiquement de toutes les permissions.</p></div>`:permEditor(!dir)}<p class="err" id="msg"></p>`,
  foot:`${modal.id&&(dir||gradeEditable(g))?`<button class="btn gh" style="margin-right:auto" onclick="delGrade('${modal.id}')">Supprimer</button>`:""}<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="saveGrade('${modal.id||""}')">Valider</button>`}}
 function MUser(u){if(!u||!manageable(u))return null;if(!modal.draft)modal.draft=Object.assign({},u.xperms||{});modal.lock=false;const dir=isDir();const role=keep.er||u.role,dept=dir?(keep.ed??u.dept??""):u.dept;
@@ -879,33 +876,101 @@ function MUser(u){if(!u||!manageable(u))return null;if(!modal.draft)modal.draft=
 /* =================== SALAIRE =================== */
 const payGlobal=()=>isDir()||can("pay.all");
 const deptKey=d=>d?String(d).replace(/[.#$\/\[\]]/g,"_"):"_dir";
+const NRM=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+const QUOTA_H=12;
+/* Grille salariale officielle : [grade, salaire de base, salaire maximal (0 = ne peut excéder la base), taux horaire des heures supplémentaires] */
+const GRILLE={
+ _dir:["Direction",[["Gouverneur",3500000,0,0],["Vice-Gouverneur",3500000,0,0],["Chef de Cabinet",3000000,3500000,50000],["Secrétaire de Cabinet",3000000,3500000,50000],["Secrétaire de Direction",2500000,3500000,50000]]],
+ fin:["Finances",[["Ministre",2500000,0,0],["Adjoint Ministre",2000000,2500000,50000],["Directeur Financier",2000000,2500000,50000],["Secrétaire des Finances",1750000,2500000,40000],["Responsable Contrôle Fiscaux",1750000,2500000,30000],["Responsable Comptables",1750000,2500000,30000],["Référent Fiscal",1500000,2250000,30000],["Expert Comptable",1500000,2250000,30000],["Contrôleur Fiscal",1250000,2000000,30000],["Comptable",1250000,2000000,25000],["Assistant Comptable",1000000,1750000,20000]]],
+ ec:["État-Civil",[["Ministre",2500000,0,0],["Adjoint Ministre",2000000,2500000,40000],["Directeur RH",2000000,2500000,40000],["Formateur E.C",1500000,2250000,30000],["Ressources Humaines",1250000,2000000,25000],["Secrétaire",1250000,2000000,25000]]],
+ jus:["Justice",[["Ministre",2500000,0,0],["Adjoint Ministre",2000000,2500000,40000],["Responsable Judiciaire",2000000,2500000,40000],["Secrétaire Justice",1750000,2500000,30000],["Chief Justice",1750000,2500000,35000],["Procureur Général",1750000,2500000,35000],["Juge",1500000,2250000,25000],["Procureur",1500000,2250000,25000],["Juge Assesseur",1250000,2000000,20000],["Substitut du Procureur",1250000,2000000,20000],["Commissaire de Justice",1000000,1750000,20000],["Secrétaire Juridique",750000,1500000,20000]]],
+ int:["Intérieur",[["Ministre",2500000,0,0],["Adjoint Ministre",2000000,2500000,50000],["Secrétaire de l'Intérieur",1750000,2500000,30000],["Superviseur",1500000,2250000,25000]]],
+ com:["Communication",[["Ministre",2500000,0,0],["Adjoint Ministre",2000000,2500000,40000],["Directeur Communication",2000000,2500000,35000],["Secrétaire Com",1750000,2500000,30000],["Responsable Com",1750000,2500000,25000],["Responsable Prod",1750000,2500000,25000],["Chargé de production",1500000,2250000,15000],["Chargé de communication",1500000,2250000,15000]]],
+ sec:["Sécurité",[["Directeur",2500000,0,0],["Directeur Adjoint",2000000,2500000,40000],["Assistant de Direction",2000000,2500000,40000],["Secrétaire",1750000,2500000,35000],["Chef Sécurité",1750000,2500000,35000],["Référent",1500000,2250000,30000],["Agent Superviseur",1500000,2250000,30000],["Agent Expérimenté",1250000,2000000,25000],["Agent Confirmé",1250000,2000000,25000],["Agent Probatoire",1000000,1750000,20000]]]};
+const comAmt=c=>c.charge?100000:125000;
+/* Spécificités de paie par département : n = nombre (montant par unité), c = case à cocher (montant fixe), hp = hors plafond */
+const DSPEC={
+ ec:[{k:"docs",l:"Documents",t:"n",a:10000},{k:"cni",l:"Cartes d'identité",t:"n",a:7500},{k:"cv",l:"CV",t:"n",a:15000},{k:"logt",l:"Logements sociaux",t:"n",a:15000},{k:"form",l:"Formation",t:"c",a:100000}],
+ jus:[{k:"jug",l:"Jugements",t:"n",d:"Quota : 7 (5 pour Resp. Judiciaire) · 50 000 $ par jugement au-delà"},{k:"cf",l:"Contrôles fiscaux",t:"n",a:10000},{k:"sais",l:"Saisies",t:"n",a:10000},{k:"perq",l:"Perquisitions",t:"n",a:10000},{k:"form",l:"Formations",t:"n",a:10000},{k:"inte",l:"Prime intéressement",t:"c",a:90000},{k:"perf",l:"Prime performance",t:"c",a:60000}],
+ int:[{k:"doc",l:"Prime Documents",t:"c",a:50000},{k:"obj",l:"Prime d'Objectif",t:"c",a:50000},{k:"sem",l:"Employé de la semaine",t:"c",a:50000}],
+ fin:[{k:"conv",l:"Convois",t:"n",a:30000},{k:"cf",l:"Contrôles fiscaux",t:"n",a:100000},{k:"sem",l:"Comptable de la semaine",t:"c",a:200000},{k:"eff",l:"Prime efficacité",t:"c",a:200000}],
+ com:[{k:"evp",l:"Prime Event",t:"c",a:comAmt},{k:"ev",l:"Évènements",t:"n",a:comAmt},{k:"form",l:"Prime Formation",t:"c",a:comAmt},{k:"med",l:"Médias",t:"n",a:comAmt},{k:"eff",l:"Prime Efficacité",t:"c",a:comAmt}],
+ sec:[{k:"gr",l:"Garde rapprochée",t:"c",a:250000,hp:1}],
+ _dir:[]};
+const SPEC_NOTE={jus:"Quota : 12 h de service et 7 jugements (5 pour le Responsable Judiciaire, aucun pour les ministres).",com:"Quota : 12 h de service ; 2 évènements minimum pour les Chargés de communication et 2 médias minimum pour les Chargés de production. Primes : 100 000 $ par unité pour les Chargés, 125 000 $ pour les autres grades.",sec:"La prime de Garde rapprochée (250 000 $) s'ajoute au-delà du plafond."};
+function dcode(d){const n=NRM(d);if(!n)return "_dir";if(n.includes("financ"))return "fin";if(n.includes("civil"))return "ec";if(n.includes("justice"))return "jus";if(n.includes("interieur"))return "int";if(n.includes("communic"))return "com";if(n.includes("secur"))return "sec";return "x"}
+function gradeCode(g,u){return g&&g.role=="direction"?"_dir":dcode((g&&g.dept)||(u&&u.dept)||"")}
+function gridRow(g,u){if(!g)return null;const G0=GRILLE[gradeCode(g,u)];if(!G0)return null;const R=G0[1],n=NRM(g.name);
+ const ex=R.find(r=>NRM(r[0])==n);if(ex)return ex;const adj=n.includes("adjoint");
+ if(n.startsWith("ministre")&&!adj)return R[0];if(adj&&n.includes("ministre"))return R[1];return null}
+function payCfg(g,u){if(!g)return null;if(g.pBase!=null&&g.pBase!=="")return {base:num(g.pBase),max:num(g.pMax),rate:num(g.pRate),src:"grade"};const r=gridRow(g,u);return r?{base:r[1],max:r[2],rate:r[3],src:"grille",ref:r[0]}:null}
+const deptCode=u=>{const g=G(u);return g?gradeCode(g,u):dcode(u.dept||"")};
+const fh=h=>(Math.round(num(h)*10)/10).toLocaleString("fr-FR");
+const PSTAT=[["","—"],["abs","Absent(e)"],["new","Nv. arrivé(e)"]];
+function jugQuota(n){return n.includes("ministre")?0:/resp(onsable)? judiciaire/.test(n)?5:7}
+function payCalc(u,l){l=l||{};const g=G(u),c=payCfg(g,u),dc=deptCode(u),F=DSPEC[dc]||[],n=NRM(g&&g.name),x=l.x||{};
+ const q=l.q!=null&&l.q!==""?Math.min(100,Math.max(0,num(l.q)))/100:1,h=num(l.h),qh=QUOTA_H*q,ctx={charge:/^charge de (com|prod)/.test(n)};
+ const r={h,q,qh,cfg:c,base:0,ot:0,primes:0,hors:0,cap:0,ecrete:0,pen:0,sal:0,total:0,why:[]};
+ if(!c){r.why.push("Grade hors grille salariale");return r}
+ if(l.st=="abs"){r.why.push("Absent(e)");return r}
+ if(h<qh)r.why.push(`Quota d'heures non atteint (${fh(h)} / ${fh(qh)} h)`);
+ if(dc=="jus"){const m=jugQuota(n);if(num(x.jug)<m)r.why.push(`Quota de jugements non atteint (${num(x.jug)} / ${m})`)}
+ if(dc=="com"){if(/^charge de com/.test(n)&&num(x.ev)<2)r.why.push(`Quota d'évènements non atteint (${num(x.ev)} / 2)`);if(/^charge de prod/.test(n)&&num(x.med)<2)r.why.push(`Quota de médias non atteint (${num(x.med)} / 2)`)}
+ if(r.why.length)return r;
+ const evo=c.max>c.base;r.base=Math.round(c.base*q);r.cap=evo?Math.round(c.max*q):r.base;
+ if(evo)r.ot=Math.round(Math.max(0,h-qh)*c.rate);
+ F.forEach(f=>{const v=f.t=="c"?(x[f.k]?1:0):Math.max(0,num(x[f.k]));let a;
+  if(dc=="jus"&&f.k=="jug")a=Math.max(0,v-(jugQuota(n)||7))*50000;else a=v*(typeof f.a=="function"?f.a(ctx):num(f.a));
+  if(f.hp)r.hors+=a;else r.primes+=a});
+ const brut=r.base+r.ot+r.primes,plaf=Math.min(brut,r.cap);r.ecrete=brut-plaf;
+ const av=num(l.av);r.pen=av>=2?1:av>=1?.5:0;
+ r.total=Math.round((plaf+r.hors)*(1-r.pen));r.sal=Math.round(Math.min(r.base+r.ot,r.cap)*(1-r.pen));return r}
+function payDet(u,l){const F=DSPEC[deptCode(u)]||[],x=(l&&l.x)||{};return F.filter(f=>f.t=="c"?x[f.k]:num(x[f.k])>0).map(f=>f.t=="c"?f.l:`${f.l} ${num(x[f.k])}`).join(" · ")}
+function payInfo(u){const d=S.paie[deptKey(u.dept)],l=d&&d.lines&&d.lines[u.id];return {total:l?payCalc(u,l).total:0}}
+function cfgTxt(c){if(!c)return `<span style="color:var(--no)">Grade hors grille</span>`;return c.max>c.base?`Base ${money(c.base)} · plafond ${money(c.max)} · ${money(c.rate)}/h sup.`:`Salaire fixe ${money(c.base)}`}
 function payFolders(){const u=ME();if(payGlobal())return DEPTS().map(d=>[deptKey(d),d]).concat([["_dir","Direction"]]);if(can("pay.dept")&&u.dept)return [[deptKey(u.dept),u.dept]];return []}
 function deptStaff(key){return vals(S.users).filter(x=>isAgent(x)&&x.active!==false&&(key=="_dir"?!x.dept:deptKey(x.dept)==key)).sort((a,b)=>((G(a)||{}).rank??99)-((G(b)||{}).rank??99)||a.nom.localeCompare(b.nom))}
 const PST={brouillon:["En préparation","wa"],soumise:["Soumise pour validation","bl"]};
-function lineTotal(l){return Math.round(num(l&&l.montant)+num(l&&l.prime))}
-V.salaire=()=>{const F=payFolders(),T=[["moi","Mon salaire"]].concat(F.length?[["gestion","Gestion des salaires"]]:[]);const s=T.some(t=>t[0]==sub)?sub:"moi";
- return `<div class="ph"><h2>Salaire</h2></div>${T.length>1?tabsH(T,s):""}${s=="gestion"?payMgmtView(F):myPayView()}`};
-function myPayView(){const u=ME(),p=payInfo(u),key=deptKey(u.dept),dr=S.paie[key],my=dr&&dr.lines&&dr.lines[u.id];
+function lineTotal(l){if(!l)return 0;if(l.total!=null)return Math.round(num(l.total));return Math.round(num(l.montant)+num(l.prime))}
+function draftTotal(key){const d=S.paie[key]||{};return deptStaff(key).reduce((s,u)=>s+payCalc(u,(d.lines||{})[u.id]).total,0)}
+V.salaire=()=>{const F=payFolders(),T=[["moi","Mon salaire"]].concat(F.length?[["gestion","Gestion des salaires"]]:[]).concat([["grille","Grille salariale"]]);const s=T.some(t=>t[0]==sub)?sub:"moi";
+ return `<div class="ph"><h2>Salaire</h2></div>${tabsH(T,s)}${s=="gestion"?payMgmtView(F):s=="grille"?grilleView():myPayView()}`};
+function grilleView(){const my=deptCode(ME()),order=Object.keys(GRILLE).sort((a,b)=>(b==my)-(a==my));
+ return `<div class="card"><p class="mu" style="margin:0">Le salaire de base est dû dès que le quota est rempli (${QUOTA_H} h de service par semaine à 100 %). Les heures au-delà du quota sont payées au taux horaire du grade, jusqu'au salaire maximal. Un grade sans plafond ne peut pas dépasser son salaire de base. Les primes du département s'ajoutent dans la limite du plafond. Avertissement : 1 = −50 %, 2 = salaire nul.</p></div>
+ <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,440px),1fr))">${order.map(k=>{const [nm,R]=GRILLE[k],F=DSPEC[k]||[];return `<div class="card tw"><h3>${esc(nm)}</h3><table><tr><th>Grade<th class="r">Base<th class="r">Maximal<th class="r">Taux h. sup.</tr>${R.map(r=>`<tr><td class="b">${esc(r[0])}<td class="r nw">${money(r[1])}<td class="r nw">${r[2]?money(r[2]):"—"}<td class="r nw">${r[2]?money(r[3]):"—"}</tr>`).join("")}</table>
+  ${F.length?`<h4 style="margin:12px 0 6px">Spécificités</h4><ul class="sm" style="margin:0;padding-left:18px">${F.map(f=>`<li>${esc(f.l)} : ${f.d?esc(f.d):typeof f.a=="function"?"100 000 $ (Chargés) / 125 000 $":money(f.a)+(f.t=="n"?" par unité":"")}${f.hp?" — hors plafond":""}</li>`).join("")}</ul>`:""}${SPEC_NOTE[k]?`<p class="mu sm" style="margin:8px 0 0">${esc(SPEC_NOTE[k])}</p>`:""}</div>`}).join("")}</div>`}
+function myPayView(){const u=ME(),key=deptKey(u.dept),dr=S.paie[key],my=dr&&dr.lines&&dr.lines[u.id],c=payCfg(G(u),u),r=my?payCalc(u,my):null;
  const A=vals(S.paiearch).filter(a=>a.lines&&a.lines[u.id]).sort((a,b)=>b.t-a.t);const H=vals(S.transactions).filter(t=>t.cat=="Salaires"&&t.user==u.id&&!t.paie).sort((a,b)=>b.t-a.t);
  const tot=A.reduce((s,a)=>s+lineTotal(a.lines[u.id]),0)+H.reduce((s,t)=>s+num(t.montant),0);
- return `<div class="kpis">${kpi("Paie en préparation",my?money(lineTotal(my)):"—","gold")}${kpi("Dossiers traités (période)",p.nd)}${kpi("Total perçu",money(tot))}</div>
- <div class="card"><h3>Ma paie en cours</h3>${my?`<div class="kv"><div class="k">Période</div><div>${esc(dr.periode||"—")}</div><div class="k">Statut</div><div>${bdg(PST,dr.st||"brouillon")}</div><div class="k">Salaire</div><div>${money(my.montant)}</div><div class="k">Prime</div><div>${money(my.prime)}</div>${my.note?`<div class="k">Commentaire</div><div>${esc(my.note)}</div>`:""}<div class="k">Total</div><div class="b" style="font-size:18px;color:var(--gold2)">${money(lineTotal(my))}</div></div>`:`<p class="mu">Votre ministre n'a pas encore saisi votre paie pour la période en cours.</p>`}
- <p class="mu sm" style="margin-top:10px">Activité depuis votre dernier versement${u.paidAt?" ("+fd(u.paidAt)+")":""}  : ${p.nd} dossier(s) traité(s). Grade : ${esc(gname(u))}.</p></div>
- <div class="card tw"><h3>Mes fiches de paie</h3><table><tr><th>Date<th>Période<th>Département<th class="r">Salaire<th class="r">Prime<th class="r">Total<th>Validé par</tr>${A.map(a=>{const l=a.lines[u.id];return `<tr><td class="nw">${fd(a.t)}<td>${esc(a.periode)}<td>${esc(a.deptNom)}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td class="r b">${money(lineTotal(l))}<td>${esc(a.byNom)}</tr>`}).join("")}${H.map(t=>`<tr><td class="nw">${fd(t.t)}<td class="mu" colspan="5">${esc(t.label)} — <b>${money(t.montant)}</b><td>${esc(t.byNom||"")}</tr>`).join("")}${!A.length&&!H.length?`<tr><td colspan="7" class="empty">Aucun versement reçu.</td></tr>`:""}</table></div>`}
+ return `<div class="kpis">${kpi("Paie en préparation",r?money(r.total):"—","gold")}${kpi("Heures déclarées",r?fh(r.h)+" h":"—")}${kpi("Total perçu",money(tot))}</div>
+ <div class="card"><h3>Ma paie en cours</h3><p class="mu sm" style="margin-top:0">Grade : ${esc(gname(u))} · ${cfgTxt(c)}</p>${my?`<div class="kv"><div class="k">Période</div><div>${esc(dr.periode||"—")}</div><div class="k">Statut</div><div>${bdg(PST,dr.st||"brouillon")}</div>
+  <div class="k">Heures de service</div><div>${fh(r.h)} h (quota ${fh(r.qh)} h${r.q<1?" · quotité "+Math.round(r.q*100)+" %":""})</div>${payDet(u,my)?`<div class="k">Activité</div><div>${esc(payDet(u,my))}</div>`:""}
+  ${r.why.length?`<div class="k">Pas de quota</div><div style="color:var(--no)">${esc(r.why.join(" · "))}</div>`:`<div class="k">Salaire de base</div><div>${money(r.base)}</div><div class="k">Heures sup.</div><div>${money(r.ot)}</div><div class="k">Primes</div><div>${money(r.primes+r.hors)}</div>${r.ecrete?`<div class="k">Écrêtement (plafond)</div><div>−${money(r.ecrete)}</div>`:""}${r.pen?`<div class="k">Avertissement</div><div style="color:var(--no)">−${r.pen*100} %</div>`:""}`}
+  ${my.note?`<div class="k">Commentaire</div><div>${esc(my.note)}</div>`:""}<div class="k">Total</div><div class="b" style="font-size:18px;color:var(--gold2)">${money(r.total)}</div></div>`:`<p class="mu">Votre ministre n'a pas encore saisi votre paie pour la période en cours.</p>`}</div>
+ <div class="card tw"><h3>Mes fiches de paie</h3><table><tr><th>Date<th>Période<th>Département<th class="r">Heures<th class="r">Salaire<th class="r">Primes<th class="r">Total<th>Validé par</tr>${A.map(a=>{const l=a.lines[u.id];return `<tr><td class="nw">${fd(a.t)}<td>${esc(a.periode)}<td>${esc(a.deptNom)}<td class="r">${l.h!=null?fh(l.h):"—"}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td class="r b">${money(lineTotal(l))}<td>${esc(a.byNom)}</tr>`}).join("")}${H.map(t=>`<tr><td class="nw">${fd(t.t)}<td class="mu" colspan="6">${esc(t.label)} — <b>${money(t.montant)}</b><td>${esc(t.byNom||"")}</tr>`).join("")}${!A.length&&!H.length?`<tr><td colspan="8" class="empty">Aucun versement reçu.</td></tr>`:""}</table></div>`}
 function payMgmtView(F){const cur=F.some(f=>f[0]==filt.pdk)?filt.pdk:F[0][0],nm=(F.find(f=>f[0]==cur)||[])[1],st=filt.pst||"cours";
- const side=`<aside class="ec-side card">${F.map(([k,n])=>{const d=S.paie[k];return `<button class="ec-c ${k==cur?"on":""}" onclick="filt.pdk='${k}';filt.pst='cours';keep={};render()"><span class="ec-h">${ic("folder")}</span><span class="ec-n">${esc(n)}</span>${d&&d.st=="soumise"?`<span class="bdg bl" style="font-size:10px">À valider</span>`:""}</button>`}).join("")}</aside>`;
+ const side=`<div class="card pfold">${F.map(([k,n])=>{const d=S.paie[k];return `<button class="ec-c ${k==cur?"on":""}" onclick="filt.pdk='${k}';filt.pst='cours';keep={};render()"><span class="ec-h">${ic("folder")}</span><span class="ec-n">${esc(n)}</span>${d&&d.st=="soumise"?`<span class="bdg bl" style="font-size:10px">À valider</span>`:""}</button>`}).join("")}</div>`;
  const tabs=`<div class="tabs"><button class="${st=="cours"?"on":""}" onclick="filt.pst='cours';render()">Paie en cours</button><button class="${st=="arch"?"on":""}" onclick="filt.pst='arch';render()">Archives des salaires</button></div>`;
- return `<div class="ec">${side}<div><div class="card"><div class="inl" style="justify-content:space-between"><h3 style="margin:0">${ic("folder").replace("<svg",'<svg width="18" height="18" style="vertical-align:-3px"')} ${esc(nm)}</h3><span class="mu">${payGlobal()?"Gestion globale":"Votre département"}</span></div>${tabs}${st=="arch"?payArchView(cur,nm):payDraftView(cur,nm)}</div></div></div>`}
+ return `${F.length>1?side:""}<div><div class="card"><div class="inl" style="justify-content:space-between"><h3 style="margin:0">${ic("folder").replace("<svg",'<svg width="18" height="18" style="vertical-align:-3px"')} ${esc(nm)}</h3><span class="mu">${payGlobal()?"Gestion globale":"Votre département"}</span></div>${tabs}${st=="arch"?payArchView(cur,nm):payDraftView(cur,nm)}</div></div>`}
 function payDraftView(key,nm){const d=S.paie[key]||{st:"brouillon",lines:{}},L=deptStaff(key),locked=d.st=="soumise"&&!payGlobal(),ed=!locked;
- const tot=L.reduce((s,u)=>s+lineTotal((d.lines||{})[u.id]),0);
+ const dc=key=="_dir"?"_dir":dcode(nm),F=DSPEC[dc]||[];let tot=0;
+ const inp=(u,f,v,w)=>`<input type="number" min="0" step="${f=="h"?"0.1":"1"}" data-nokeep class="pn" value="${v??""}" onchange="paySetLine('${key}','${u.id}','${w||f}',this.value)">`;
+ const rows=L.map(u=>{const l=(d.lines||{})[u.id]||{},x=l.x||{},c=payCfg(G(u),u),r=payCalc(u,l);tot+=r.total;
+  return `<tr><td class="pag"><b>${esc(u.nom)}</b><div class="mu sm">${esc(gname(u))}</div><div class="mu" style="font-size:11px">${cfgTxt(c)}</div>
+  <td>${ed?inp(u,"h",l.h):fh(l.h)}<td>${ed?`<select data-nokeep class="pn" onchange="paySetLine('${key}','${u.id}','q',this.value)">${opts([["100","100 %"],["75","75 %"],["50","50 %"]],String(l.q??100))}</select>`:(l.q??100)+" %"}
+  <td>${ed?`<select data-nokeep class="pst" onchange="paySetLine('${key}','${u.id}','st',this.value)">${opts(PSTAT,l.st||"")}</select>`:esc((PSTAT.find(p=>p[0]==(l.st||""))||[,""])[1])}
+  <td>${ed?`<select data-nokeep class="pn" onchange="paySetLine('${key}','${u.id}','av',this.value)">${opts([["0","0"],["1","1"],["2","2"]],String(num(l.av)))}</select>`:num(l.av)}
+  ${F.map(f=>`<td class="c">${f.t=="c"?`<input type="checkbox" data-nokeep ${x[f.k]?"checked":""} ${ed?"":"disabled"} onchange="paySetLine('${key}','${u.id}','x.${f.k}',this.checked)">`:ed?inp(u,f.k,x[f.k],"x."+f.k):num(x[f.k])}`).join("")}
+  <td>${ed?`<input data-nokeep value="${esc(l.note||"")}" onchange="paySetLine('${key}','${u.id}','note',this.value)" class="pnote">`:esc(l.note||"")}
+  <td class="r nw"><b>${money(r.total)}</b>${r.why.length?`<div><span class="bdg no" style="font-size:10px" title="${esc(r.why.join(" · "))}">Pas de quota</span></div><div class="sm" style="color:var(--no);max-width:180px;white-space:normal">${esc(r.why.join(" · "))}</div>`:`<div class="mu" style="font-size:11px">${money(r.base)} + ${money(r.ot)} sup. + ${money(r.primes+r.hors)} primes${r.ecrete?` · plafonné`:""}${r.pen?` · averto −${r.pen*100} %`:""}</div>`}</tr>`}).join("");
+ const nc=7+F.length;
  return `<div class="form" style="margin-top:12px"><label class="f">Période<input id="pper_${key}" data-nokeep value="${esc(d.periode||"")}" placeholder="Ex. : Semaine 41 — 2026" ${ed?"":"disabled"} onchange="paySetPeriod('${key}',this.value)"></label>
  <div class="f"><span class="mu sm">Statut</span><div style="margin-top:10px">${bdg(PST,d.st||"brouillon")}${d.updNom?` <span class="mu sm">· modifiée par ${esc(d.updNom)} le ${fd(d.updT)}</span>`:""}</div></div></div>
+ <p class="mu sm">Renseignez les heures de service et l'activité de chaque agent : le salaire est calculé automatiquement selon la grille salariale (quota ${QUOTA_H} h, taux horaire et plafond du grade). ${esc(SPEC_NOTE[dc]||"")}</p>
  ${d.st=="soumise"?`<p class="mu">Soumise par ${esc(d.subNom||"")} le ${fd(d.subT)}.${payGlobal()?" Vérifiez les montants puis validez le versement.":" En attente de validation par la gestion globale ; modification impossible."}</p>`:""}${d.retour?`<div class="card" style="border-color:var(--wa)"><b>Renvoyée pour correction</b> : ${esc(d.retour)}</div>`:""}
- <div class="tw"><table class="payt"><tr><th>Agent<th>Activité<th class="r">Indicatif<th>Salaire ($)<th>Prime ($)<th>Commentaire<th class="r">Total</tr>${L.map(u=>{const l=(d.lines||{})[u.id]||{},p=payInfo(u);return `<tr><td><b>${esc(u.nom)}</b><div class="mu sm">${esc(gname(u))}</div><td class="nw sm">${p.nd} dossier(s)<td class="r mu" title="Calcul selon le barème du grade">${money(p.total)}
-  <td>${ed?`<input type="number" min="0" data-nokeep value="${l.montant??""}" onchange="paySetLine('${key}','${u.id}','montant',this.value)">`:money(l.montant)}<td>${ed?`<input type="number" min="0" data-nokeep value="${l.prime??""}" onchange="paySetLine('${key}','${u.id}','prime',this.value)">`:money(l.prime)}
-  <td>${ed?`<input data-nokeep value="${esc(l.note||"")}" onchange="paySetLine('${key}','${u.id}','note',this.value)" class="pnote">`:esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`}).join("")||`<tr><td colspan="7" class="empty">Aucun agent actif dans ce département.</td></tr>`}
- <tr><td colspan="6" class="r b">Total du département<td class="r b" style="color:var(--gold2)">${money(tot)}</tr></table></div>
- <div class="inl" style="margin-top:12px;justify-content:flex-end">${ed&&L.length?`<button class="btn gh" onclick="payFillIndic('${key}')">Reprendre le calcul indicatif</button>`:""}
+ <div class="tw"><table class="payt"><tr><th>Agent<th>Heures<th>Quotité<th>Statut<th>Averto${F.map(f=>`<th class="c" title="${esc(f.d||(typeof f.a=="function"?"100 000 $ (Chargés) / 125 000 $":money(f.a)+(f.t=="n"?" par unité":"")))}">${esc(f.l)}<div class="mu" style="font-size:10px;font-weight:400;text-transform:none">${f.d?"quota":typeof f.a=="function"?"100k / 125k":(f.t=="n"?"× ":"")+money(f.a)}</div>`).join("")}<th>Commentaire<th class="r">Total</tr>${rows||`<tr><td colspan="${nc}" class="empty">Aucun agent actif dans ce département.</td></tr>`}
+ <tr><td colspan="${nc-1}" class="r b">Total du département<td class="r b" style="color:var(--gold2)">${money(tot)}</tr></table></div>
+ <div class="inl" style="margin-top:12px;justify-content:flex-end">
  ${d.st!="soumise"&&L.length?`<button class="btn bl" onclick="paySubmit('${key}','${esc(nm)}')">Soumettre pour validation</button>`:""}
  ${payGlobal()&&d.st=="soumise"?`<button class="btn sec" onclick="payReturn('${key}')">Renvoyer pour correction</button>`:""}
  ${payGlobal()&&L.length?`<button class="btn ok" onclick="payValidate('${key}','${esc(nm)}')">Valider et verser la paie</button>`:""}</div><p class="err" id="msg"></p>`}
@@ -913,7 +978,7 @@ function payArchView(key,nm){const A=vals(S.paiearch).filter(a=>a.dept==key).sor
  return `<div class="tw" style="margin-top:12px"><table><tr><th>Période<th>Versée le<th>Agents<th class="r">Total versé<th>Préparée par<th>Validée par</tr>${A.map(a=>`<tr class="click" onclick="openM('paiearch','${a.id}')"><td class="b">${esc(a.periode)}<td class="nw">${fd(a.t)}<td>${Object.keys(a.lines||{}).length}<td class="r b">${money(a.total)}<td>${esc(a.subNom||"—")}<td>${esc(a.byNom)}</tr>`).join("")||`<tr><td colspan="6" class="empty">Aucune paie archivée pour ce département.</td></tr>`}</table></div>`}
 function MPaieArch(a){if(!a)return null;const F=payFolders();if(!F.some(f=>f[0]==a.dept))return null;const L=Object.entries(a.lines||{}).map(([id,l])=>Object.assign({id},l)).sort((x,y)=>String(x.nom).localeCompare(y.nom));
  return {title:"Paie archivée — "+esc(a.deptNom)+" — "+esc(a.periode),wide:1,body:`<div class="kpis">${kpi("Agents payés",L.length)}${kpi("Total versé",money(a.total),"gold")}</div><p class="mu">Versée le ${fd(a.t)} · préparée par ${esc(a.subNom||"—")} · validée par ${esc(a.byNom)}</p>
- <div class="tw"><table><tr><th>Agent<th>Grade<th class="r">Dossiers<th class="r">Salaire<th class="r">Prime<th>Commentaire<th class="r">Total</tr>${L.map(l=>`<tr><td class="b">${esc(l.nom)}<td>${esc(l.grade||"")}<td class="r">${num(l.nd)}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td>${esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`).join("")}</table></div>`,
+ <div class="tw"><table><tr><th>Agent<th>Grade<th class="r">Heures<th>Activité<th class="r">Salaire<th class="r">Primes<th>Commentaire<th class="r">Total</tr>${L.map(l=>`<tr><td class="b">${esc(l.nom)}<td>${esc(l.grade||"")}<td class="r">${l.h!=null?fh(l.h):"—"}<td class="sm">${esc(l.det||"")}${l.why?`<div style="color:var(--no)">${esc(l.why)}</div>`:""}${num(l.av)?`<div style="color:var(--no)">Averto ${num(l.av)}</div>`:""}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td>${esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`).join("")}</table></div>`,
  foot:`${isDir()?`<button class="btn gh" style="margin-right:auto" onclick="openM('paiedel','${a.id}')">Supprimer l'archive</button>`:""}<button class="btn sec" onclick="payArchCSV('${a.id}')">Exporter (CSV)</button><button class="btn" onclick="closeM()">Fermer</button>`}}
 
 /* =================== JOURNAL =================== */
@@ -1130,17 +1195,17 @@ function restoreActe(id){const a=S.actes[id];if(!isDir())return;DBX.update("acte
 function payCanEdit(key){const d=S.paie[key];if(payGlobal())return true;const u=ME();return can("pay.dept")&&deptKey(u.dept)==key&&!(d&&d.st=="soumise")}
 function payTouch(key){const u=ME();return {updNom:u.nom,updT:Date.now()}}
 function paySetPeriod(key,v){if(!payCanEdit(key))return;DBX.update("paie/"+key,Object.assign({periode:String(v).trim()},payTouch(key)))}
-function paySetLine(key,uid,f,v){if(!payCanEdit(key))return;const val=f=="note"?String(v).trim():(String(v).trim()===""?null:Math.max(0,num(v)));const up=payTouch(key);up["lines/"+uid+"/"+f]=val;if(!S.paie[key]||!S.paie[key].st)up.st="brouillon";DBX.update("paie/"+key,up)}
-function payFillIndic(key){if(!payCanEdit(key))return;ask("Remplir le salaire de chaque agent avec le calcul indicatif du barème de son grade ? Les montants déjà saisis seront remplacés.",()=>{const up=payTouch(key);deptStaff(key).forEach(u=>up["lines/"+u.id+"/montant"]=payInfo(u).total);if(!S.paie[key]||!S.paie[key].st)up.st="brouillon";DBX.update("paie/"+key,up);toast("Montants indicatifs repris.")},"Remplir")}
-function paySubmit(key,nm){if(!payCanEdit(key))return;const d=S.paie[key]||{};if(!d.periode)return say("Indiquez la période de paie.");const L=deptStaff(key),tot=L.reduce((s,u)=>s+lineTotal((d.lines||{})[u.id]),0);
+function paySetLine(key,uid,f,v){if(!payCanEdit(key))return;let val;if(typeof v=="boolean")val=v||null;else if(f=="note"||f=="st")val=String(v).trim()||null;else val=String(v).trim()===""?null:Math.max(0,num(v));
+ const up=payTouch(key);up["lines/"+uid+"/"+f.replace(".","/")]=val;if(!S.paie[key]||!S.paie[key].st)up.st="brouillon";DBX.update("paie/"+key,up)}
+function paySubmit(key,nm){if(!payCanEdit(key))return;const d=S.paie[key]||{};if(!d.periode)return say("Indiquez la période de paie.");const tot=draftTotal(key);
  ask(`Soumettre la paie « ${d.periode} » du département ${nm} (${money(tot)}) pour validation ?`,()=>{const u=ME();DBX.update("paie/"+key,{st:"soumise",subNom:u.nom,subT:Date.now(),retour:null});log(`Paie ${d.periode} soumise pour validation (${money(tot)})`,nm,"Salaires");toast("Paie soumise pour validation.")},"Soumettre")}
 function payReturn(key){if(!payGlobal())return;modal={type:"payret",key};keep={};render()}
 function payReturnDo(){const key=modal.key,m=tval("prm");if(!m)return say("Indiquez ce qu'il faut corriger.");DBX.update("paie/"+key,{st:"brouillon",retour:m});log(`Paie renvoyée pour correction : ${m}`,(payFolders().find(f=>f[0]==key)||[])[1],"Salaires");toast("Paie renvoyée au département.");closeM()}
-function payValidate(key,nm){if(!payGlobal())return;const d=S.paie[key]||{};if(!d.periode)return say("Indiquez la période de paie.");const L=deptStaff(key).filter(u=>lineTotal((d.lines||{})[u.id])>0);if(!L.length)return say("Aucun montant à verser.");
- const tot=L.reduce((s,u)=>s+lineTotal(d.lines[u.id]),0);
+function payValidate(key,nm){if(!payGlobal())return;const d=S.paie[key]||{};if(!d.periode)return say("Indiquez la période de paie.");const L=deptStaff(key).filter(u=>payCalc(u,(d.lines||{})[u.id]).total>0);if(!L.length)return say("Aucun montant à verser.");
+ const tot=L.reduce((s,u)=>s+payCalc(u,d.lines[u.id]).total,0);
  ask(`Valider et verser la paie « ${d.periode} » du département ${nm} : ${money(tot)} à ${L.length} agent(s) ? Les montants seront débités du Trésor et la paie archivée.`,()=>{
   const me=ME(),now=Date.now(),aid=nid(),lines={};
-  L.forEach(u=>{const l=d.lines[u.id],p=payInfo(u),t=lineTotal(l);lines[u.id]={nom:u.nom,grade:gname(u),montant:num(l.montant),prime:num(l.prime),note:l.note||"",nd:p.nd};
+  L.forEach(u=>{const l=d.lines[u.id],r=payCalc(u,l),t=r.total;lines[u.id]={nom:u.nom,grade:gname(u),h:r.h,q:Math.round(r.q*100),av:num(l.av),det:payDet(u,l),x:l.x||{},montant:r.sal,prime:t-r.sal,total:t,note:l.note||""};
    DBX.update("users/"+u.id,{paidAt:now,bonus:0});const tid=nid();
    DBX.set("transactions/"+tid,{id:tid,t:now,type:"out",cat:"Salaires",dept:key=="_dir"?"":(u.dept||""),user:u.id,paie:aid,montant:t,label:`Salaire ${d.periode} — ${u.nom}`,by:me.id,byNom:me.nom})});
   DBX.set("paiearch/"+aid,{id:aid,dept:key,deptNom:nm,periode:d.periode,t:now,by:me.id,byNom:me.nom,subNom:d.subNom||d.updNom||"",total:tot,lines});
@@ -1150,7 +1215,7 @@ function delPaieArch(id){if(!isDir())return;const a=S.paiearch[id];if(!a)return;
  const T=vals(S.transactions).filter(t=>t.paie==id);if(refund)T.forEach(t=>DBX.remove("transactions/"+t.id));else{const up={};T.forEach(t=>up[t.id+"/paie"]=null);if(T.length)DBX.update("transactions",up)}
  DBX.remove("paiearch/"+id);log(`Archive de paie supprimée : ${a.periode} (${money(a.total)})${refund?" — versements annulés au Trésor":""}`,a.deptNom,"Salaires");toast("Archive supprimée.");modal=null;keep={};render()}
 function payArchCSV(id){const a=S.paiearch[id],q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
- const rows=[["Agent","Grade","Dossiers","Heures","Salaire","Prime","Commentaire","Total"]].concat(Object.values(a.lines||{}).map(l=>[l.nom,l.grade,num(l.nd),num(l.h),num(l.montant),num(l.prime),l.note||"",lineTotal(l)]));rows.push([],["Total","","","","","","",a.total]);
+ const rows=[["Agent","Grade","Heures","Quotité","Averto","Activité","Salaire","Primes","Commentaire","Total"]].concat(Object.values(a.lines||{}).map(l=>[l.nom,l.grade,l.h!=null?num(l.h):"",l.q!=null?l.q+" %":"",num(l.av),l.det||"",num(l.montant),num(l.prime),l.note||"",lineTotal(l)]));rows.push([],["Total","","","","","","","","",a.total]);
  const csv="﻿"+rows.map(r=>r.map(q).join(";")).join("\r\n"),b=new Blob([csv],{type:"text/csv;charset=utf-8"}),l=document.createElement("a");l.href=URL.createObjectURL(b);l.download=("paie-"+a.deptNom+"-"+a.periode).replace(/[^\w\-]+/g,"_")+".csv";document.body.appendChild(l);l.click();setTimeout(()=>{URL.revokeObjectURL(l.href);l.remove()},500)}
 
 /* Sécurité : patrouilles */
@@ -1182,10 +1247,10 @@ function closePeriod(){if(!can("fin.archive"))return;const name=tval("arn");if(!
   const ud={},uf={};P.D.forEach(d=>ud[d.id+"/arch"]=id);P.F.filter(f=>f.st=="payee").forEach(f=>uf[f.id+"/arch"]=id);
   if(Object.keys(ud).length)DBX.update("declarations",ud);if(Object.keys(uf).length)DBX.update("factures",uf);
   log(`Période fiscale clôturée : ${name} (${P.D.length} déclarations, ${money(P.emis)} d'impôts)`,"Finances","Archives");clr("arn","arno");toast("Période archivée.")},"Clôturer")}
-function delArchive(id){if(!isDir())return;const a=S.archives[id];ask(`Supprimer l'archive « ${a.name} » ? Ses déclarations et impôts réglés reviendront dans les listes actives.`,()=>{
- const ud={},uf={};vals(S.declarations).filter(d=>d.arch==id).forEach(d=>ud[d.id+"/arch"]=null);vals(S.factures).filter(f=>f.arch==id).forEach(f=>uf[f.id+"/arch"]=null);
- if(Object.keys(ud).length)DBX.update("declarations",ud);if(Object.keys(uf).length)DBX.update("factures",uf);DBX.remove("archives/"+id);DBX.remove("archdata/"+id);delete archCache[id];
- log("Archive fiscale supprimée : "+a.name,"Finances","Archives");modal=null},"Supprimer")}
+function delArchive(id){if(!isDir())return;const a=S.archives[id];const D=vals(S.declarations).filter(d=>d.arch==id),F=vals(S.factures).filter(f=>f.arch==id);
+ ask(`Supprimer définitivement l'archive « ${a.name} » ? Ses ${D.length} déclaration(s) et ${F.length} impôt(s) réglé(s) seront supprimés avec elle. Les encaissements déjà comptés au Trésor ne sont pas modifiés.`,()=>{
+ D.forEach(d=>DBX.remove("declarations/"+d.id));F.forEach(f=>{if(f.proof)DBX.remove("preuves/"+f.id);DBX.remove("factures/"+f.id)});DBX.remove("archives/"+id);DBX.remove("archdata/"+id);delete archCache[id];
+ log(`Archive fiscale supprimée : ${a.name} (${D.length} déclaration(s), ${F.length} impôt(s))`,"Finances","Archives");modal=null},"Supprimer")}
 function archText(a){const E=Object.values(a.perEnt||{}).sort((x,y)=>num(y.impot)-num(x.impot));
  return [`# Bilan fiscal — ${a.name}`,`Du ${a.from?fd(a.from):"début"} au ${fd(a.to)}`,"",`- Déclarations : ${a.nDecl}`,`- CA déclaré : ${money(a.ca)}`,`- Impôts déclarés : ${money(a.emis)}`,`- Impôts encaissés : ${money(a.paye)}`,`- Impayés : ${money(a.impaye)}`,"","## Détail par entreprise"].concat(E.map(e=>`- ${e.nom} (${num(e.taux)} %) : ${money(e.impot)}${num(e.reste)>0?` — reste dû ${money(e.reste)}`:""}`)).join("\n")}
 function archCopy(id){const t=archText(S.archives[id]),done=()=>toast("Bilan copié : collez-le dans Discord.");if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t,done));else fallbackCopy(t,done)}
@@ -1219,8 +1284,9 @@ async function saveUser(id){const u=S.users[id],dir=isDir(),nom=tval("en");if(!n
 function delUser(id){const u=S.users[id];ask(`Supprimer le compte de ${u.nom} (${u.login}) ? Son historique reste dans le journal.`,()=>{DBX.remove("users/"+id);log("Compte supprimé : "+u.nom,u.dept,"Comptes")},"Supprimer")}
 function saveGrade(id){const dir=isDir(),name=tval("gn");if(!name)return say("Intitulé requis.");const old=id?S.grades[id]:null;
  const role=dir?val("gr"):"fonctionnaire",dept=dir?val("gd"):ME().dept;
- const g={name,role,dept,color:val("gc"),perDossier:num(val("gpd")),fixe:num(val("gfx")),rank:num(val("grk")),perms:role=="direction"?{}:finalPerms(old&&old.perms,!dir)};
- if(id)DBX.update("grades/"+id,g);else{id=nid();g.id=id;DBX.set("grades/"+id,g)}
+ const g={name,role,dept,color:val("gc"),rank:num(val("grk")),perms:role=="direction"?{}:finalPerms(old&&old.perms,!dir)};
+ if(dir){const pb=String(val("gpb")).trim();if(pb===""){g.pBase=null;g.pMax=null;g.pRate=null}else{g.pBase=Math.max(0,num(pb));g.pMax=num(val("gpm"))>g.pBase?num(val("gpm")):0;g.pRate=g.pMax?Math.max(0,num(val("gpr"))):0}}
+ if(id)DBX.update("grades/"+id,g);else{id=nid();g.id=id;Object.keys(g).forEach(k=>g[k]==null&&delete g[k]);DBX.set("grades/"+id,g)}
  log(`Grade ${old?"modifié":"créé"} : ${name}`,dept,"Grades");toast("Grade enregistré.");closeM()}
 function delGrade(id){const g=S.grades[id],n=vals(S.users).filter(u=>u.gradeId==id);ask(`Supprimer le grade « ${g.name} » ?${n.length?` ${n.length} agent(s) perdront ce grade.`:""}`,()=>{n.forEach(u=>DBX.update("users/"+u.id,{gradeId:""}));DBX.remove("grades/"+id);log("Grade supprimé : "+g.name,g.dept,"Grades");modal=null},"Supprimer")}
 /* Administration */
@@ -1233,6 +1299,19 @@ function exportData(){const data={config:S.config};COLS.forEach(c=>data[c]=S[c])
 function importData(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let d;try{d=JSON.parse(r.result)}catch(e){return toast("Fichier invalide.",1)}if(!d||!d.users)return toast("Ce fichier n'est pas une sauvegarde de l'intranet.",1);
  ask("Restaurer cette sauvegarde ? Toutes les données actuelles seront remplacées.",()=>{DBX.replaceAll(d).then(()=>{toast("Sauvegarde restaurée.");setTimeout(()=>log("Sauvegarde restaurée","","Administration"),500)})},"Restaurer")};r.readAsText(f);inp.value=""}
 function wipeAll(){ask("Tout effacer définitivement ? Cette action est irréversible.",()=>{DBX.replaceAll({}).then(()=>{meId=null;lsSet("lsgov_session",null);ready=false;S={config:{}};COLS.forEach(c=>S[c]={});setTimeout(boot,600)})},"Tout effacer")}
+
+
+/* Grille salariale : création des grades manquants */
+function gridSync(){if(!isDir())return;const todo=[];
+ Object.entries(GRILLE).forEach(([dc,[nm,R]])=>{const dept=dc=="_dir"?"":DEPTS().find(d=>dcode(d)==dc);if(dept===undefined)return;
+  const ex=vals(S.grades).filter(g=>dc=="_dir"?g.role=="direction":g.role!="direction"&&g.dept==dept);
+  R.forEach((r,i)=>{if(!ex.some(g=>gridRow(g)===r))todo.push({dc,dept,r,i,ex})})});
+ if(!todo.length)return toast("Tous les grades de la grille existent déjà.");
+ ask(`Créer ${todo.length} grade(s) manquant(s) d'après la grille salariale (${[...new Set(todo.map(t=>GRILLE[t.dc][0]))].join(", ")}) ? Ils recevront les permissions de base : complétez-les ensuite.`,()=>{
+  const P=(...a)=>Object.fromEntries(a.map(k=>[pk(k),true])),base=P("annuaire","dos.view","dos.treat");
+  todo.forEach(t=>{const min=t.ex.find(g=>gridRow(g)===GRILLE[t.dc][1][0]),enc=t.dc!="_dir"&&t.i<2,role=t.dc=="_dir"?"direction":enc?"encadrement":"fonctionnaire";
+   const id=nid()+t.i;DBX.set("grades/"+id,{id,name:t.r[0],role,dept:t.dept,color:(min&&min.color)||"#c9a24a",rank:t.i*10,perms:role=="direction"?{}:enc&&min?Object.assign({},min.perms||{}):base})});
+  log(`Grille salariale : ${todo.length} grade(s) créé(s)`,"","Grades");toast(todo.length+" grade(s) créé(s).")},"Créer")}
 
 /* Démarrage */
 applyTheme();render();startData();
