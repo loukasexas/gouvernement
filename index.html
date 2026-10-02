@@ -260,6 +260,11 @@ const isDir=()=>{const u=ME();return u&&u.role=="direction"};
 function myDepts(){const u=ME();return (isDir()||can("dos.all"))?DEPTS():(u&&u.dept?[u.dept]:[])}
 function manageable(u){const m=ME();if(!m||!u||u.id==m.id)return false;if(isDir())return true;
  return u.role=="entreprise"||(u.role=="fonctionnaire"&&u.dept&&u.dept==m.dept)}
+/* Taxes : taux spécifique de l'entreprise > taux de son type > taux par défaut */
+const TCATS=()=>Object.entries(S.config.taxCats||{}).filter(([k,c])=>c&&typeof c=="object").map(([id,c])=>Object.assign({id},c)).sort((a,b)=>(a.rank??99)-(b.rank??99)||String(a.name).localeCompare(b.name));
+const hasOwnRate=u=>u&&u.taxRate!==undefined&&u.taxRate!==null&&u.taxRate!=="";
+function taxRate(u){if(hasOwnRate(u))return num(u.taxRate);const c=u&&u.taxCat&&S.config.taxCats&&S.config.taxCats[u.taxCat];return c?num(c.rate):num(S.config.tax)}
+function taxCatName(u){const c=u&&u.taxCat&&S.config.taxCats&&S.config.taxCats[u.taxCat];return c?c.name:"Sans type"}
 function gradeEditable(g){if(isDir())return true;const m=ME();return can("rh.grades")&&g.role=="fonctionnaire"&&g.dept==m.dept}
 
 /* ---------- Couche de données (Firebase ou local) ---------- */
@@ -298,6 +303,7 @@ async function boot(){try{
  }
  if(!Object.keys(S.grades).length)seedGrades();
  if(!S.config||!S.config.siteName)DBX.update("config",{siteName:"Gouvernement de Los Santos",subtitle:"État de San Andreas — Intranet officiel",depts:DEF_DEPTS,tax:8,requireService:true,treasuryStart:250000,budgets:{},banner:{on:true,txt:"Bienvenue sur l'intranet du Gouvernement de Los Santos. Pensez à prendre votre service avant de traiter les dossiers.",lvl:"info"},maintenance:{on:false,msg:""}});
+ if(!S.config.taxCatsInit){const o={},L=[["Hôpitaux",0],["Forces de l'ordre",0],["Concessionnaires",15],["Garages mécaniques",30],["Commerces",10],["Restauration",10]];L.forEach(([name,rate],i)=>{o[nid()+i]={name,rate,rank:i}});DBX.update("config",{taxCats:o,taxCatsInit:true})}
  const sid=lsGet("lsgov_session");if(sid&&S.users[sid]&&S.users[sid].active!==false)meId=sid;
 } catch(e){console.error(e);toast("Erreur d'initialisation : "+e.message,1)}
  ready=true;applyTheme();render();
@@ -516,8 +522,8 @@ V.mesdem=()=>{const L=vals(S.dossiers).filter(d=>d.ent==meId).sort((a,b)=>b.t-a.
  return `<div class="ph"><h2>Mes demandes</h2><button class="btn" onclick="go('demande')">${ic("plus")}Nouvelle demande</button></div><div class="card tw"><table><tr><th>N°<th>Objet<th>Département<th>Statut<th>Déposée<th>Messages</tr>
  ${L.map(d=>`<tr class="click" onclick="openM('dossier','${d.id}')"><td class="nw">${esc(d.num)}<td>${esc(d.objet)}<div class="mu">${esc(d.type||"")}</div><td>${esc(d.dept)}<td>${bdg(DST,d.st)}<td class="nw">${fd(d.t)}<td>${vals(d.comments).filter(c=>!c.internal).length}</tr>`).join("")||`<tr><td colspan="6" class="empty">Aucune demande déposée.</td></tr>`}</table></div>`};
 const FST={due:["À payer","wa"],verif:["Paiement à vérifier","bl"],payee:["Payée","ok"],annulee:["Annulée","mu"]};
-V.factures=()=>{const u=ME(),F=vals(S.factures).filter(f=>f.ent==u.id).sort((a,b)=>b.t-a.t),Dc=vals(S.declarations).filter(d=>d.ent==u.id).sort((a,b)=>b.t-a.t),tx=num(S.config.tax);
- return `<div class="ph"><h2>Factures & impôts</h2></div><div class="grid g2"><div class="card"><h3>Déclarer mon chiffre d'affaires</h3><p class="mu">Pour régler une facture, effectuez le paiement puis cliquez sur <b>Notifier du paiement</b> en joignant votre preuve : un agent des Finances la vérifiera.</p><p class="mu">Taux d'imposition en vigueur : <b>${tx} %</b>. Une facture d'impôt est générée automatiquement.</p>
+V.factures=()=>{const u=ME(),F=vals(S.factures).filter(f=>f.ent==u.id).sort((a,b)=>b.t-a.t),Dc=vals(S.declarations).filter(d=>d.ent==u.id).sort((a,b)=>b.t-a.t),tx=taxRate(u);
+ return `<div class="ph"><h2>Factures & impôts</h2></div><div class="grid g2"><div class="card"><h3>Déclarer mon chiffre d'affaires</h3><p class="mu">Pour régler une facture, effectuez le paiement puis cliquez sur <b>Notifier du paiement</b> en joignant votre preuve : un agent des Finances la vérifiera.</p><p class="mu">Votre type d'entreprise : <b>${esc(taxCatName(u))}</b> · Taux d'imposition applicable : <b>${tx} %</b>. Une facture d'impôt est générée automatiquement.</p>
  <div class="form"><label class="f">Période<input id="dp" placeholder="Ex. : Semaine 40 — 2026"></label><label class="f">Chiffre d'affaires ($)<input id="dca" type="number" min="0" oninput="keep.dca=this.value;document.getElementById('dimp').textContent=money(num(this.value)*${tx}/100)"></label></div>
  <p>Impôt estimé : <b id="dimp">${money(num(keep.dca)*tx/100)}</b></p><button class="btn" onclick="declare()">Envoyer la déclaration</button><p class="err" id="msg"></p></div>
  <div class="card"><h3>Mes déclarations</h3><div class="tw"><table><tr><th>Période<th>CA<th>Impôt<th>Statut</tr>${Dc.map(d=>`<tr><td>${esc(d.periode)}<td>${money(d.ca)}<td>${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">En vérification</span>'}</tr>`).join("")||`<tr><td colspan="4" class="empty">Aucune déclaration.</td></tr>`}</table></div></div></div>
@@ -607,7 +613,7 @@ function MReg(){const s=modal.reg,R=REG[s],r=modal.id?S[s][modal.id]:{},ed=can(R
 
 /* =================== FINANCES =================== */
 function treasury(){return num(S.config.treasuryStart)+vals(S.transactions).reduce((s,t)=>s+(t.type=="in"?1:-1)*num(t.montant),0)}
-V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);if(can("fin.bill")||can("fin.view"))T.push(["fact","Factures & amendes"]);if(can("fin.decl")||can("fin.view"))T.push(["decl","Déclarations fiscales"]);if(can("fin.budget")||can("fin.view"))T.push(["budget","Budgets & fiscalité"]);
+V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);if(can("fin.bill")||can("fin.view"))T.push(["fact","Factures & amendes"]);if(can("fin.decl")||can("fin.view"))T.push(["decl","Déclarations fiscales"]);if(can("fin.budget")||can("fin.view"))T.push(["fisc","Taxes par entreprise"],["budget","Budgets"]);
  const s=T.some(t=>t[0]==sub)?sub:T[0][0];let h=`<div class="ph"><h2>Finances publiques</h2></div>${tabsH(T,s)}`;
  const X=vals(S.transactions),inS=X.filter(t=>t.type=="in").reduce((a,t)=>a+num(t.montant),0),outS=X.filter(t=>t.type=="out").reduce((a,t)=>a+num(t.montant),0),due=vals(S.factures).filter(f=>f.st=="due");
  if(s=="tresor"){let L=X;if(filt.tt)L=L.filter(t=>t.type==filt.tt);if(filt.tc)L=L.filter(t=>t.cat==filt.tc);if(filt.td)L=L.filter(t=>t.dept==filt.td);L=L.filter(t=>match(filt.tq,t.label,t.cat,t.dept)).sort((a,b)=>b.t-a.t);
@@ -624,9 +630,27 @@ V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);i
  if(s=="decl"){const L=vals(S.declarations).sort((a,b)=>(a.st=="validee")-(b.st=="validee")||b.t-a.t);
   return h+`<div class="card tw"><table><tr><th>Date<th>Entreprise<th>Période<th class="r">CA déclaré<th>Taux<th class="r">Impôt<th>Statut<th></tr>${L.map(d=>`<tr><td class="nw">${fd(d.t)}<td>${esc(d.entNom)}<td>${esc(d.periode)}<td class="r">${money(d.ca)}<td>${d.taux} %<td class="r b">${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">À vérifier</span>'}<td>${can("fin.decl")&&d.st!="validee"?`<button class="btn sm ok" onclick="validDecl('${d.id}')">Valider</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune déclaration.</td></tr>`}</table></div>`}
  const B=S.config.budgets||{},ed=can("fin.budget");
- return h+`<div class="card"><h3>Fiscalité</h3><div class="inl"><label class="f">Taux d'imposition sur le CA (%)<input id="ctax" type="number" min="0" max="100" step="0.5" value="${num(S.config.tax)}" ${ed?"":"disabled"} style="width:120px"></label>${ed?`<button class="btn sec sm" onclick="setTax()">Appliquer</button>`:""}</div></div>
- <div class="card tw"><h3>Budgets par département</h3><table><tr><th>Département<th class="r">Budget alloué<th class="r">Dépensé<th style="width:30%">Consommation<th class="r">Reste</tr>${DEPTS().map((d,i)=>{const b=num(B[d]),sp=X.filter(t=>t.type=="out"&&t.dept==d).reduce((a,t)=>a+num(t.montant),0),p=b?Math.min(100,sp/b*100):0;
+ if(s=="fisc")return h+fiscView(ed);
+ return h+` <div class="card tw"><h3>Budgets par département</h3><table><tr><th>Département<th class="r">Budget alloué<th class="r">Dépensé<th style="width:30%">Consommation<th class="r">Reste</tr>${DEPTS().map((d,i)=>{const b=num(B[d]),sp=X.filter(t=>t.type=="out"&&t.dept==d).reduce((a,t)=>a+num(t.montant),0),p=b?Math.min(100,sp/b*100):0;
   return `<tr><td>${esc(d)}<td class="r">${ed?`<input type="number" min="0" value="${b}" onchange="setBudget(${i},this.value)">`:money(b)}<td class="r">${money(sp)}<td><div class="bar"><i class="${b&&sp>b?"over":""}" style="width:${b?p:0}%"></i></div><td class="r ${b-sp<0?"":"b"}" style="${b-sp<0?"color:var(--no)":""}">${money(b-sp)}</tr>`}).join("")}</table></div>`};
+function fiscView(ed){const C=TCATS(),E=vals(S.users).filter(u=>u.role=="entreprise").sort((a,b)=>a.nom.localeCompare(b.nom)),q=filt.tq2||"";
+ const cnt=id=>E.filter(u=>(u.taxCat||"")==id).length;
+ const groups=C.map(c=>[c.id,c.name,num(c.rate)]).concat([["","Sans type",num(S.config.tax)]]);
+ const row=u=>`<tr><td class="b">${esc(u.nom)}<div class="mu sm">${esc(u.login)}</div><td>${ed?`<select onchange="setEntCat('${u.id}',this.value)" style="width:200px">${opts([["","Sans type"]].concat(C.map(c=>[c.id,c.name])),u.taxCat||"")}</select>`:esc(taxCatName(u))}
+  <td>${ed?`<input type="number" min="0" max="100" step="0.5" placeholder="Hérité" value="${hasOwnRate(u)?num(u.taxRate):""}" onchange="setEntRate('${u.id}',this.value)" style="width:90px"> %`:hasOwnRate(u)?num(u.taxRate)+" %":"—"}
+  <td class="r"><span class="bdg ${taxRate(u)?"gd":"mu"}">${taxRate(u)} %</span>${hasOwnRate(u)?`<div class="mu sm">spécifique</div>`:`<div class="mu sm">du type</div>`}</tr>`;
+ return `<div class="grid g2"><div class="card"><h3>Types d'entreprise</h3><p class="mu">Chaque type a un taux par défaut. Une entreprise peut aussi avoir un taux spécifique, prioritaire sur celui de son type.</p>
+ <div class="tw"><table><tr><th>Type<th>Taux par défaut<th>Entreprises<th></tr>${C.map(c=>`<tr><td>${ed?`<input value="${esc(c.name)}" onchange="setCat('${c.id}','name',this.value)" style="width:100%;min-width:150px">`:`<b>${esc(c.name)}</b>`}<td class="nw">${ed?`<input type="number" min="0" max="100" step="0.5" value="${num(c.rate)}" onchange="setCat('${c.id}','rate',this.value)" style="width:80px"> %`:num(c.rate)+" %"}<td>${cnt(c.id)}<td>${ed?`<button class="btn gh sm" onclick="delCat('${c.id}')">×</button>`:""}</tr>`).join("")}
+ <tr><td class="mu">Sans type (par défaut)<td class="nw">${ed?`<input id="ctax" type="number" min="0" max="100" step="0.5" value="${num(S.config.tax)}" onchange="setTax()" style="width:80px"> %`:num(S.config.tax)+" %"}<td>${cnt("")}<td></tr></table></div>
+ ${ed?`<div class="inl" style="margin-top:12px"><input id="ncn" placeholder="Nouveau type (ex. : Hôpitaux)"><input id="ncr" type="number" min="0" max="100" step="0.5" placeholder="Taux %" style="min-width:90px;width:100px"><button class="btn sec" onclick="addCat()">${ic("plus")}Ajouter</button></div>`:""}</div>
+ <div class="card"><h3>Récapitulatif</h3><p class="mu">Annonce prête à copier pour Discord, au format de la liste des taxes.</p><button class="btn" onclick="copyTaxes()">Copier pour Discord</button>
+ <div class="pre mu sm" style="margin-top:12px;max-height:260px;overflow:auto;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px">${esc(taxText())}</div></div></div>
+ <div class="card inl">${search("tq2","Rechercher une entreprise…")}<span class="mu">${E.length} entreprise(s) — un compte « Entreprise » = une entreprise</span></div>
+ ${groups.map(([id,name,rate])=>{const L=E.filter(u=>(u.taxCat||"")==id&&match(q,u.nom,u.login));if(!L.length&&(q||id===""))return "";
+  return `<div class="card tw"><div class="inl" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">${esc(name)}</h3><span class="mu">Taux du type : <b>${rate} %</b></span></div><table><tr><th>Entreprise<th>Type<th>Taux spécifique<th class="r">Taux appliqué</tr>${L.map(row).join("")||`<tr><td colspan="4" class="empty">Aucune entreprise dans ce type.</td></tr>`}</table></div>`}).join("")}`}
+function taxText(){const E=vals(S.users).filter(u=>u.role=="entreprise"&&u.active!==false);const out=["# Taxes — "+(S.config.siteName||"Gouvernement de Los Santos"),""];
+ TCATS().concat([{id:"",name:"Autres entreprises"}]).forEach(c=>{const L=E.filter(u=>(u.taxCat||"")==c.id).sort((a,b)=>a.nom.localeCompare(b.nom));if(!L.length)return;out.push("## "+c.name);L.forEach(u=>out.push("- "+u.nom+" : "+taxRate(u)+"%"));out.push("")});
+ return out.join("\n").trim()}
 const CATS=["Impôts","Amendes","Factures","Salaires","Subventions","Fonctionnement","Investissement","Sécurité","Événements","Autre"];
 
 /* =================== ANNONCES & MESSAGERIE =================== */
@@ -664,6 +688,7 @@ V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(c
   return h+(can("rh.create")?`<div class="card"><h3>Créer un compte</h3><div class="form"><label class="f">Nom affiché<input id="cn" placeholder="Ex. : John Smith / Bean Machine"></label><label class="f">Identifiant<input id="cl" autocomplete="off"></label><label class="f">Mot de passe provisoire<input id="cp" autocomplete="off"></label>
   <label class="f">Rôle<select id="cr" onchange="keep.cr=this.value;render()">${opts(rs.map(r=>[r,ROLES[r]]),cr)}</select></label>
   ${cr=="fonctionnaire"||cr=="encadrement"?`<label class="f">Département${dir?`<select id="cd" onchange="keep.cd=this.value;render()">${opts([["","— Choisir —"]].concat(DEPTS().map(d=>[d,d])),cd)}</select>`:`<input value="${esc(cd)}" disabled>`}</label>`:""}
+  ${cr=="entreprise"?`<label class="f">Type d'entreprise (taxes)<select id="ctc">${opts([["","Sans type"]].concat(TCATS().map(c=>[c.id,c.name+" — "+num(c.rate)+" %"])))}</select></label>`:""}
   ${cr!="entreprise"?`<label class="f">Grade<select id="cg"><option value="">— Aucun —</option>${gl.map(g=>`<option value="${g.id}">${esc(g.name)}${g.dept?" ("+esc(g.dept)+")":""}</option>`).join("")}</select></label><label class="f">Matricule<input id="cm" placeholder="Ex. : JUS-014"></label>`:""}
   <label class="f">Téléphone<input id="ct"></label></div><button class="btn" onclick="addUser()">Créer le compte</button><p class="err" id="msg"></p><p class="mu sm">L'utilisateur devra changer son mot de passe à la première connexion.</p></div>`:"")+
   `<div class="card inl">${search("pq","Nom, identifiant, grade…")}${fsel("pr",Object.entries(ROLES),"Tous rôles")}${fsel("pd",DEPTS(),"Tous départements")}</div>
@@ -704,6 +729,7 @@ function MUser(u){if(!u||!manageable(u))return null;if(!modal.draft)modal.draft=
  return {title:"Modifier — "+esc(u.nom),wide:1,body:`<div class="form"><label class="f">Nom affiché<input id="en" value="${esc(u.nom)}"></label><label class="f">Identifiant<input value="${esc(u.login)}" disabled></label>
  <label class="f">Rôle<select id="er" onchange="keep.er=this.value;render()" ${dir?"":"disabled"}>${opts(Object.entries(ROLES),role)}</select></label>
  ${role=="fonctionnaire"||role=="encadrement"?`<label class="f">Département<select id="ed" onchange="keep.ed=this.value;render()" ${dir?"":"disabled"}>${opts([["","— Choisir —"]].concat(DEPTS().map(d=>[d,d])),dept)}</select></label>`:""}
+ ${role=="entreprise"?`<label class="f">Type d'entreprise (taxes)<select id="etc">${opts([["","Sans type"]].concat(TCATS().map(c=>[c.id,c.name+" — "+num(c.rate)+" %"])),u.taxCat||"")}</select></label>`:""}
  ${role!="entreprise"?`<label class="f">Grade<select id="eg"><option value="">— Aucun —</option>${gl.map(g=>`<option value="${g.id}" ${g.id==u.gradeId?"selected":""}>${esc(g.name)}</option>`).join("")}</select></label><label class="f">Matricule<input id="em" value="${esc(u.matricule||"")}"></label>`:""}
  <label class="f">Téléphone<input id="et" value="${esc(u.tel||"")}"></label><label class="f">État du compte<select id="ea">${opts([["1","Actif"],["0","Suspendu"]],u.active===false?"0":"1")}</select></label>
  <label class="f">Nouveau mot de passe provisoire<input id="ep" placeholder="Laisser vide pour ne pas changer" autocomplete="off"></label></div>
@@ -845,12 +871,23 @@ function payFact(id){const f=S.factures[id],u=ME();if(!can("fin.bill"))return;as
  encaisser(f);
  log(`Paiement ${f.num} (${money(f.montant)}) de ${f.entNom} enregistré directement`,"Finances","Finances");toast("Paiement enregistré.")},"Marquer payée")}
 function cancelFact(id){const f=S.factures[id];ask("Annuler "+f.num+" ?",()=>{DBX.update("factures/"+id,{st:"annulee"});log("Annulation "+f.num,"Finances","Finances")},"Annuler la facture")}
-function declare(){const p=tval("dp"),ca=num(val("dca"));if(!p||ca<=0)return say("Indiquez la période et un chiffre d'affaires.");const u=ME(),tx=num(S.config.tax),imp=Math.round(ca*tx/100),id=nid(),fid=nid();
+function declare(){const p=tval("dp"),ca=num(val("dca"));if(!p||ca<=0)return say("Indiquez la période et un chiffre d'affaires.");const u=ME(),tx=taxRate(u),imp=Math.round(ca*tx/100),id=nid(),fid=nid();
  DBX.set("declarations/"+id,{id,ent:u.id,entNom:u.nom,periode:p,ca,taux:tx,impot:imp,st:"declaree",t:Date.now(),fac:fid});
  if(imp>0)DBX.set("factures/"+fid,{id:fid,num:nextNum("factures","FAC"),kind:"taxe",ent:u.id,entNom:u.nom,motif:"Impôt sur le CA — "+p,montant:imp,ech:new Date(Date.now()+7*864e5).toISOString().slice(0,10),dept:"Finances",st:"due",t:Date.now(),by:u.id,byNom:u.nom});
  log(`Déclaration fiscale de ${u.nom} (${p}) : CA ${money(ca)}`,"Finances","Finances");clr("dp","dca");delete keep.dca;toast("Déclaration envoyée. Facture d'impôt générée.")}
 function validDecl(id){const d=S.declarations[id];DBX.update("declarations/"+id,{st:"validee",vby:meId,vt:Date.now()});log("Déclaration validée : "+d.entNom+" ("+d.periode+")","Finances","Finances")}
-function setTax(){const t=Math.min(100,Math.max(0,num(val("ctax"))));DBX.update("config",{tax:t});log("Taux d'imposition fixé à "+t+" %","Finances","Finances");toast("Taux appliqué.")}
+function setTax(){const t=Math.min(100,Math.max(0,num(val("ctax"))));DBX.update("config",{tax:t});log("Taux par défaut (sans type) fixé à "+t+" %","Finances","Finances");toast("Taux appliqué.")}
+function addCat(){if(!can("fin.budget"))return;const n=tval("ncn"),r=val("ncr");if(!n)return toast("Indiquez le nom du type.",1);const id=nid(),rate=Math.min(100,Math.max(0,num(r)));
+ DBX.update("config/taxCats",{[id]:{name:n,rate,rank:TCATS().length}});log(`Type d'entreprise créé : ${n} (${rate} %)`,"Finances","Taxes");clr("ncn","ncr");toast("Type ajouté.")}
+function setCat(id,f,v){if(!can("fin.budget"))return;const c=S.config.taxCats[id];if(!c)return;if(f=="rate")v=Math.min(100,Math.max(0,num(v)));else{v=String(v).trim();if(!v)return render()}
+ DBX.update("config/taxCats/"+id,{[f]:v});log(f=="rate"?`Taux du type « ${c.name} » : ${v} %`:`Type « ${c.name} » renommé en « ${v} »`,"Finances","Taxes")}
+function delCat(id){const c=S.config.taxCats[id],L=vals(S.users).filter(u=>u.taxCat==id);ask(`Supprimer le type « ${c.name} » ?${L.length?` ${L.length} entreprise(s) passeront « Sans type ».`:""}`,()=>{L.forEach(u=>DBX.update("users/"+u.id,{taxCat:""}));DBX.remove("config/taxCats/"+id);log(`Type d'entreprise supprimé : ${c.name}`,"Finances","Taxes")},"Supprimer")}
+function setEntCat(uid,cat){if(!can("fin.budget"))return;const u=S.users[uid];DBX.update("users/"+uid,{taxCat:cat||""});log(`${u.nom} classée « ${cat?S.config.taxCats[cat].name:"Sans type"} »`,"Finances","Taxes")}
+function setEntRate(uid,v){if(!can("fin.budget"))return;const u=S.users[uid],own=String(v).trim()!=="";const r=own?Math.min(100,Math.max(0,num(v))):null;
+ DBX.update("users/"+uid,{taxRate:r});log(own?`Taux spécifique de ${u.nom} : ${r} %`:`Taux spécifique de ${u.nom} retiré (taux du type)`,"Finances","Taxes")}
+function copyTaxes(){const t=taxText();const done=()=>toast("Récapitulatif copié : collez-le dans Discord.");
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t,done));else fallbackCopy(t,done)}
+function fallbackCopy(t,cb){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy");cb()}catch(e){toast("Copie impossible : sélectionnez le texte manuellement.",1)}a.remove()}
 function setBudget(i,v){const d=DEPTS()[i];DBX.update("config/budgets",{[d]:num(v)});log(`Budget ${d} : ${money(v)}`,"Finances","Finances")}
 
 /* Preuves de paiement */
@@ -887,12 +924,12 @@ async function addUser(){const dir=isDir(),nom=tval("cn"),l=tval("cl"),p=val("cp
  if(vals(S.users).some(u=>u.login.toLowerCase()==l.toLowerCase()))return say("Cet identifiant existe déjà.");
  if(!dir&&!["entreprise","fonctionnaire"].includes(r))return say("Rôle non autorisé.");
  const dept=(r=="fonctionnaire"||r=="encadrement")?(dir?val("cd"):ME().dept):"";if((r=="fonctionnaire"||r=="encadrement")&&!dept)return say("Choisissez un département.");
- const id=nid();await DBX.set("users/"+id,{id,login:l,hash:await hashPw(l,p),nom,role:r,dept,gradeId:r=="entreprise"?"":val("cg"),matricule:r=="entreprise"?"":tval("cm"),tel:tval("ct"),active:true,mustChange:true,created:Date.now(),createdBy:meId});
+ const id=nid();await DBX.set("users/"+id,{id,login:l,hash:await hashPw(l,p),nom,role:r,dept,gradeId:r=="entreprise"?"":val("cg"),taxCat:r=="entreprise"?val("ctc"):"",matricule:r=="entreprise"?"":tval("cm"),tel:tval("ct"),active:true,mustChange:true,created:Date.now(),createdBy:meId});
  log(`Compte créé : ${nom} (${ROLES[r]}${dept?", "+dept:""})`,dept,"Comptes");clr("cn","cl","cp","cm","ct");toast("Compte créé. Identifiant : "+l)}
 async function saveUser(id){const u=S.users[id],dir=isDir(),nom=tval("en");if(!nom)return say("Nom requis.");
  const role=dir?val("er"):u.role,up={nom,tel:tval("et"),active:val("ea")=="1"};up.role=role;
  if(role=="fonctionnaire"||role=="encadrement"){up.dept=dir?val("ed"):u.dept;if(!up.dept)return say("Choisissez un département.")}else up.dept="";
- if(role!="entreprise"){up.gradeId=val("eg");up.matricule=tval("em")}else{up.gradeId="";}
+ if(role!="entreprise"){up.gradeId=val("eg");up.matricule=tval("em")}else{up.gradeId="";up.taxCat=val("etc")||"";}
  const np=val("ep");if(np){up.hash=await hashPw(u.login,np);up.mustChange=true}
  if(dir&&(role=="fonctionnaire"||role=="encadrement"))up.xperms=finalPerms(null,false);
  if(up.active===false&&u.svc&&u.svc.on){up.svc=Object.assign({},u.svc,{on:false})}
