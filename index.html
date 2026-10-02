@@ -112,6 +112,31 @@ td input,td select{margin:0;width:110px;padding:5px 8px}
 .modal .mh h3{margin:0}
 .modal .mb{padding:16px 18px}
 .modal .mf{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--bd)}
+.modal.wide{max-width:860px;display:flex;flex-direction:column;max-height:90vh}
+.modal.wide .mb{overflow-y:auto;flex:1;min-height:0}
+.modal.wide .mf{background:var(--cd);border-radius:0 0 14px 14px}
+.modal .mh h3{text-transform:uppercase;letter-spacing:.06em;font-size:17px}
+.pe-card,.pe{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.pe-pay summary{cursor:pointer;color:var(--mu);font-size:13px;font-weight:600}
+.pe-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pe-top .pe-t{color:var(--mu);font-size:13px;font-weight:600}
+.pe-top input{width:auto;flex:1;min-width:160px;margin:0;padding:6px 10px}
+.acc{border:1px solid var(--bd);border-radius:12px;margin-bottom:8px;background:var(--cd);overflow:hidden;transition:border-color .15s}
+.acc.open{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,162,74,.25)}
+.acc-h{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:var(--tx);padding:11px 14px;font:inherit;font-weight:600;cursor:pointer;text-align:left}
+.acc.open .acc-h{background:var(--cd2)}
+.acc-h svg{width:17px;height:17px;flex:none;color:var(--mu)}
+.acc-h .chev svg{color:var(--gold2);transition:transform .15s}
+.acc.open .acc-h .chev svg{transform:rotate(180deg)}
+.acc-n{flex:1}.acc-c{color:var(--mu);font-weight:500}.acc.has .acc-c{color:var(--gold2)}
+.acc-r{font-size:12px;color:var(--mu);font-variant-numeric:tabular-nums}
+.acc-b{padding:8px 16px 10px 44px}
+.pck{display:flex;align-items:center;gap:12px;padding:7px 0;cursor:pointer;font-size:14.5px}
+.pck input{width:19px;height:19px;accent-color:var(--gold);cursor:pointer;flex:none}
+.pck.dis{opacity:.4;cursor:not-allowed}
+.acc-f{display:flex;gap:14px;padding-top:6px;border-top:1px dashed var(--bd);margin-top:4px}
+.lnk{background:none;border:0;color:var(--gold2);font:inherit;font-size:12.5px;cursor:pointer;padding:4px 0}
+.lnk:hover{text-decoration:underline}
 .x{background:none;border:0;color:var(--mu);font-size:22px;cursor:pointer;line-height:1}
 .toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:8px}
 .toast{background:var(--cd2);border:1px solid var(--bd);border-left:3px solid var(--gold);padding:10px 14px;border-radius:10px;box-shadow:var(--sh);max-width:340px;animation:fi .2s}
@@ -170,15 +195,19 @@ const DOS_TYPES={
 const DST={attente:["En attente","wa"],cours:["En cours","bl"],ok:["Acceptée","ok"],no:["Refusée","no"]};
 const AST={ouverte:["Ouverte","bl"],instruction:["En instruction","wa"],audience:["Audience fixée","gd"],jugee:["Jugée","ok"],classee:["Classée sans suite","mu"]};
 const PERMS=[
- ["Général",[["dash","Tableau de bord global"],["annuaire","Annuaire des agents"]]],
- ["Dossiers administratifs",[["dos.view","Consulter les dossiers"],["dos.treat","Accepter / refuser"],["dos.assign","Assigner aux agents"],["dos.all","Tous les départements"],["dos.delete","Supprimer un dossier"]]],
- ["Justice",[["jus.view","Consulter les affaires"],["jus.open","Ouvrir une affaire"],["jus.instruct","Instruire (pièces, auditions, notes)"],["jus.status","Statut, juge, audience, clôture / réouverture"],["jus.verdict","Rendre un jugement"],["jus.secret","Voir les affaires confidentielles"],["jus.delete","Supprimer une affaire"]]],
- ["Registres",[["reg.ent.view","Entreprises — consulter"],["reg.ent.edit","Entreprises — modifier"],["reg.civ.view","État civil — consulter"],["reg.civ.edit","État civil — modifier"],["reg.cas.view","Casier — consulter"],["reg.cas.edit","Casier — modifier"],["reg.avis.view","Avis de recherche — consulter"],["reg.avis.edit","Avis de recherche — modifier"]]],
- ["Finances",[["fin.view","Consulter la trésorerie"],["fin.edit","Saisir des opérations"],["fin.bill","Émettre factures et amendes"],["fin.decl","Valider les déclarations fiscales"],["fin.budget","Budgets et taux d'imposition"]]],
- ["Communication",[["com.post","Publier des annonces"],["com.banner","Gérer le bandeau d'information"]]],
- ["Personnel",[["rh.view","Voir les comptes"],["rh.create","Créer des comptes"],["rh.edit","Modifier / suspendre des comptes"],["rh.delete","Supprimer des comptes"],["rh.grades","Gérer les grades"],["rh.pay.view","Voir les salaires"],["rh.pay.edit","Modifier les primes"],["rh.pay.do","Verser les salaires"]]],
- ["Journal",[["log.dept","Journal du département"],["log.all","Journal complet"]]],
- ["Administration",[["adm.site","Paramètres du site, maintenance, sauvegarde"]]]
+ ["Général",[["dash","Peut voir le tableau de bord global"],["annuaire","Peut consulter l'annuaire des agents"]],"home"],
+ ["Dossiers administratifs",[["dos.view","Peut voir les dossiers de son département"],["dos.treat","Peut accepter ou refuser un dossier"],["dos.assign","Peut assigner un dossier à un agent"],["dos.all","Peut voir les dossiers de tous les départements"],["dos.delete","Peut supprimer un dossier"]],"folder"],
+ ["Affaires judiciaires",[["jus.view","Peut voir la liste des affaires"],["jus.open","Peut ouvrir une affaire"],["jus.instruct","Peut instruire une affaire (pièces, auditions, notes)"],["jus.status","Peut changer le statut, le juge et l'audience (clore / rouvrir)"],["jus.verdict","Peut rendre un jugement"],["jus.secret","Peut voir les affaires confidentielles"],["jus.delete","Peut supprimer une affaire"]],"scale"],
+ ["Registre des entreprises",[["reg.ent.view","Peut consulter le registre des entreprises"],["reg.ent.edit","Peut créer, modifier et supprimer des fiches entreprise"]],"book"],
+ ["État civil",[["reg.civ.view","Peut consulter l'état civil"],["reg.civ.edit","Peut créer, modifier et supprimer des fiches d'identité"]],"user"],
+ ["Casier judiciaire",[["reg.cas.view","Peut consulter le casier judiciaire"],["reg.cas.edit","Peut ajouter, modifier et supprimer des mentions"]],"file"],
+ ["Avis de recherche",[["reg.avis.view","Peut voir les avis de recherche"],["reg.avis.edit","Peut émettre, modifier et lever des avis"]],"shield"],
+ ["Finances",[["fin.view","Peut consulter la trésorerie"],["fin.edit","Peut saisir des recettes et des dépenses"],["fin.bill","Peut émettre des factures et des amendes"],["fin.decl","Peut valider les déclarations fiscales"],["fin.budget","Peut gérer les budgets et le taux d'imposition"]],"coins"],
+ ["Communication",[["com.post","Peut publier des annonces"],["com.banner","Peut gérer le bandeau d'information"]],"megaphone"],
+ ["Comptes du personnel",[["rh.view","Peut voir la liste des comptes"],["rh.create","Peut créer des comptes"],["rh.edit","Peut modifier et suspendre des comptes"],["rh.delete","Peut supprimer des comptes"],["rh.grades","Peut créer et modifier des grades"]],"users"],
+ ["Salaires",[["rh.pay.view","Peut voir les salaires"],["rh.pay.edit","Peut modifier les primes"],["rh.pay.do","Peut verser les salaires"]],"wallet"],
+ ["Journal d'activité",[["log.dept","Peut voir le journal de son département"],["log.all","Peut voir le journal complet"]],"list"],
+ ["Administration",[["adm.site","Peut gérer les paramètres du site, la maintenance et les sauvegardes"]],"settings"]
 ];
 const ALLP=PERMS.flatMap(g=>g[1].map(p=>p[0]));
 const PL=Object.fromEntries(PERMS.flatMap(g=>g[1]));
@@ -302,12 +331,12 @@ function render(){
  const root=$("#root");if(!root)return;
  const ae=document.activeElement;let fid=ae&&ae.id,ss=null,se=null;try{ss=ae.selectionStart;se=ae.selectionEnd}catch(e){}
  root.querySelectorAll("input[id],textarea[id],select[id]").forEach(e=>{if(e.type!="checkbox"&&e.type!="file"&&!e.hasAttribute("data-nokeep"))keep[e.id]=e.value});
- const mb=root.querySelector(".modal-bg"),ms=mb?mb.scrollTop:0,tb=root.querySelector(".thread .body"),ts=tb?tb.scrollTop:0,tAtEnd=tb?tb.scrollHeight-tb.scrollTop-tb.clientHeight<40:true;
+ const mbd=root.querySelector(".modal .mb"),mbs=mbd?mbd.scrollTop:0;const mb=root.querySelector(".modal-bg"),ms=mb?mb.scrollTop:0,tb=root.querySelector(".thread .body"),ts=tb?tb.scrollTop:0,tAtEnd=tb?tb.scrollHeight-tb.scrollTop-tb.clientHeight<40:true;
  let h;try{h=page()}catch(e){console.error(e);h=`<div class="login"><div class="box card"><h3>Erreur d'affichage</h3><p class="mu">${esc(e.message)}</p><button class="btn" onclick="modal=null;go('accueil')">Revenir à l'accueil</button></div></div>`}
  root.innerHTML=h;
  for(const id in keep){const e=document.getElementById(id);if(e&&e.type!="checkbox"&&!e.hasAttribute("data-nokeep")&&e.value!==keep[id]){if(e.tagName=="SELECT"&&![...e.options].some(o=>o.value==keep[id]))continue;e.value=keep[id]}}
  if(fid){const e=document.getElementById(fid);if(e){e.focus({preventScroll:true});try{if(ss!=null)e.setSelectionRange(ss,se)}catch(x){}}}
- const mb2=root.querySelector(".modal-bg");if(mb2)mb2.scrollTop=ms;
+ const mb2=root.querySelector(".modal-bg");if(mb2)mb2.scrollTop=ms;const mbd2=root.querySelector(".modal .mb");if(mbd2)mbd2.scrollTop=mbs;
  const tb2=root.querySelector(".thread .body");if(tb2)tb2.scrollTop=tAtEnd?tb2.scrollHeight:ts;
  tickClocks();notify();
  document.title=(unread()?"("+unread()+") ":"")+"Intranet — "+(S.config.siteName||"Gouvernement de Los Santos");
@@ -332,7 +361,7 @@ function closeSide(){$(".side")&&$(".side").classList.remove("open");$(".scrim")
 document.addEventListener("keydown",e=>{if(e.key=="Escape"&&modal){modal.type=="confirm"?askNo():closeM()}});
 
 /* ---------- Icônes ---------- */
-const IC={home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
+const IC={home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
 function ic(n){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(IC[n]||"").split("|").map(p=>p[0]=="c"?(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`)(p.slice(1).split(",")):`<path d="${p}"/>`).join("")}</svg>`}
 function seal(){const src=(S.config&&S.config.logo)||"logo.png";return `<img class="logo" src="${esc(src)}" alt="Sceau du gouvernement" onerror="this.outerHTML=sealSvg()">`}
 function setFavicon(){let l=document.querySelector("link[rel=icon]");if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l)}l.href=(S.config&&S.config.logo)||"logo.png"}
@@ -639,24 +668,37 @@ V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(c
  <div class="card tw"><div class="inl" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Salaires de la période</h3>${can("rh.pay.do")?`<button class="btn" onclick="payAll()">Verser tous les salaires</button>`:""}</div>
  <table><tr><th>Agent<th>Grade<th>Dossiers<th>Heures<th class="r">Fixe<th>Prime / ajustement<th class="r">Total<th>Dernier versement<th></tr>${P.map(([u,p])=>`<tr><td class="b">${esc(u.nom)}<div class="mu">${esc(u.dept||"")}</div><td>${esc(gname(u))}<td>${p.nd} × ${money(p.pd)}<td>${p.h.toFixed(1)} h × ${money(p.ph)}<td class="r">${money(p.fx)}<td>${can("rh.pay.edit")?`<input type="number" value="${num(u.bonus)}" onchange="setBonus('${u.id}',this.value)">`:money(p.bo)}<td class="r b">${money(p.total)}<td class="nw">${u.paidAt?fd(u.paidAt):"—"}<td>${can("rh.pay.do")&&p.total>0?`<button class="btn ok sm" onclick="payUser('${u.id}')">Verser</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun agent.</td></tr>`}</table></div>
  <div class="card tw"><h3>Historique des versements</h3><table><tr><th>Date<th>Agent<th>Détail<th class="r">Montant<th>Par</tr>${hist.map(t=>`<tr><td class="nw">${fd(t.t)}<td>${esc(uname(t.user))}<td class="mu">${esc(t.label)}<td class="r b">${money(t.montant)}<td>${esc(t.byNom)}</tr>`).join("")||`<tr><td colspan="5" class="empty">Aucun versement.</td></tr>`}</table></div>`};
-function permBoxes(prefix,cur,lockOwn){return PERMS.map(([gn,ps])=>`<div class="pgrp"><h4>${gn}</h4><div class="pl">${ps.map(([k,l])=>{const dis=lockOwn&&!can(k);return `<label class="ck"><input type="checkbox" id="${prefix}${k.replace(/\./g,"_")}" ${cur&&cur[pk(k)]?"checked":""} ${dis?"disabled":""}><span>${esc(l)}</span></label>`}).join("")}</div></div>`).join("")}
-function readPerms(prefix,base,lockOwn){const o={};ALLP.forEach(k=>{const e=document.getElementById(prefix+k.replace(/\./g,"_"));if(!e)return;if(lockOwn&&!can(k)){if(base&&base[pk(k)])o[pk(k)]=true;return}if(e.checked)o[pk(k)]=true});return o}
+let openGrp=new Set([0]);
+function permEditor(lockOwn){const d=modal.draft||{},q=(keep.peq||"").trim().toLowerCase(),tot=ALLP.filter(k=>d[pk(k)]).length;
+ return `<div class="pe"><div class="pe-top"><span class="pe-t">Permissions</span><span class="bdg gd">${tot} / ${ALLP.length}</span><input id="peq" placeholder="Rechercher une permission…" oninput="render()"><button class="btn gh sm" onclick="peAll(1)">Tout cocher</button><button class="btn gh sm" onclick="peAll(0)">Tout décocher</button></div>
+ ${lockOwn?`<p class="mu sm" style="margin:0 0 10px">Les permissions grisées ne peuvent pas être accordées : vous ne les possédez pas vous-même.</p>`:""}
+ ${PERMS.map(([gn,ps,icn],i)=>{const vis=ps.filter(([k,l])=>!q||l.toLowerCase().includes(q)||gn.toLowerCase().includes(q));if(!vis.length)return "";const n=ps.filter(([k])=>d[pk(k)]).length,open=q?true:openGrp.has(i);
+  return `<div class="acc ${open?"open":""} ${n?"has":""}"><button class="acc-h" onclick="peToggle(${i})" aria-expanded="${open}"><span class="chev">${ic("chev")}</span>${ic(icn)}<span class="acc-n">${esc(gn)} <span class="acc-c">(${n})</span></span><span class="acc-r">${n}/${ps.length}</span></button>
+  ${open?`<div class="acc-b">${vis.map(([k,l])=>{const dis=lockOwn&&!can(k);return `<label class="pck ${dis?"dis":""}"><input type="checkbox" ${d[pk(k)]?"checked":""} ${dis?"disabled":""} onchange="peSet('${k}',this.checked)"><span>${esc(l)}</span></label>`}).join("")}
+  <div class="acc-f"><button class="lnk" onclick="peGrp(${i},1)">Tout cocher</button><button class="lnk" onclick="peGrp(${i},0)">Tout décocher</button></div></div>`:""}</div>`}).join("")}</div>`}
+function peToggle(i){openGrp.has(i)?openGrp.delete(i):openGrp.add(i);render()}
+function peSet(k,v){modal.draft=modal.draft||{};if(v)modal.draft[pk(k)]=true;else delete modal.draft[pk(k)];render()}
+function peGrp(i,v){const q=(keep.peq||"").trim().toLowerCase();PERMS[i][1].filter(([k,l])=>!q||l.toLowerCase().includes(q)||PERMS[i][0].toLowerCase().includes(q)).forEach(([k])=>{if(!(modal.lock&&!can(k)))peSet0(k,v)});render()}
+function peAll(v){ALLP.forEach(k=>{if(!(modal.lock&&!can(k)))peSet0(k,v)});render()}
+function peSet0(k,v){modal.draft=modal.draft||{};if(v)modal.draft[pk(k)]=true;else delete modal.draft[pk(k)]}
+function finalPerms(base,lockOwn){const o={},d=modal.draft||{};ALLP.forEach(k=>{const K=pk(k);if(lockOwn&&!can(k)){if(base&&base[K])o[K]=true}else if(d[K])o[K]=true});return o}
 function MGrade(){const g=modal.id?S.grades[modal.id]:{role:"fonctionnaire",dept:isDir()?"":ME().dept,perms:{},color:"#c9a24a"};if(modal.id&&!g)return null;const dir=isDir();const role=keep.gr||g.role;
- return {title:modal.id?"Modifier le grade":"Nouveau grade",body:`<div class="form"><label class="f">Intitulé du grade<input id="gn" value="${esc(g.name||"")}" placeholder="Ex. : Ministre de la Justice"></label>
- <label class="f">Rôle associé<select id="gr" onchange="keep.gr=this.value;render()" ${dir?"":"disabled"}>${opts(Object.entries(ROLES).filter(r=>r[0]!="entreprise"),role)}</select></label>
- <label class="f">Département<select id="gd" ${dir?"":"disabled"}>${opts([["","Tous"]].concat(DEPTS().map(d=>[d,d])),g.dept||"")}</select></label><label class="f">Couleur<input id="gc" type="color" value="${esc(g.color||"#c9a24a")}"></label>
- <label class="f">Salaire par dossier traité ($)<input id="gpd" type="number" min="0" value="${num(g.perDossier)}"></label><label class="f">Salaire par heure de service ($)<input id="gph" type="number" min="0" value="${num(g.perHour)}"></label><label class="f">Salaire fixe par période ($)<input id="gfx" type="number" min="0" value="${num(g.fixe)}"></label><label class="f">Ordre hiérarchique (0 = plus haut)<input id="grk" type="number" min="0" value="${num(g.rank)}"></label></div>
- ${role=="direction"?`<p class="mu">Le rôle Direction dispose automatiquement de toutes les permissions.</p>`:`<h4>Permissions du grade</h4>${!dir?`<p class="mu sm">Vous ne pouvez accorder que les permissions dont vous disposez.</p>`:""}${permBoxes("gp_",g.perms,!dir)}`}<p class="err" id="msg"></p>`,
- foot:`${modal.id&&(dir||gradeEditable(g))?`<button class="btn gh" onclick="delGrade('${modal.id}')">Supprimer</button>`:""}<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="saveGrade('${modal.id||""}')">Enregistrer</button>`}}
-function MUser(u){if(!u||!manageable(u))return null;const dir=isDir();const role=keep.er||u.role,dept=dir?(keep.ed??u.dept??""):u.dept;
+ if(!modal.draft)modal.draft=Object.assign({},g.perms||{});modal.lock=!dir;
+ return {title:modal.id?"Édition d'un grade":"Création d'un grade",wide:1,body:`<div class="pe-card"><div class="form"><label class="f">Intitulé du grade<input id="gn" value="${esc(g.name||"")}" placeholder="Ex. : Ministre de la Justice"></label>
+ <label class="f">Rattaché au rôle<select id="gr" onchange="keep.gr=this.value;render()" ${dir?"":"disabled"}>${opts(Object.entries(ROLES).filter(r=>r[0]!="entreprise"),role)}</select></label>
+ <label class="f">Département<select id="gd" ${dir?"":"disabled"}>${opts([["","Tous les départements"]].concat(DEPTS().map(d=>[d,d])),g.dept||"")}</select></label></div>
+ <details class="pe-pay"><summary>Rémunération et affichage</summary><div class="form" style="margin-top:10px"><label class="f">Salaire par dossier traité ($)<input id="gpd" type="number" min="0" value="${num(g.perDossier)}"></label><label class="f">Salaire par heure de service ($)<input id="gph" type="number" min="0" value="${num(g.perHour)}"></label><label class="f">Salaire fixe par période ($)<input id="gfx" type="number" min="0" value="${num(g.fixe)}"></label><label class="f">Ordre hiérarchique (0 = plus haut)<input id="grk" type="number" min="0" value="${num(g.rank)}"></label><label class="f">Couleur du badge<input id="gc" type="color" value="${esc(g.color||"#c9a24a")}"></label></div></details></div>
+ ${role=="direction"?`<div class="pe-card"><p class="mu" style="margin:0">Le rôle Direction dispose automatiquement de toutes les permissions.</p></div>`:permEditor(!dir)}<p class="err" id="msg"></p>`,
+ foot:`${modal.id&&(dir||gradeEditable(g))?`<button class="btn gh" style="margin-right:auto" onclick="delGrade('${modal.id}')">Supprimer</button>`:""}<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="saveGrade('${modal.id||""}')">Valider</button>`}}
+function MUser(u){if(!u||!manageable(u))return null;if(!modal.draft)modal.draft=Object.assign({},u.xperms||{});modal.lock=false;const dir=isDir();const role=keep.er||u.role,dept=dir?(keep.ed??u.dept??""):u.dept;
  const gl=vals(S.grades).filter(g=>g.role==role&&(!g.dept||!dept||g.dept==dept)&&(dir||g.role=="fonctionnaire"));
- return {title:"Modifier — "+esc(u.nom),body:`<div class="form"><label class="f">Nom affiché<input id="en" value="${esc(u.nom)}"></label><label class="f">Identifiant<input value="${esc(u.login)}" disabled></label>
+ return {title:"Modifier — "+esc(u.nom),wide:1,body:`<div class="form"><label class="f">Nom affiché<input id="en" value="${esc(u.nom)}"></label><label class="f">Identifiant<input value="${esc(u.login)}" disabled></label>
  <label class="f">Rôle<select id="er" onchange="keep.er=this.value;render()" ${dir?"":"disabled"}>${opts(Object.entries(ROLES),role)}</select></label>
  ${role=="fonctionnaire"||role=="encadrement"?`<label class="f">Département<select id="ed" onchange="keep.ed=this.value;render()" ${dir?"":"disabled"}>${opts([["","— Choisir —"]].concat(DEPTS().map(d=>[d,d])),dept)}</select></label>`:""}
  ${role!="entreprise"?`<label class="f">Grade<select id="eg"><option value="">— Aucun —</option>${gl.map(g=>`<option value="${g.id}" ${g.id==u.gradeId?"selected":""}>${esc(g.name)}</option>`).join("")}</select></label><label class="f">Matricule<input id="em" value="${esc(u.matricule||"")}"></label>`:""}
  <label class="f">Téléphone<input id="et" value="${esc(u.tel||"")}"></label><label class="f">État du compte<select id="ea">${opts([["1","Actif"],["0","Suspendu"]],u.active===false?"0":"1")}</select></label>
  <label class="f">Nouveau mot de passe provisoire<input id="ep" placeholder="Laisser vide pour ne pas changer" autocomplete="off"></label></div>
- ${dir&&(role=="fonctionnaire"||role=="encadrement")?`<details><summary class="b" style="cursor:pointer;margin-bottom:8px">Permissions supplémentaires individuelles (en plus du grade)</summary>${permBoxes("ex_",u.xperms||{})}</details>`:""}<p class="err" id="msg"></p>`,
+ ${dir&&(role=="fonctionnaire"||role=="encadrement")?`<h4 style="margin-top:6px">Permissions individuelles (en plus de celles du grade)</h4>${permEditor(false)}`:""}<p class="err" id="msg"></p>`,
  foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="saveUser('${u.id}')">Enregistrer</button>`}}
 V.salaire=()=>{const u=ME(),p=payInfo(u),H=vals(S.transactions).filter(t=>t.cat=="Salaires"&&t.user==u.id).sort((a,b)=>b.t-a.t);
  return `<div class="ph"><h2>Mon salaire</h2></div><div class="kpis">${kpi("Salaire en cours",money(p.total),"gold")}${kpi("Dossiers traités",p.nd)}${kpi("Heures de service",p.h.toFixed(1)+" h")}${kpi("Total perçu",money(H.reduce((s,t)=>s+num(t.montant),0)))}</div>
@@ -697,7 +739,7 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="grade")m=MGrade();
  else if(modal.type=="user")m=MUser(S.users[modal.id]);
  if(!m){modal=null;return ""}
- return `<div class="modal-bg" onclick="if(event.target===this)${modal.type=="confirm"?"askNo()":"closeM()"}"><div class="modal ${m.sm?"sm":""}" role="dialog" aria-modal="true"><div class="mh"><h3>${m.title}</h3><button class="x" onclick="${modal.type=="confirm"?"askNo()":"closeM()"}" aria-label="Fermer">×</button></div><div class="mb">${m.body}</div>${m.foot?`<div class="mf">${m.foot}</div>`:""}</div></div>`}
+ return `<div class="modal-bg" onclick="if(event.target===this)${modal.type=="confirm"?"askNo()":"closeM()"}"><div class="modal ${m.sm?"sm":""} ${m.wide?"wide":""}" role="dialog" aria-modal="true"><div class="mh"><h3>${m.title}</h3><button class="x" onclick="${modal.type=="confirm"?"askNo()":"closeM()"}" aria-label="Fermer">×</button></div><div class="mb">${m.body}</div>${m.foot?`<div class="mf">${m.foot}</div>`:""}</div></div>`}
 </script>
 <script>
 /* =================== ACTIONS =================== */
@@ -797,13 +839,13 @@ async function saveUser(id){const u=S.users[id],dir=isDir(),nom=tval("en");if(!n
  if(role=="fonctionnaire"||role=="encadrement"){up.dept=dir?val("ed"):u.dept;if(!up.dept)return say("Choisissez un département.")}else up.dept="";
  if(role!="entreprise"){up.gradeId=val("eg");up.matricule=tval("em")}else{up.gradeId="";}
  const np=val("ep");if(np){up.hash=await hashPw(u.login,np);up.mustChange=true}
- if(dir&&(role=="fonctionnaire"||role=="encadrement"))up.xperms=readPerms("ex_");
+ if(dir&&(role=="fonctionnaire"||role=="encadrement"))up.xperms=finalPerms(null,false);
  if(up.active===false&&u.svc&&u.svc.on){up.svc=Object.assign({},u.svc,{on:false})}
  DBX.update("users/"+id,up);log(`Compte modifié : ${nom}${up.active===false?" (suspendu)":""}${np?" — mot de passe réinitialisé":""}`,up.dept,"Comptes");toast("Compte mis à jour.");closeM()}
 function delUser(id){const u=S.users[id];ask(`Supprimer le compte de ${u.nom} (${u.login}) ? Son historique reste dans le journal.`,()=>{DBX.remove("users/"+id);log("Compte supprimé : "+u.nom,u.dept,"Comptes")},"Supprimer")}
 function saveGrade(id){const dir=isDir(),name=tval("gn");if(!name)return say("Intitulé requis.");const old=id?S.grades[id]:null;
  const role=dir?val("gr"):"fonctionnaire",dept=dir?val("gd"):ME().dept;
- const g={name,role,dept,color:val("gc"),perDossier:num(val("gpd")),perHour:num(val("gph")),fixe:num(val("gfx")),rank:num(val("grk")),perms:role=="direction"?{}:readPerms("gp_",old&&old.perms,!dir)};
+ const g={name,role,dept,color:val("gc"),perDossier:num(val("gpd")),perHour:num(val("gph")),fixe:num(val("gfx")),rank:num(val("grk")),perms:role=="direction"?{}:finalPerms(old&&old.perms,!dir)};
  if(id)DBX.update("grades/"+id,g);else{id=nid();g.id=id;DBX.set("grades/"+id,g)}
  log(`Grade ${old?"modifié":"créé"} : ${name}`,dept,"Grades");toast("Grade enregistré.");closeM()}
 function delGrade(id){const g=S.grades[id],n=vals(S.users).filter(u=>u.gradeId==id);ask(`Supprimer le grade « ${g.name} » ?${n.length?` ${n.length} agent(s) perdront ce grade.`:""}`,()=>{n.forEach(u=>DBX.update("users/"+u.id,{gradeId:""}));DBX.remove("grades/"+id);log("Grade supprimé : "+g.name,g.dept,"Grades");modal=null},"Supprimer")}
