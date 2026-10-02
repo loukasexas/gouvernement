@@ -137,8 +137,15 @@ td input,td select{margin:0;width:110px;padding:5px 8px}
 .acc-f{display:flex;gap:14px;padding-top:6px;border-top:1px dashed var(--bd);margin-top:4px}
 .lnk{background:none;border:0;color:var(--gold2);font:inherit;font-size:12.5px;cursor:pointer;padding:4px 0}
 .lnk:hover{text-decoration:underline}
+.drop{border:2px dashed var(--bd);border-radius:14px;padding:26px 16px;text-align:center;cursor:pointer;background:var(--bg2);transition:border-color .15s,background .15s}
+.drop:hover,.drop.over,.drop:focus{border-color:var(--gold);background:var(--cd2);outline:none}
+.drop.has{border-style:solid;padding:14px}
+.drop-ic svg{width:38px;height:38px;color:var(--gold2);margin-bottom:6px}
+.proof-img{max-width:100%;max-height:52vh;border-radius:10px;border:1px solid var(--bd);cursor:zoom-in;display:block;margin:0 auto}
+.proof-file{display:flex;align-items:center;gap:12px;text-align:left;justify-content:center}
+.proof-file svg{width:34px;height:34px;color:var(--gold2)}
 .x{background:none;border:0;color:var(--mu);font-size:22px;cursor:pointer;line-height:1}
-.toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.toasts{position:fixed;right:16px;top:64px;z-index:200;display:flex;flex-direction:column;gap:8px}
 .toast{background:var(--cd2);border:1px solid var(--bd);border-left:3px solid var(--gold);padding:10px 14px;border-radius:10px;box-shadow:var(--sh);max-width:340px;animation:fi .2s}
 .toast.err{border-left-color:var(--no)}
 @keyframes fi{from{opacity:0;transform:translateY(8px)}}
@@ -402,7 +409,7 @@ function navItems(){const u=ME(),n=unread(),I=[];
  if(can("dos.view")){const p=vals(S.dossiers).filter(d=>myDepts().includes(d.dept)&&d.st=="attente").length;I.push(["dossiers","Dossiers","folder",p])}
  if(can("jus.view"))I.push(["justice","Justice","scale"]);
  if(["reg.ent.view","reg.civ.view","reg.cas.view","reg.avis.view"].some(can))I.push(["registres","Registres","book"]);
- if(["fin.view","fin.bill","fin.decl","fin.budget"].some(can))I.push(["finances","Finances","coins"]);
+ if(["fin.view","fin.bill","fin.decl","fin.budget"].some(can))I.push(["finances","Finances","coins",can("fin.bill")?vals(S.factures).filter(f=>f.st=="verif").length:0]);
  I.push(["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n]);
  if(can("annuaire"))I.push(["annuaire","Annuaire","users"]);
  if(["rh.view","rh.grades","rh.pay.view"].some(can))I.push(["personnel","Personnel","shield"]);
@@ -506,13 +513,13 @@ V.demande=()=>{const d=keep.nd||DEPTS()[0];const types=(DOS_TYPES[d]||[]).concat
 V.mesdem=()=>{const L=vals(S.dossiers).filter(d=>d.ent==meId).sort((a,b)=>b.t-a.t);
  return `<div class="ph"><h2>Mes demandes</h2><button class="btn" onclick="go('demande')">${ic("plus")}Nouvelle demande</button></div><div class="card tw"><table><tr><th>N°<th>Objet<th>Département<th>Statut<th>Déposée<th>Messages</tr>
  ${L.map(d=>`<tr class="click" onclick="openM('dossier','${d.id}')"><td class="nw">${esc(d.num)}<td>${esc(d.objet)}<div class="mu">${esc(d.type||"")}</div><td>${esc(d.dept)}<td>${bdg(DST,d.st)}<td class="nw">${fd(d.t)}<td>${vals(d.comments).filter(c=>!c.internal).length}</tr>`).join("")||`<tr><td colspan="6" class="empty">Aucune demande déposée.</td></tr>`}</table></div>`};
-const FST={due:["À payer","wa"],payee:["Payée","ok"],annulee:["Annulée","mu"]};
+const FST={due:["À payer","wa"],verif:["Paiement à vérifier","bl"],payee:["Payée","ok"],annulee:["Annulée","mu"]};
 V.factures=()=>{const u=ME(),F=vals(S.factures).filter(f=>f.ent==u.id).sort((a,b)=>b.t-a.t),Dc=vals(S.declarations).filter(d=>d.ent==u.id).sort((a,b)=>b.t-a.t),tx=num(S.config.tax);
- return `<div class="ph"><h2>Factures & impôts</h2></div><div class="grid g2"><div class="card"><h3>Déclarer mon chiffre d'affaires</h3><p class="mu">Taux d'imposition en vigueur : <b>${tx} %</b>. Une facture d'impôt est générée automatiquement.</p>
+ return `<div class="ph"><h2>Factures & impôts</h2></div><div class="grid g2"><div class="card"><h3>Déclarer mon chiffre d'affaires</h3><p class="mu">Pour régler une facture, effectuez le paiement puis cliquez sur <b>Notifier du paiement</b> en joignant votre preuve : un agent des Finances la vérifiera.</p><p class="mu">Taux d'imposition en vigueur : <b>${tx} %</b>. Une facture d'impôt est générée automatiquement.</p>
  <div class="form"><label class="f">Période<input id="dp" placeholder="Ex. : Semaine 40 — 2026"></label><label class="f">Chiffre d'affaires ($)<input id="dca" type="number" min="0" oninput="keep.dca=this.value;document.getElementById('dimp').textContent=money(num(this.value)*${tx}/100)"></label></div>
  <p>Impôt estimé : <b id="dimp">${money(num(keep.dca)*tx/100)}</b></p><button class="btn" onclick="declare()">Envoyer la déclaration</button><p class="err" id="msg"></p></div>
  <div class="card"><h3>Mes déclarations</h3><div class="tw"><table><tr><th>Période<th>CA<th>Impôt<th>Statut</tr>${Dc.map(d=>`<tr><td>${esc(d.periode)}<td>${money(d.ca)}<td>${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">En vérification</span>'}</tr>`).join("")||`<tr><td colspan="4" class="empty">Aucune déclaration.</td></tr>`}</table></div></div></div>
- <div class="card tw"><h3>Mes factures et amendes</h3><table><tr><th>N°<th>Nature<th>Motif<th>Montant<th>Échéance<th>Statut<th></tr>${F.map(f=>`<tr><td class="nw">${esc(f.num)}<td>${kindL(f.kind)}<td>${esc(f.motif)}<td class="b">${money(f.montant)}<td>${fdd(f.ech)}<td>${bdg(FST,f.st)}<td>${f.st=="due"?`<button class="btn sm ok" onclick="payFact('${f.id}')">Payer</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune facture.</td></tr>`}</table></div>`};
+ <div class="card tw"><h3>Mes factures et amendes</h3><table><tr><th>N°<th>Nature<th>Motif<th>Montant<th>Échéance<th>Statut<th></tr>${F.map(f=>`<tr><td class="nw">${esc(f.num)}<td>${kindL(f.kind)}<td>${esc(f.motif)}<td class="b">${money(f.montant)}<td>${fdd(f.ech)}<td>${bdg(FST,f.st)}${f.st=="due"&&f.rejet?`<div class="sm" style="color:var(--no);margin-top:4px">Preuve refusée : ${esc(f.rejet)}</div>`:""}${f.st=="verif"?`<div class="mu sm" style="margin-top:4px">Envoyée le ${fd(f.notifT)}</div>`:""}<td class="nw">${f.st=="due"?`<button class="btn sm bl" onclick="openM('notif','${f.id}')">${f.rejet?"Renvoyer une preuve":"Notifier du paiement"}</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune facture.</td></tr>`}</table></div>`};
 const kindL=k=>({facture:"Facture",amende:"Amende",taxe:"Impôt"}[k]||k);
 const licB=s=>`<span class="bdg ${({Active:"ok",Suspendue:"wa",Expirée:"mu",Révoquée:"no","En demande":"bl"}[s]||"mu")}">${esc(s||"—")}</span>`;
 
@@ -606,12 +613,12 @@ V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);i
   ${can("fin.edit")?`<div class="card"><h3>Saisir une opération</h3><div class="form"><label class="f">Sens<select id="ft">${opts([["in","Recette"],["out","Dépense"]])}</select></label><label class="f">Catégorie<select id="fc">${opts(CATS)}</select></label><label class="f">Département<select id="fdp">${opts(["Général"].concat(DEPTS()))}</select></label><label class="f">Montant ($)<input id="fm" type="number" min="0"></label><label class="f full">Libellé<input id="fl"></label></div><button class="btn" onclick="addTx()">Enregistrer</button><p class="err" id="msg"></p></div>`:""}
   <div class="card inl">${search("tq","Libellé…")}${fsel("tt",[["in","Recettes"],["out","Dépenses"]],"Recettes et dépenses")}${fsel("tc",CATS,"Toutes catégories")}${fsel("td",["Général"].concat(DEPTS()),"Tous départements")}</div>
   <div class="card tw"><table><tr><th>Date<th>Libellé<th>Catégorie<th>Département<th>Saisi par<th class="r">Montant<th></tr>${L.slice(0,300).map(t=>`<tr><td class="nw">${fd(t.t)}<td>${esc(t.label)}<td>${esc(t.cat)}<td>${esc(t.dept||"—")}<td>${esc(t.byNom||"")}<td class="r b nw" style="color:var(--${t.type=="in"?"ok":"no"})">${t.type=="in"?"+":"−"} ${money(t.montant)}<td>${can("fin.edit")?`<button class="btn gh sm" onclick="delTx('${t.id}')">×</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune opération.</td></tr>`}</table></div>`}
- if(s=="fact"){let L=vals(S.factures);if(filt.fs)L=L.filter(f=>f.st==filt.fs);if(filt.fk)L=L.filter(f=>f.kind==filt.fk);L=L.filter(f=>match(filt.fq,f.num,f.entNom,f.motif)).sort((a,b)=>b.t-a.t);
+ if(s=="fact"){let L=vals(S.factures);const nv=L.filter(f=>f.st=="verif").length;if(filt.fs)L=L.filter(f=>f.st==filt.fs);if(filt.fk)L=L.filter(f=>f.kind==filt.fk);L=L.filter(f=>match(filt.fq,f.num,f.entNom,f.motif)).sort((a,b)=>b.t-a.t);
   return h+(can("fin.bill")?`<div class="card"><h3>Émettre une facture ou une amende</h3><div class="form"><label class="f">Nature<select id="bk">${opts([["facture","Facture"],["amende","Amende"],["taxe","Impôt / taxe"]])}</select></label>
   <label class="f">Destinataire (compte entreprise)<select id="be"><option value="">— Personne / entité sans compte —</option>${vals(S.users).filter(u=>u.role=="entreprise").map(u=>`<option value="${u.id}">${esc(u.nom)}</option>`).join("")}</select></label>
   <label class="f">ou nom du destinataire<input id="bn" placeholder="Si pas de compte"></label><label class="f">Montant ($)<input id="bm" type="number" min="0"></label><label class="f">Échéance<input id="bd" type="date"></label><label class="f">Département<select id="bdp">${opts(DEPTS(),"Finances")}</select></label><label class="f full">Motif<input id="bmo"></label></div><button class="btn" onclick="addBill()">Émettre</button><p class="err" id="msg"></p></div>`:"")+
-  `<div class="card inl">${search("fq","N°, destinataire, motif…")}${fsel("fs",Object.entries(FST).map(([k,v])=>[k,v[0]]),"Tous statuts")}${fsel("fk",[["facture","Factures"],["amende","Amendes"],["taxe","Impôts"]],"Toutes natures")}</div>
-  <div class="card tw"><table><tr><th>N°<th>Nature<th>Destinataire<th>Motif<th class="r">Montant<th>Échéance<th>Statut<th></tr>${L.map(f=>`<tr><td class="nw">${esc(f.num)}<td>${kindL(f.kind)}<td>${esc(f.entNom)}<td>${esc(f.motif)}<td class="r b nw">${money(f.montant)}<td>${fdd(f.ech)}${f.st=="due"&&f.ech&&f.ech<new Date().toISOString().slice(0,10)?' <span class="bdg no">Retard</span>':""}<td>${bdg(FST,f.st)}<td class="nw">${can("fin.bill")&&f.st=="due"?`<button class="btn sm ok" onclick="payFact('${f.id}')">Encaisser</button> <button class="btn sm gh" onclick="cancelFact('${f.id}')">Annuler</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune facture.</td></tr>`}</table></div>`}
+  (nv?`<div class="card inl" style="border-color:var(--blue)"><b>${nv} paiement(s) en attente de vérification.</b><button class="btn sm bl" onclick="filt.fs='verif';render()">Afficher</button></div>`:"")+`<div class="card inl">${search("fq","N°, destinataire, motif…")}${fsel("fs",Object.entries(FST).map(([k,v])=>[k,v[0]]),"Tous statuts")}${fsel("fk",[["facture","Factures"],["amende","Amendes"],["taxe","Impôts"]],"Toutes natures")}</div>
+  <div class="card tw"><table><tr><th>N°<th>Nature<th>Destinataire<th>Motif<th class="r">Montant<th>Échéance<th>Statut<th></tr>${L.map(f=>`<tr><td class="nw">${esc(f.num)}<td>${kindL(f.kind)}<td>${esc(f.entNom)}<td>${esc(f.motif)}<td class="r b nw">${money(f.montant)}<td>${fdd(f.ech)}${f.st=="due"&&f.ech&&f.ech<new Date().toISOString().slice(0,10)?' <span class="bdg no">Retard</span>':""}<td>${bdg(FST,f.st)}${f.st=="due"&&f.rejet?`<div class="sm" style="color:var(--no);margin-top:4px">Preuve refusée</div>`:""}<td class="nw">${f.st=="verif"?`<button class="btn sm bl" onclick="openM('verif','${f.id}')">Vérifier la preuve</button>`:""}${f.st=="payee"&&f.proof?`<button class="btn sm gh" onclick="openM('verif','${f.id}')">Voir la preuve</button>`:""}${can("fin.bill")&&f.st=="due"?`<button class="btn sm ok" onclick="payFact('${f.id}')">Marquer payée</button> <button class="btn sm gh" onclick="cancelFact('${f.id}')">Annuler</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune facture.</td></tr>`}</table></div>`}
  if(s=="decl"){const L=vals(S.declarations).sort((a,b)=>(a.st=="validee")-(b.st=="validee")||b.t-a.t);
   return h+`<div class="card tw"><table><tr><th>Date<th>Entreprise<th>Période<th class="r">CA déclaré<th>Taux<th class="r">Impôt<th>Statut<th></tr>${L.map(d=>`<tr><td class="nw">${fd(d.t)}<td>${esc(d.entNom)}<td>${esc(d.periode)}<td class="r">${money(d.ca)}<td>${d.taux} %<td class="r b">${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">À vérifier</span>'}<td>${can("fin.decl")&&d.st!="validee"?`<button class="btn sm ok" onclick="validDecl('${d.id}')">Valider</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune déclaration.</td></tr>`}</table></div>`}
  const B=S.config.budgets||{},ed=can("fin.budget");
@@ -729,6 +736,27 @@ V.profil=()=>{const u=ME();return `<div class="ph"><h2>Mon profil</h2></div><div
  ${isAgent(u)&&!isDir()?`<h4 style="margin-top:16px">Mes permissions</h4><div class="pl">${ALLP.filter(can).map(k=>`<span class="bdg mu">${esc(PL[k])}</span>`).join("")||`<span class="mu">Aucune permission particulière.</span>`}</div>`:""}</div>
  <div class="card"><h3>Changer de mot de passe</h3><label class="f">Mot de passe actuel<input id="op" type="password" autocomplete="current-password"></label><label class="f">Nouveau mot de passe<input id="np1" type="password" autocomplete="new-password"></label><label class="f">Confirmation<input id="np2" type="password" autocomplete="new-password"></label><button class="btn" onclick="changePw()">Modifier</button><p class="err" id="msg"></p></div></div>`};
 
+/* =================== PREUVES DE PAIEMENT =================== */
+function proofView(p){if(!p)return "";if((p.type||"").startsWith("image/"))return `<img class="proof-img" src="${p.data}" alt="Preuve de paiement" onclick="modal.zoom=!modal.zoom;render()" title="Cliquer pour agrandir">`;
+ return `<div class="proof-file">${ic("file")}<div><b>${esc(p.name||"Document")}</b><div class="mu sm">${p.type=="application/pdf"?"Document PDF":esc(p.type)} · ${Math.round((p.size||0)/1024)} Ko</div></div><a class="btn sec sm" href="${p.data}" download="${esc(p.name||"preuve")}">Télécharger</a></div>`}
+function MNotif(f){if(!f||f.ent!=meId)return null;const p=modal.proof;
+ return {title:"Notifier du paiement",body:`<div class="pe-card"><div class="kv"><div class="k">Facture</div><div><b>${esc(f.num)}</b> · ${kindL(f.kind)}</div><div class="k">Motif</div><div>${esc(f.motif)}</div><div class="k">Montant à régler</div><div class="b" style="color:var(--gold2);font-size:17px">${money(f.montant)}</div></div></div>
+ ${f.rejet?`<div class="card" style="border-color:var(--no)"><b>Votre précédente preuve a été refusée.</b><div class="mu">Motif : ${esc(f.rejet)}</div></div>`:""}
+ <h4>Preuve de paiement</h4>
+ <div class="drop ${p?"has":""}" tabindex="0" onclick="if(!event.target.closest('a'))document.getElementById('pf').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();proofFile(event.dataTransfer.files[0])">
+ ${p?`${proofView(p)}<div class="mu sm" style="margin-top:8px">${esc(p.name)} — cliquez pour changer de fichier</div>`:`<div class="drop-ic">${ic("file")}</div><b>Cliquez pour sélectionner votre preuve</b><div class="mu">ou glissez-déposez le fichier ici, ou collez une capture (Ctrl+V)</div><div class="mu sm" style="margin-top:6px">Images (PNG, JPG…) ou PDF</div>`}</div>
+ <input type="file" id="pf" accept="image/*,application/pdf" style="display:none" onchange="proofFile(this.files[0]);this.value=''">
+ ${modal.busy?`<p class="mu">Traitement du fichier…</p>`:""}
+ <div class="form" style="margin-top:12px"><label class="f">Référence du paiement (facultatif)<input id="nref" placeholder="Ex. : n° de virement, reçu…"></label><label class="f">Date du paiement<input id="ndt" type="date" value="${new Date().toISOString().slice(0,10)}"></label><label class="f full">Commentaire (facultatif)<textarea id="ncom" rows="2"></textarea></label></div><p class="err" id="msg"></p>`,
+ foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" ${p&&!modal.busy?"":"disabled"} onclick="sendNotif('${f.id}')">Envoyer la notification</button>`}}
+function MVerif(f){if(!f||!(can("fin.bill")||can("fin.view")))return null;const p=proofCache[f.id];if(p===undefined)loadProof(f.id);const v=f.st=="verif"&&can("fin.bill");
+ if(modal.zoom&&p)return {title:"Preuve — "+esc(f.num),wide:1,body:`<img src="${p.data}" alt="Preuve" style="width:100%;border-radius:10px;cursor:zoom-out" onclick="modal.zoom=false;render()">`,foot:`<button class="btn sec" onclick="modal.zoom=false;render()">Retour</button>`};
+ return {title:(v?"Vérification du paiement — ":"Preuve de paiement — ")+esc(f.num),wide:1,body:`<div class="pe-card"><div class="kv"><div class="k">Entreprise</div><div>${esc(f.entNom)}</div><div class="k">Nature / motif</div><div>${kindL(f.kind)} — ${esc(f.motif)}</div><div class="k">Montant</div><div class="b" style="color:var(--gold2);font-size:17px">${money(f.montant)}</div>
+ <div class="k">Notifié le</div><div>${fd(f.notifT)}${f.notifDate?" · paiement déclaré le "+fdd(f.notifDate):""}</div>${f.notifRef?`<div class="k">Référence</div><div>${esc(f.notifRef)}</div>`:""}${f.notifCom?`<div class="k">Commentaire</div><div class="pre">${esc(f.notifCom)}</div>`:""}${f.st=="payee"?`<div class="k">Validé</div><div>${fd(f.paidT)}${f.vNom?" par "+esc(f.vNom):""}</div>`:""}</div></div>
+ <h4>Preuve fournie</h4><div class="drop has" style="cursor:default">${p===undefined?`<p class="mu">Chargement de la preuve…</p>`:p?proofView(p)+(p.type.startsWith("image/")?`<div class="mu sm" style="margin-top:6px">Cliquez sur l'image pour l'agrandir</div>`:""):`<p class="mu">Aucune preuve trouvée.</p>`}</div>
+ ${v?`<label class="f" style="margin-top:12px">Motif en cas de refus (visible par l'entreprise)<textarea id="vrj" rows="2" placeholder="Ex. : montant incorrect, preuve illisible…"></textarea></label>`:""}<p class="err" id="msg"></p>`,
+ foot:v?`<button class="btn sec" onclick="closeM()">Fermer</button><button class="btn no" onclick="rejectPay('${f.id}')">Refuser la preuve</button><button class="btn ok" onclick="validatePay('${f.id}')">Valider le paiement</button>`:`<button class="btn sec" onclick="closeM()">Fermer</button>`}}
+
 /* =================== MODALES =================== */
 function modalH(){if(!modal)return "";let m=null;
  if(modal.type=="confirm")m={title:"Confirmation",sm:1,body:`<p class="pre">${esc(modal.msg)}</p>`,foot:`<button class="btn sec" onclick="askNo()">Annuler</button><button class="btn no" onclick="askOk()">${esc(modal.label)}</button>`};
@@ -738,6 +766,8 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="reg")m=MReg();
  else if(modal.type=="grade")m=MGrade();
  else if(modal.type=="user")m=MUser(S.users[modal.id]);
+ else if(modal.type=="notif")m=MNotif(S.factures[modal.id]);
+ else if(modal.type=="verif")m=MVerif(S.factures[modal.id]);
  if(!m){modal=null;return ""}
  return `<div class="modal-bg" onclick="if(event.target===this)${modal.type=="confirm"?"askNo()":"closeM()"}"><div class="modal ${m.sm?"sm":""} ${m.wide?"wide":""}" role="dialog" aria-modal="true"><div class="mh"><h3>${m.title}</h3><button class="x" onclick="${modal.type=="confirm"?"askNo()":"closeM()"}" aria-label="Fermer">×</button></div><div class="mb">${m.body}</div>${m.foot?`<div class="mf">${m.foot}</div>`:""}</div></div>`}
 </script>
@@ -808,9 +838,10 @@ function delTx(id){const t=S.transactions[id];ask("Supprimer l'opération « "+t
 function addBill(){const m=num(val("bm")),mo=tval("bmo"),e=val("be"),n=tval("bn");if(m<=0||!mo)return say("Montant et motif requis.");if(!e&&!n)return say("Choisissez un compte ou saisissez un nom.");
  const id=nid(),u=ME();DBX.set("factures/"+id,{id,num:nextNum("factures","FAC"),kind:val("bk"),ent:e,entNom:e?uname(e):n,motif:mo,montant:m,ech:val("bd"),dept:val("bdp"),st:"due",t:Date.now(),by:u.id,byNom:u.nom});
  log(`${kindL(val("bk"))} émise à ${e?uname(e):n} : ${money(m)}`,"Finances","Finances");clr("bm","bmo","bn","bd");toast("Émise.")}
-function payFact(id){const f=S.factures[id],u=ME();ask(`${u.role=="entreprise"?"Payer":"Encaisser"} ${kindL(f.kind).toLowerCase()} ${f.num} de ${money(f.montant)} ?`,()=>{
- DBX.update("factures/"+id,{st:"payee",paidT:Date.now()});const tid=nid();DBX.set("transactions/"+tid,{id:tid,t:Date.now(),type:"in",cat:f.kind=="amende"?"Amendes":f.kind=="taxe"?"Impôts":"Factures",dept:f.dept||"Finances",montant:num(f.montant),label:`${f.num} — ${f.entNom} — ${f.motif}`,by:u.id,byNom:u.nom});
- log(`Paiement ${f.num} (${money(f.montant)}) par ${f.entNom}`,"Finances","Finances");toast("Paiement enregistré.")},u.role=="entreprise"?"Payer":"Encaisser")}
+function encaisser(f,extra){const u=ME();DBX.update("factures/"+f.id,Object.assign({st:"payee",paidT:Date.now(),vBy:u.id,vNom:u.nom,rejet:null},extra||{}));const tid=nid();DBX.set("transactions/"+tid,{id:tid,t:Date.now(),type:"in",cat:f.kind=="amende"?"Amendes":f.kind=="taxe"?"Impôts":"Factures",dept:f.dept||"Finances",montant:num(f.montant),label:`${f.num} — ${f.entNom} — ${f.motif}`,by:u.id,byNom:u.nom})}
+function payFact(id){const f=S.factures[id],u=ME();if(!can("fin.bill"))return;ask(`Marquer ${kindL(f.kind).toLowerCase()} ${f.num} de ${money(f.montant)} comme payée (paiement constaté directement) ?`,()=>{
+ encaisser(f);
+ log(`Paiement ${f.num} (${money(f.montant)}) de ${f.entNom} enregistré directement`,"Finances","Finances");toast("Paiement enregistré.")},"Marquer payée")}
 function cancelFact(id){const f=S.factures[id];ask("Annuler "+f.num+" ?",()=>{DBX.update("factures/"+id,{st:"annulee"});log("Annulation "+f.num,"Finances","Finances")},"Annuler la facture")}
 function declare(){const p=tval("dp"),ca=num(val("dca"));if(!p||ca<=0)return say("Indiquez la période et un chiffre d'affaires.");const u=ME(),tx=num(S.config.tax),imp=Math.round(ca*tx/100),id=nid(),fid=nid();
  DBX.set("declarations/"+id,{id,ent:u.id,entNom:u.nom,periode:p,ca,taux:tx,impot:imp,st:"declaree",t:Date.now(),fac:fid});
@@ -819,6 +850,28 @@ function declare(){const p=tval("dp"),ca=num(val("dca"));if(!p||ca<=0)return say
 function validDecl(id){const d=S.declarations[id];DBX.update("declarations/"+id,{st:"validee",vby:meId,vt:Date.now()});log("Déclaration validée : "+d.entNom+" ("+d.periode+")","Finances","Finances")}
 function setTax(){const t=Math.min(100,Math.max(0,num(val("ctax"))));DBX.update("config",{tax:t});log("Taux d'imposition fixé à "+t+" %","Finances","Finances");toast("Taux appliqué.")}
 function setBudget(i,v){const d=DEPTS()[i];DBX.update("config/budgets",{[d]:num(v)});log(`Budget ${d} : ${money(v)}`,"Finances","Finances")}
+
+/* Preuves de paiement */
+const proofCache={};
+function loadProof(fid){if(proofCache[fid]!==undefined||loadProof.p[fid])return;loadProof.p[fid]=1;
+ const done=v=>{proofCache[fid]=v||null;delete loadProof.p[fid];render()};
+ if(db)db.ref(ROOT+"/preuves/"+fid).once("value").then(s=>done(s.val()),e=>{fbErr(e);done(null)});else done(S.preuves&&S.preuves[fid])}
+loadProof.p={};
+function proofFile(file){if(!file||!modal||modal.type!="notif")return;
+ if(file.type=="application/pdf"){if(file.size>3e6)return toast("PDF trop lourd (3 Mo max). Envoyez plutôt une capture d'écran.",1);const r=new FileReader();r.onload=()=>{modal.proof={data:r.result,name:file.name||"preuve.pdf",type:file.type,size:file.size};render()};r.readAsDataURL(file);return}
+ if(!file.type.startsWith("image/"))return toast("Format non pris en charge : image ou PDF uniquement.",1);
+ modal.busy=1;render();const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height,mx=1600;if(w>mx||h>mx){const k=mx/Math.max(w,h);w=Math.round(w*k);h=Math.round(h*k)}
+  const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);let q=.85,d=c.toDataURL("image/jpeg",q);while(d.length>1.4e6&&q>.4){q-=.15;d=c.toDataURL("image/jpeg",q)}
+  if(modal&&modal.type=="notif"){modal.proof={data:d,name:(file.name&&file.name!="image.png"?file.name:"capture.png").replace(/\.[^.]+$/,"")+".jpg",type:"image/jpeg",size:Math.round(d.length*.75)};modal.busy=0;render()}};
+  im.onerror=()=>{modal.busy=0;toast("Image illisible.",1);render()};im.src=r.result};r.readAsDataURL(file)}
+document.addEventListener("paste",e=>{if(!modal||modal.type!="notif"||!e.clipboardData)return;const it=[...e.clipboardData.items].find(i=>i.kind=="file"&&(i.type.startsWith("image/")||i.type=="application/pdf"));if(it){e.preventDefault();proofFile(it.getAsFile())}});
+function sendNotif(fid){const f=S.factures[fid],u=ME(),p=modal.proof;if(!f||f.ent!=u.id)return;if(!p)return say("Joignez une preuve de paiement.");
+ DBX.set("preuves/"+fid,{data:p.data,name:p.name,type:p.type,size:p.size,t:Date.now(),by:u.id});proofCache[fid]=Object.assign({},p);
+ DBX.update("factures/"+fid,{st:"verif",proof:true,notifT:Date.now(),notifRef:tval("nref"),notifDate:val("ndt"),notifCom:tval("ncom"),rejet:null});
+ log(`Paiement notifié par ${u.nom} pour ${f.num} (${money(f.montant)}) — en attente de vérification`,"Finances","Finances");toast("Notification envoyée. Les Finances vont vérifier votre paiement.");closeM()}
+function validatePay(fid){const f=S.factures[fid];if(!can("fin.bill")||f.st!="verif")return;ask(`Confirmer la réception de ${money(f.montant)} de ${f.entNom} pour ${f.num} ?`,()=>{encaisser(f);log(`Paiement validé : ${f.num} (${money(f.montant)}) de ${f.entNom}`,"Finances","Finances");toast("Paiement validé et encaissé.");modal=null},"Valider le paiement")}
+function rejectPay(fid){const f=S.factures[fid],m=tval("vrj");if(!can("fin.bill"))return;if(!m)return say("Indiquez le motif du refus pour l'entreprise.");
+ DBX.update("factures/"+fid,{st:"due",rejet:m,rejT:Date.now(),rejBy:meId});log(`Preuve refusée pour ${f.num} (${f.entNom}) : ${m}`,"Finances","Finances");toast("Preuve refusée. L'entreprise a été informée.");closeM()}
 
 /* Communication */
 function addAnn(){const t=tval("at1"),x=tval("at2");if(!t||!x)return say("Titre et contenu requis.");const id=nid(),u=ME();
