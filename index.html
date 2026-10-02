@@ -158,6 +158,13 @@ td input,td select{margin:0;width:110px;padding:5px 8px}
 .fdoc{height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--gold2)}.fdoc svg{width:34px;height:34px}
 .fname{font-size:12px;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:900px){.ec{grid-template-columns:1fr}.ec-side{position:static}}
+.viz{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--sx:#9aa3b5}
+:root[data-theme="dark"] .viz{--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--sx:#5b6782}
+.pie-wrap{display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.pie{width:240px;height:240px;flex:none}.pie path{cursor:pointer;transition:opacity .12s}.pie path:hover{opacity:.85}
+.pie-l{fill:var(--mu);font-size:12px}.pie-v{fill:var(--tx);font-size:16px;font-weight:700}
+.pie-leg{flex:1;min-width:260px;width:auto}.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+.pietip{position:fixed;z-index:300;background:var(--cd2);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-size:13px;pointer-events:none;box-shadow:var(--sh);display:none}
 .x{background:none;border:0;color:var(--mu);font-size:22px;cursor:pointer;line-height:1}
 .toasts{position:fixed;right:16px;top:64px;z-index:200;display:flex;flex-direction:column;gap:8px}
 .toast{background:var(--cd2);border:1px solid var(--bd);border-left:3px solid var(--gold);padding:10px 14px;border-radius:10px;box-shadow:var(--sh);max-width:340px;animation:fi .2s}
@@ -686,7 +693,7 @@ function MPatArch(a){if(!a||!secOk())return null;const P=vals(S.patrouilles).fil
 
 /* =================== FINANCES =================== */
 function treasury(){return num(S.config.treasuryStart)+vals(S.transactions).reduce((s,t)=>s+(t.type=="in"?1:-1)*num(t.montant),0)}
-V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);if(can("fin.bill")||can("fin.view"))T.push(["fact","Comptabilité"]);if(can("fin.decl")||can("fin.view"))T.push(["decl","Déclarations fiscales"]);if(can("fin.budget")||can("fin.view"))T.push(["fisc","Taxes par entreprise"]);if(can("fin.view")||can("fin.archive"))T.push(["arch","Archives fiscales"]);
+V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);if(can("fin.bill")||can("fin.view"))T.push(["fact","Comptabilité"]);if(can("fin.decl")||can("fin.view"))T.push(["decl","Déclarations fiscales"]);if(can("fin.budget")||can("fin.view"))T.push(["fisc","Taxes par entreprise"]);if(can("fin.view")||can("fin.archive"))T.push(["arch","Archives fiscales"]);if(can("fin.view")||can("fin.budget"))T.push(["stats","Statistiques"]);
  const s=T.some(t=>t[0]==sub)?sub:T[0][0];let h=`<div class="ph"><h2>Finances publiques</h2></div>${tabsH(T,s)}`;
  const X=vals(S.transactions),inS=X.filter(t=>t.type=="in").reduce((a,t)=>a+num(t.montant),0),outS=X.filter(t=>t.type=="out").reduce((a,t)=>a+num(t.montant),0),due=vals(S.factures).filter(f=>f.st=="due");
  if(s=="tresor"){let L=X;if(filt.tt)L=L.filter(t=>t.type==filt.tt);if(filt.tc)L=L.filter(t=>t.cat==filt.tc);if(filt.td)L=L.filter(t=>t.dept==filt.td);L=L.filter(t=>match(filt.tq,t.label,t.cat,t.dept)).sort((a,b)=>b.t-a.t);
@@ -705,12 +712,49 @@ V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);i
  const ed=can("fin.budget");
  if(s=="fisc")return h+fiscView(ed);
  if(s=="arch")return h+archView();
+ if(s=="stats")return h+statsView();
  return h};
 /* =================== ARCHIVES FISCALES =================== */
 function curPeriod(){const last=vals(S.archives).reduce((m,a)=>Math.max(m,num(a.to)),0);
  const D=vals(S.declarations).filter(d=>!d.arch),F=vals(S.factures).filter(f=>f.kind=="taxe"&&!f.arch&&f.st!="annulee");
  const sum=(L,k)=>L.reduce((s,x)=>s+num(x[k]),0);
  return {from:last,D,F,ca:sum(D,"ca"),emis:sum(D,"impot"),paye:sum(F.filter(f=>f.st=="payee"),"montant"),impaye:sum(F.filter(f=>f.st!="payee"),"montant")}}
+/* =================== STATISTIQUES FISCALES =================== */
+function curPerEnt(){const P=curPeriod(),o={};const ent=(uid,nom)=>{if(!o[uid]){const x=S.users[uid];o[uid]={nom:x?x.nom:nom,type:x?taxCatName(x):"Sans type",ca:0,impot:0,paye:0}}return o[uid]};
+ P.D.forEach(d=>{const e=ent(d.ent,d.entNom);e.ca+=num(d.ca);e.impot+=num(d.impot)});P.F.filter(f=>f.st=="payee").forEach(f=>{ent(f.ent||("x_"+f.entNom),f.entNom).paye+=num(f.montant)});return o}
+function evo(cur,prev){if(!prev&&!cur)return `<span class="mu">—</span>`;if(!prev)return `<span class="bdg bl">Nouveau</span>`;const d=cur-prev,p=d/prev*100;
+ return `<span class="nw" style="color:var(--${d>0?"ok":d<0?"no":"mu"})">${d>0?"▲":d<0?"▼":"="} ${d>0?"+":""}${money(d)} <span class="sm">(${d>0?"+":""}${p.toFixed(1)} %)</span></span>`}
+function cmpTile(label,cur,prev,hasPrev){const d=cur-prev;return `<div class="kpi"><div class="l">${label}</div><div class="v">${money(cur)}</div><div class="sm" style="margin-top:4px">${hasPrev?`<span style="color:var(--${d>0?"ok":d<0?"no":"mu"})">${d>0?"▲":d<0?"▼":"="} ${d>0?"+":""}${money(d)}${prev?` (${d>0?"+":""}${(d/prev*100).toFixed(1)} %)`:""}</span> <span class="mu">vs ${money(prev)} la semaine précédente</span>`:`<span class="mu">Pas encore de semaine archivée pour comparer</span>`}</div></div>`}
+const PIE_VARS=["--s1","--s2","--s3","--s4","--s5","--s6"];
+function pieSvg(items,total){if(!total)return `<div class="empty">Aucune donnée pour cette période.</div>`;let a=-Math.PI/2;const R=96,r=58,cx=110,cy=110;
+ const arc=(a0,a1)=>{if(a1-a0>=Math.PI*2-1e-6)a1=a0+Math.PI*2-1e-4;const L=a1-a0>Math.PI?1:0,p=(rr,t)=>[cx+rr*Math.cos(t),cy+rr*Math.sin(t)];const[x0,y0]=p(R,a0),[x1,y1]=p(R,a1),[x2,y2]=p(r,a1),[x3,y3]=p(r,a0);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${R} ${R} 0 ${L} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}L${x2.toFixed(2)} ${y2.toFixed(2)}A${r} ${r} 0 ${L} 0 ${x3.toFixed(2)} ${y3.toFixed(2)}Z`};
+ window.__pie=items;
+ return `<svg viewBox="0 0 220 220" class="pie" role="img" aria-label="Répartition des taxes">${items.map((it,i)=>{const a0=a,a1=a+it.v/total*Math.PI*2;a=a1;return `<path d="${arc(a0,a1)}" fill="var(${it.c})" stroke="var(--cd)" stroke-width="2" onmousemove="pieTip(event,${i})" onmouseleave="pieTip(null)"></path>`}).join("")}
+ <text x="110" y="104" text-anchor="middle" class="pie-l">Total</text><text x="110" y="126" text-anchor="middle" class="pie-v">${money(total)}</text></svg>`}
+function pieTip(e,i){let t=document.getElementById("pietip");if(!e){if(t)t.style.display="none";return}if(!t){t=document.createElement("div");t.id="pietip";t.className="pietip";document.body.appendChild(t)}
+ const it=(window.__pie||[])[i];if(!it)return;t.innerHTML=`<b>${esc(it.k)}</b><br>${money(it.v)} · ${it.p.toFixed(1)} %`;t.style.display="block";t.style.left=(e.clientX+14)+"px";t.style.top=(e.clientY+14)+"px"}
+function statsView(){const _t=document.getElementById("pietip");if(_t)_t.style.display="none";const A=vals(S.archives).sort((a,b)=>b.to-a.to),last=A[0],P=curPeriod(),cur=curPerEnt(),prev=last?last.perEnt||{}:{};
+ let h=`<div class="kpis">${cmpTile("Taxes récoltées — semaine en cours",P.paye,last?num(last.paye):0,!!last)}${cmpTile("Taxes déclarées — semaine en cours",P.emis,last?num(last.emis):0,!!last)}${cmpTile("Chiffre d'affaires déclaré",P.ca,last?num(last.ca):0,!!last)}</div>
+ <p class="mu sm" style="margin-top:-6px">La « semaine en cours » couvre tout depuis la dernière clôture fiscale${last?` (« ${esc(last.name)} », ${fd(last.to)})`:""} ; la semaine précédente correspond à cette dernière archive.</p>`;
+ // évolution du CA par entreprise
+ const ids=[...new Set(Object.keys(cur).concat(Object.keys(prev)))];const rows=ids.map(id=>{const c=cur[id]||{},p=prev[id]||{};return {nom:c.nom||p.nom,type:c.type||p.type||"—",ca:num(c.ca),pca:num(p.ca),imp:num(c.impot),paye:num(c.paye)}}).sort((a,b)=>(b.ca-b.pca)-(a.ca-a.pca));
+ h+=`<div class="card tw"><h3>Évolution du chiffre d'affaires par entreprise</h3><table><tr><th>Entreprise<th>Type<th class="r">Semaine précédente<th class="r">Semaine en cours<th>Évolution<th class="r">Taxes déclarées<th class="r">Taxes récoltées</tr>${rows.map(r=>`<tr><td class="b">${esc(r.nom)}<td>${esc(r.type)}<td class="r">${last?money(r.pca):"—"}<td class="r">${money(r.ca)}<td>${last?evo(r.ca,r.pca):'<span class="mu">—</span>'}<td class="r">${money(r.imp)}<td class="r">${money(r.paye)}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune déclaration pour le moment.</td></tr>`}</table>
+ ${!last?`<p class="mu sm">La comparaison apparaîtra après la première clôture dans « Archives fiscales ».</p>`:""}</div>`;
+ // historique des semaines
+ if(A.length)h+=`<div class="card tw"><h3>Taxes récoltées par semaine</h3><table><tr><th>Période<th class="r">CA déclaré<th class="r">Taxes déclarées<th class="r">Taxes récoltées<th>Évolution des taxes récoltées</tr><tr><td class="b">Semaine en cours<td class="r">${money(P.ca)}<td class="r">${money(P.emis)}<td class="r b">${money(P.paye)}<td>${evo(P.paye,num(A[0].paye))}</tr>${A.slice(0,12).map((a,i)=>`<tr><td>${esc(a.name)}<td class="r">${money(a.ca)}<td class="r">${money(a.emis)}<td class="r b">${money(a.paye)}<td>${A[i+1]?evo(num(a.paye),num(A[i+1].paye)):'<span class="mu">—</span>'}</tr>`).join("")}</table></div>`;
+ // camembert
+ const per=filt.spe||"cur",dim=filt.sdi||"type",bas=filt.sba||"paye";const src=per=="cur"?cur:((S.archives[per]||{}).perEnt||{});
+ const agg={};Object.values(src).forEach(e=>{const k=dim=="type"?(e.type||"Sans type"):e.nom;agg[k]=(agg[k]||0)+num(bas=="paye"?e.paye:e.impot)});
+ let it=Object.entries(agg).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]);const total=it.reduce((s,x)=>s+x[1],0);
+ if(it.length>6){const o=it.slice(5).reduce((s,x)=>s+x[1],0);it=it.slice(0,5).concat([["Autres",o]])}
+ const items=it.map(([k,v],i)=>({k,v,p:total?v/total*100:0,c:k=="Autres"?"--sx":PIE_VARS[i]}));
+ h+=`<div class="card"><div class="inl" style="justify-content:space-between"><h3 style="margin:0">Répartition des taxes</h3><div class="inl">
+ <select onchange="filt.spe=this.value;render()" style="min-width:170px"><option value="cur">Semaine en cours</option>${A.map(a=>`<option value="${a.id}" ${per==a.id?"selected":""}>${esc(a.name)}</option>`).join("")}</select>
+ <select onchange="filt.sdi=this.value;render()" style="min-width:160px">${opts([["type","Par type d'entreprise"],["ent","Par entreprise"]],dim)}</select>
+ <select onchange="filt.sba=this.value;render()" style="min-width:150px">${opts([["paye","Taxes récoltées"],["impot","Taxes déclarées"]],bas)}</select></div></div>
+ <div class="viz pie-wrap">${pieSvg(items,total)}<table class="pie-leg"><tr><th>${dim=="type"?"Type":"Entreprise"}<th class="r">Montant<th class="r">Part</tr>${items.map(x=>`<tr><td><span class="sw" style="background:var(${x.c})"></span>${esc(x.k)}<td class="r">${money(x.v)}<td class="r b">${x.p.toFixed(1)} %</tr>`).join("")}</table></div></div>`;
+ return h}
 function archView(){const P=curPeriod(),A=vals(S.archives).sort((a,b)=>b.to-a.to),ca=can("fin.archive");
  return `<div class="card"><div class="inl" style="justify-content:space-between"><h3 style="margin:0">Période fiscale en cours</h3><span class="mu">${P.from?"Depuis la clôture du "+fd(P.from):"Depuis l'ouverture de l'intranet"}</span></div>
  <div class="kpis" style="margin:14px 0 6px">${kpi("Déclarations",P.D.length)}${kpi("CA déclaré",money(P.ca))}${kpi("Impôts déclarés",money(P.emis),"gold")}${kpi("Impôts encaissés",money(P.paye))}${kpi("Impayés",money(P.impaye))}</div>
