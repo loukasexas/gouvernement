@@ -505,7 +505,9 @@ function askOk(){const cb=pendingCb;pendingCb=null;const p=modal&&modal.prev;mod
 function askNo(){pendingCb=null;modal=modal&&modal.prev||null;render()}
 function tickClocks(){document.querySelectorAll("[data-since]").forEach(e=>{e.textContent=clock(Date.now()-(+e.dataset.since)+(+e.dataset.base||0))})}
 setInterval(tickClocks,1000);
-function unread(){const m=ME();return m?vals(S.messages).filter(x=>x.to==m.id&&!x.read).length:0}
+/* Conversations supprimées : masquées pour soi seul (le correspondant conserve sa copie) */
+function msgVis(x){const m=ME();if(!m)return false;const w=x.from==m.id?x.to:x.from,c=m.convClear&&m.convClear[w];return !c||num(x.t)>num(c)}
+function unread(){const m=ME();return m?vals(S.messages).filter(x=>x.to==m.id&&!x.read&&msgVis(x)).length:0}
 function notify(){try{notifCheck()}catch(e){console.error(e)}}
 function applyTheme(){setFavicon();const t=lsGet("lsgov_theme")||"dark";document.documentElement.setAttribute("data-theme",t);
  const a=S.config&&S.config.accent;if(a&&/^#[0-9a-f]{6}$/i.test(a)){document.documentElement.style.setProperty("--gold",a);document.documentElement.style.setProperty("--gold2",a)}else{document.documentElement.style.removeProperty("--gold");document.documentElement.style.removeProperty("--gold2")}}
@@ -939,15 +941,15 @@ const CATS=["Impôts","Amendes","Factures","Salaires","Subventions","Fonctionnem
 V.annonces=()=>`<div class="ph"><h2>Annonces officielles</h2></div>${can("com.post")?`<div class="card"><h3>Publier une annonce</h3><div class="form"><label class="f full">Titre<input id="at1" maxlength="120"></label><label class="f full">Contenu<textarea id="at2" rows="4"></textarea></label>
  <label class="f">Destinataires<select id="at3">${opts([["all","Tout le monde"],["agents","Tous les agents"],["entreprises","Entreprises"]].concat(DEPTS().map(d=>[d,"Département "+d])))}</select></label><label class="ck" style="margin-top:22px"><input type="checkbox" id="at4"><span>Épingler en haut</span></label></div><button class="btn" onclick="addAnn()">Publier</button><p class="err" id="msg"></p></div>`:""}
  ${visibleAnn().map(annCard).join("")||`<div class="card">${empty("Aucune annonce.")}</div>`}`;
-function convs(){const m=meId,o={};vals(S.messages).forEach(x=>{if(x.from!=m&&x.to!=m)return;const w=x.from==m?x.to:x.from;if(!o[w])o[w]={w,last:0,n:0,txt:""};if(x.t>o[w].last||(x.t==o[w].last&&String(x.id)>String(o[w].id||""))){o[w].last=x.t;o[w].id=x.id;o[w].txt=x.txt}if(x.to==m&&!x.read)o[w].n++});return Object.values(o).sort((a,b)=>b.last-a.last)}
+function convs(){const m=meId,o={};vals(S.messages).forEach(x=>{if(x.from!=m&&x.to!=m||!msgVis(x))return;const w=x.from==m?x.to:x.from;if(!o[w])o[w]={w,last:0,n:0,txt:""};if(x.t>o[w].last||(x.t==o[w].last&&String(x.id)>String(o[w].id||""))){o[w].last=x.t;o[w].id=x.id;o[w].txt=x.txt}if(x.to==m&&!x.read)o[w].n++});return Object.values(o).sort((a,b)=>b.last-a.last)}
 V.messages=()=>{const C=convs(),me=ME();if(!convWith&&C.length)convWith=C[0].w;
  const rec=vals(S.users).filter(u=>u.id!=meId&&u.active!==false&&(me.role!="entreprise"||isAgent(u))).sort((a,b)=>a.nom.localeCompare(b.nom));
- const M=convWith?vals(S.messages).filter(x=>(x.from==meId&&x.to==convWith)||(x.to==meId&&x.from==convWith)).sort(msgCmp):[];
+ const M=convWith?vals(S.messages).filter(x=>(x.from==meId&&x.to==convWith)||(x.to==meId&&x.from==convWith)).filter(msgVis).sort(msgCmp):[];
  const toRead=M.filter(x=>x.to==meId&&!x.read);if(toRead.length&&view=="messages"){const up={};toRead.forEach(x=>up[x.id+"/read"]=true);setTimeout(()=>DBX.update("messages",up),0)}
  const w=convWith&&U(convWith);
  return `<div class="ph"><h2>Messagerie</h2><div class="inl"><select id="mto" style="max-width:280px"><option value="">Nouvelle conversation avec…</option>${rec.map(u=>`<option value="${u.id}">${esc(u.nom)} — ${esc(gname(u))}${u.dept?" ("+esc(u.dept)+")":""}</option>`).join("")}</select><button class="btn sec" onclick="if(val('mto')){convWith=val('mto');keep.mto='';render()}">Ouvrir</button></div></div>
  <div class="msgs"><div class="conv">${C.map(c=>`<div class="ci ${c.w==convWith?"on":""}" onclick="convWith='${c.w}';render()"><div class="inl" style="justify-content:space-between"><b>${esc(uname(c.w))}</b>${c.n?`<span class="bdg no">${c.n}</span>`:""}</div><div class="mu" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.txt)}</div></div>`).join("")||`<div class="empty">Aucune conversation.</div>`}</div>
- <div class="thread">${w?`<div style="padding:12px 14px;border-bottom:1px solid var(--bd)"><b>${esc(w.nom)}</b> <span class="mu">· ${esc(gname(w))}${w.dept?" · "+esc(w.dept):""}</span></div><div class="body">${M.map((x,i)=>{const d=new Date(x.t),day=d.toDateString(),pv=M[i-1],grp=pv&&pv.from==x.from&&x.t-pv.t<120000&&new Date(pv.t).toDateString()==day;
+ <div class="thread">${w?`<div style="padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button class="btn gh sm" style="order:2;margin-left:auto" onclick="convDel('${convWith}')" title="Supprimer la conversation">Supprimer la conversation</button><b>${esc(w.nom)}</b> <span class="mu">· ${esc(gname(w))}${w.dept?" · "+esc(w.dept):""}</span></div><div class="body">${M.map((x,i)=>{const d=new Date(x.t),day=d.toDateString(),pv=M[i-1],grp=pv&&pv.from==x.from&&x.t-pv.t<120000&&new Date(pv.t).toDateString()==day;
   return `${!pv||new Date(pv.t).toDateString()!=day?`<div class="msep"><span>${day==new Date().toDateString()?"Aujourd'hui":d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}</span></div>`:""}<div class="bub ${x.from==meId?"me":""} ${grp?"grp":""}" title="${d.toLocaleString("fr-FR")}">${esc(x.txt)}<div class="mu sm mt">${d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}${x.from==meId&&x.read?" · lu":""}</div></div>`}).join("")||`<div class="empty">Démarrez la conversation.</div>`}</div>
  <div class="send"><textarea id="mtx" placeholder="Votre message…" onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea><button class="btn" onclick="sendMsg()">Envoyer</button></div>`:`<div class="empty" style="margin:auto">Sélectionnez ou démarrez une conversation.</div>`}</div></div>`};
 
@@ -1609,7 +1611,7 @@ function MJdoc(x){if(!x||!canDocs())return null;const F=jdocCache[x.id];if(F===u
 
 /* =================== NOTIFICATIONS =================== */
 function notifList(){const u=ME();if(!u)return [];const N=[],me=u.id,ent=u.role=="entreprise",add=(k,t,ic0,ti,tx,act)=>{if(t)N.push({k,t:+t,ic:ic0,ti,tx,act})};
- vals(S.messages).filter(m=>m.to==me&&!m.read).forEach(m=>add("m_"+m.id,m.t,"mail","Nouveau message",uname(m.from)+" : "+String(m.txt||"").slice(0,90),`convWith='${m.from}';go('messages')`));
+ vals(S.messages).filter(m=>m.to==me&&!m.read&&msgVis(m)).forEach(m=>add("m_"+m.id,m.t,"mail","Nouveau message",uname(m.from)+" : "+String(m.txt||"").slice(0,90),`convWith='${m.from}';go('messages')`));
  visibleAnn().filter(a=>a.by!=me).forEach(a=>add("a_"+a.id,a.t,"megaphone","Nouvelle annonce",a.titre,"go('annonces')"));
  if(ent){vals(S.dossiers).filter(d=>d.ent==me).forEach(d=>{vals(d.comments).filter(c=>!c.internal&&c.u!=me).forEach(c=>add("dc_"+d.id+"_"+c.t,c.t,"folder","Réponse à votre demande",d.num+" — "+c.nom+" : "+String(c.txt||"").slice(0,80),`openM('dossier','${d.id}')`));
    if((d.st=="ok"||d.st=="no")&&d.tt)add("ds_"+d.id+"_"+d.st,d.tt,"folder",d.st=="ok"?"Demande acceptée":"Demande refusée",d.num+" — "+d.objet,`openM('dossier','${d.id}')`)});
@@ -1729,7 +1731,7 @@ function MNotif(f){if(!f||f.ent!=meId)return null;const p=modal.proof;
  ${modal.busy?`<p class="mu">Traitement du fichier…</p>`:""}
  <div class="form" style="margin-top:12px"><label class="f">Référence du paiement (facultatif)<input id="nref" placeholder="Ex. : n° de virement, reçu…"></label><label class="f">Date du paiement<input id="ndt" type="date" value="${new Date().toISOString().slice(0,10)}"></label><label class="f full">Commentaire (facultatif)<textarea id="ncom" rows="2"></textarea></label></div><p class="err" id="msg"></p>`,
  foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" ${p&&!modal.busy?"":"disabled"} onclick="sendNotif('${f.id}')">Envoyer la notification</button>`}}
-function MVerif(f){if(!f||!(can("fin.bill")||can("fin.view")))return null;const p=proofCache[f.id];if(p===undefined)loadProof(f.id);const v=f.st=="verif"&&canBill();
+function MVerif(f){if(!f||!(can("fin.bill")||can("fin.view")))return null;const p=proofCache[f.id+"@"+(f.notifT||0)];if(p===undefined)loadProof(f.id);const v=f.st=="verif"&&canBill();
  if(modal.zoom&&p)return {title:"Preuve — "+esc(f.num),wide:1,body:`<img src="${p.data}" alt="Preuve" style="width:100%;border-radius:10px;cursor:zoom-out" onclick="modal.zoom=false;render()">`,foot:`<button class="btn sec" onclick="modal.zoom=false;render()">Retour</button>`};
  return {title:(v?"Vérification du paiement — ":"Preuve de paiement — ")+esc(f.num),wide:1,body:`<div class="pe-card"><div class="kv"><div class="k">Entreprise</div><div>${esc(f.entNom)}</div><div class="k">Nature / motif</div><div>${kindL(f.kind)} — ${esc(f.motif)}</div><div class="k">Montant</div><div class="b" style="color:var(--gold2);font-size:17px">${money(f.montant)}</div>
  <div class="k">Notifié le</div><div>${fd(f.notifT)}${f.notifDate?" · paiement déclaré le "+fdd(f.notifDate):""}</div>${f.notifRef?`<div class="k">Référence</div><div>${esc(f.notifRef)}</div>`:""}${f.notifCom?`<div class="k">Commentaire</div><div class="pre">${esc(f.notifCom)}</div>`:""}${f.st=="payee"?`<div class="k">Validé</div><div>${fd(f.paidT)}${f.vNom?" par "+esc(f.vNom):""}</div>`:""}</div></div>
@@ -1868,8 +1870,9 @@ function fallbackCopy(t,cb){const a=document.createElement("textarea");a.value=t
 
 /* Preuves de paiement */
 const proofCache={};
-function loadProof(fid){if(proofCache[fid]!==undefined||loadProof.p[fid])return;loadProof.p[fid]=1;
- const done=v=>{proofCache[fid]=v||null;delete loadProof.p[fid];render()};
+/* Le cache est lié à la date de notification : une nouvelle preuve envoyée après un refus remplace bien l'ancienne */
+function loadProof(fid){const f=S.factures[fid],key=fid+"@"+((f&&f.notifT)||0);if(proofCache[key]!==undefined||loadProof.p[key])return;loadProof.p[key]=1;
+ const done=v=>{proofCache[key]=v||null;delete loadProof.p[key];render()};
  if(db)db.ref(ROOT+"/"+rp("preuves/"+fid)).once("value").then(s=>done(s.val()),e=>{fbErr(e);done(null)});else done(S.preuves&&S.preuves[fid])}
 loadProof.p={};
 function proofFile(file){if(!file||!modal||modal.type!="notif")return;
@@ -1881,12 +1884,12 @@ function proofFile(file){if(!file||!modal||modal.type!="notif")return;
   im.onerror=()=>{modal.busy=0;toast("Image illisible.",1);render()};im.src=r.result};r.readAsDataURL(file)}
 document.addEventListener("paste",e=>{if(!modal||modal.type!="notif"||!e.clipboardData)return;const it=[...e.clipboardData.items].find(i=>i.kind=="file"&&(i.type.startsWith("image/")||i.type=="application/pdf"));if(it){e.preventDefault();proofFile(it.getAsFile())}});
 function sendNotif(fid){const f=S.factures[fid],u=ME(),p=modal.proof;if(!f||f.ent!=u.id)return;if(!p)return say("Joignez une preuve de paiement.");
- DBX.set("preuves/"+fid,{data:p.data,name:p.name,type:p.type,size:p.size,t:Date.now(),by:u.id});proofCache[fid]=Object.assign({},p);
- DBX.update("factures/"+fid,{st:"verif",proof:true,notifT:Date.now(),notifRef:tval("nref"),notifDate:val("ndt"),notifCom:tval("ncom"),rejet:null});
+ const nt=Date.now();DBX.set("preuves/"+fid,{data:p.data,name:p.name,type:p.type,size:p.size,t:nt,by:u.id});proofCache[fid+"@"+nt]=Object.assign({},p);
+ DBX.update("factures/"+fid,{st:"verif",proof:true,notifT:nt,notifRef:tval("nref"),notifDate:val("ndt"),notifCom:tval("ncom"),rejet:null});
  log(`Paiement notifié par ${u.nom} pour ${f.num} (${money(f.montant)}) — en attente de vérification`,"Finances","Finances");toast("Notification envoyée. Les Finances vont vérifier votre paiement.");closeM()}
 function validatePay(fid){const f=S.factures[fid];if(!canBill()||f.st!="verif")return;ask(`Confirmer la réception de ${money(f.montant)} de ${f.entNom} pour ${f.num} ?`,()=>{encaisser(f);log(`Paiement validé : ${f.num} (${money(f.montant)}) de ${f.entNom}`,"Finances","Finances");toast("Paiement validé et encaissé.");modal=null},"Valider le paiement")}
 function rejectPay(fid){const f=S.factures[fid],m=tval("vrj");if(!canBill())return;if(!m)return say("Indiquez le motif du refus pour l'entreprise.");
- DBX.update("factures/"+fid,{st:"due",rejet:m,rejT:Date.now(),rejBy:meId});log(`Preuve refusée pour ${f.num} (${f.entNom}) : ${m}`,"Finances","Finances");toast("Preuve refusée. L'entreprise a été informée.");closeM()}
+ DBX.update("factures/"+fid,{st:"due",rejet:m,rejT:Date.now(),rejBy:meId,proof:null});DBX.remove("preuves/"+fid);Object.keys(proofCache).filter(k=>k.startsWith(fid+"@")).forEach(k=>delete proofCache[k]);log(`Preuve refusée pour ${f.num} (${f.entNom}) : ${m}`,"Finances","Finances");toast("Preuve refusée. L'entreprise a été informée.");closeM()}
 
 /* État civil : actes */
 function fileToData(file){return new Promise((res,rej)=>{if(!file)return rej(new Error("Aucun fichier"));
@@ -2118,6 +2121,12 @@ function jdocPrint(id){const x=S.jdocs[id],w=window.open("","_blank");if(!w)retu
  const css=[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n");
  w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(x.num)}</title><style>${css}\nbody{background:#fff!important;padding:20px}.paper{box-shadow:none;margin:0 auto}@media print{body{padding:0}}</style></head><body data-theme="light">${docPaper(x)}<script>setTimeout(()=>print(),400)<\/script></body></html>`);w.document.close()}
 
+/* Messagerie : suppression d'une conversation (pour soi uniquement) */
+function convDel(w){const me=ME();if(!me||!w)return;ask(`Supprimer la conversation avec ${uname(w)} ? Elle disparaît de votre messagerie uniquement : votre correspondant conserve sa copie.`,()=>{
+ const M=vals(S.messages).filter(x=>(x.from==me.id&&x.to==w)||(x.to==me.id&&x.from==w)),now=srvNow(),last=M.reduce((a,x)=>Math.max(a,num(x.t)),0),base="messagerie/"+ulog(me.id),up={};
+ M.forEach(x=>{up[(x.from==me.id?"envoyés/":"reçus/")+x.id]=null});
+ DBX.update("users/"+me.id,{["convClear/"+w]:Math.max(now,last)});if(Object.keys(up).length)DBX.update(base,up);
+ convWith=null;toast("Conversation supprimée.")},"Supprimer")}
 /* Recrutements */
 function openRecNew(){modal={type:"recNew",files:[]};keep={};render()}
 async function addRecFiles(list){if(!modal||modal.type!="recNew")return;const arr=[...(list||[])];if(!arr.length)return;modal.busy=1;render();modal.files=modal.files||[];
