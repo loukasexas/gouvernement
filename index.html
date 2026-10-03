@@ -317,33 +317,105 @@ function secOk(){const u=ME();return !!u&&(isDir()||(isAgent(u)&&u.dept=="Sécur
 function secArch(){return secOk()&&(isDir()||can("sec.archive"))}
 function gradeEditable(g){if(isDir())return true;const m=ME();return can("rh.grades")&&g.role=="fonctionnaire"&&g.dept==m.dept}
 
-/* ---------- Couche de données (Firebase ou local) ---------- */
 function setAt(path,v){const p=path.split("/");let o=S;for(let i=0;i<p.length-1;i++){if(!o[p[i]]||typeof o[p[i]]!="object")o[p[i]]={};o=o[p[i]]}
  const k=p[p.length-1];if(v===null||v===undefined)delete o[k];else o[k]=JSON.parse(JSON.stringify(v))}
-const LKEY="lsgov_local_v2";
+/* ---------- Couche de données (Firebase ou local) ---------- */
+/* Organisation de la base : chaque type de donnée est rangé dans un dossier lisible, avec des sous-dossiers
+   (département, catégorie, mois, utilisateur…). L'application continue de manipuler des listes à plat (S.xxx[id]) :
+   cette couche traduit chaque écriture vers le bon emplacement et reconstitue les listes à la lecture. */
+const DB_LAYOUT=2;
+const fk=s=>{s=String(s==null?"":s).replace(/[.#$\[\]\/\u0000-\u001f\u007f]/g,"_").trim();return s||"_sans"};
+const ulog=(id,U)=>{const u=(U||S.users||{})[id];return fk(u&&u.login?u.login:id)};
+const dkey=t=>{const d=new Date(+t||Date.now());return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const LAYOUT={
+ users:["personnel/comptes",2,(x,id)=>[fk(x.role=="entreprise"?"Entreprises":x.role=="direction"?"Direction":x.dept||"Sans département")+"/"+fk(x.login||id)]],
+ grades:["personnel/grades",2,(x,id)=>[fk(x.role=="direction"?"Direction":x.dept||"Tous départements")+"/"+id]],
+ sanctions:["personnel/sanctions",2,(x,id,U)=>[ulog(x.uid,U)+"/"+id]],
+ paie:["salaires/en_cours",1,(x,id)=>[id]],
+ paiearch:["salaires/archives",2,(x,id)=>[fk(x.deptNom)+"/"+id]],
+ dossiers:["dossiers",2,(x,id)=>[fk(x.dept)+"/"+id]],
+ affaires:["justice/affaires",1,(x,id)=>[id]],
+ entreprises:["registres/entreprises",1,(x,id)=>[id]],
+ identites:["registres/documents_identite",2,(x,id)=>[fk(IDL[x.type]?IDL[x.type][1]:"Anciennes fiches")+"/"+id]],
+ actes:["registres/etat_civil",2,(x,id)=>[fk((ECL[x.cat]||["","Autres"])[1])+"/"+id]],
+ transactions:["finances/tresorerie",2,(x,id)=>[dkey(x.t).slice(0,7)+"/"+id]],
+ factures:["finances/comptabilite",2,(x,id)=>[fk(x.entNom)+"/"+id]],
+ declarations:["finances/declarations",2,(x,id)=>[fk(x.entNom)+"/"+id]],
+ archives:["finances/archives_fiscales",1,(x,id)=>[id]],
+ patrouilles:["securite/patrouilles",2,(x,id)=>[fk((PATL[x.type]||["","Autres"])[1])+"/"+id]],
+ patarch:["securite/archives",1,(x,id)=>[id]],
+ recrutements:["recrutements/candidatures",1,(x,id)=>[id]],
+ blacklist:["recrutements/blacklist",1,(x,id)=>[id]],
+ annonces:["communication/annonces",1,(x,id)=>[id]],
+ messages:["messagerie",3,(x,id,U)=>[ulog(x.from,U)+"/envoyés/"+id,ulog(x.to,U)+"/reçus/"+id]],
+ logs:["journal",2,(x,id)=>[dkey(x.t)+"/"+id]]};
+const RAWP={preuves:"finances/preuves_paiement",archdata:"finances/archives_fiscales_detail",actefiles:"registres/etat_civil_pieces",cvfiles:"recrutements/cv",idfiles:"registres/documents_identite_images"};
+const rp=p=>{const s=String(p).split("/");return RAWP[s[0]]?[RAWP[s[0]]].concat(s.slice(1)).join("/"):p};
+const itemPaths=(col,x,id,U)=>x&&typeof x=="object"?LAYOUT[col][2](x,id,U).map(p=>LAYOUT[col][0]+"/"+p):[];
+const clone=v=>v===undefined?null:JSON.parse(JSON.stringify(v));
+function getAt(o,path){for(const k of String(path).split("/")){if(!o||typeof o!="object")return undefined;o=o[k]}return o}
+function putAt(o,path,v){const p=String(path).split("/");for(let i=0;i<p.length-1;i++){if(!o[p[i]]||typeof o[p[i]]!="object")o[p[i]]={};o=o[p[i]]}const k=p[p.length-1];if(v===null||v===undefined)delete o[k];else o[k]=clone(v)}
+function flattenCol(node,d){const out={};const walk=(n,lvl)=>{if(!n||typeof n!="object")return;for(const k in n){const v=n[k];if(!v||typeof v!="object")continue;if(lvl==1){const id=v.id||k;out[id]=out[id]?Object.assign({},out[id],v,{read:!!(out[id].read||v.read)}):v}else walk(v,lvl-1)}};walk(node,d);return out}
+function treeToFlat(T){const F={config:(T&&T.config)||{}};for(const c of COLS)F[c]=flattenCol(getAt(T,LAYOUT[c][0]),LAYOUT[c][1]);for(const r in RAWP)F[r]=getAt(T,RAWP[r])||{};return F}
+function flatToTree(F){const T={config:Object.assign({},F.config||{},{dbLayout:DB_LAYOUT})},U=F.users||{};
+ for(const c of COLS)for(const [id,x] of Object.entries(F[c]||{}))for(const p of itemPaths(c,x,id,U))putAt(T,p,x);
+ for(const r in RAWP)if(F[r]&&Object.keys(F[r]).length)putAt(T,RAWP[r],F[r]);
+ for(const k in F)if(!COLS.includes(k)&&!RAWP[k]&&k!="config"&&!T[k])T[k]=F[k];return T}
+/* Traduit une écriture « à plat » (ex. users/<id>/nom) en écritures multi-emplacements dans l'arborescence */
+function dbWrite(ops){const multi={},byItem=new Map();
+ for(const [path,v] of ops){const s=path.split("/");const col=s[0];
+  if(LAYOUT[col]&&s.length>=2){const id=s[1],k=col+"/"+id;if(!byItem.has(k))byItem.set(k,{col,id,old:clone(S[col]&&S[col][id]),ops:[]});byItem.get(k).ops.push([s.slice(2).join("/"),v]);setAt(path,v)}
+  else{setAt(path,v);multi[rp(path)]=clone(v)}}
+ for(const {col,id,old,ops} of byItem.values()){const cur=S[col]&&S[col][id],oP=itemPaths(col,old,id),nP=itemPaths(col,cur,id);
+  if(!cur){oP.forEach(p=>multi[p]=null);continue}
+  const same=old&&oP.length==nP.length&&oP.every(p=>nP.includes(p))&&ops.every(o=>o[0]!=="");
+  if(same)nP.forEach(p=>ops.forEach(([r,v])=>multi[p+"/"+r]=clone(v)));
+  else{oP.filter(p=>!nP.includes(p)).forEach(p=>multi[p]=null);nP.forEach(p=>multi[p]=clone(cur))}}
+ /* évite les chemins imbriqués dans une même mise à jour (interdit par Firebase) : l'écriture complète du parent suffit */
+ const keys=Object.keys(multi);for(const k of keys)if(keys.some(a=>a!==k&&k.startsWith(a+"/")))delete multi[k];
+ schedule();if(db)return db.ref(ROOT).update(multi).catch(fbErr);
+ for(const p in multi)putAt(LT,p,multi[p]);persist();return Promise.resolve()}
+let LT={};const LKEY="lsgov_local_v3",LKEY_OLD="lsgov_local_v2";
 let db=null;
 const DBX={
- set(path,v){setAt(path,v);persist();schedule();if(db)return db.ref(ROOT+"/"+path).set(v===undefined?null:v).catch(fbErr);return Promise.resolve()},
- update(path,obj){for(const k in obj)setAt(path+"/"+k,obj[k]);persist();schedule();if(db)return db.ref(ROOT+"/"+path).update(obj).catch(fbErr);return Promise.resolve()},
+ set(path,v){return dbWrite([[path,v]])},
+ update(path,obj){return dbWrite(Object.entries(obj).map(([k,v])=>[path+"/"+k,v]))},
  remove(path){return DBX.set(path,null)},
- replaceAll(data){if(db)return db.ref(ROOT).set(data).catch(fbErr);S={config:{}};COLS.forEach(c=>S[c]={});Object.assign(S,data||{});S.config=S.config||{};COLS.forEach(c=>S[c]=S[c]||{});persist();schedule();return Promise.resolve()}
+ replaceAll(data){const T=data&&data.config&&data.config.dbLayout==DB_LAYOUT&&!data.users?data:flatToTree(data||{});if(db)return db.ref(ROOT).set(T).catch(fbErr);
+  LT=T;S=treeToFlat(LT);persist();schedule();return Promise.resolve()}
 };
-function persist(){if(!db)lsSet(LKEY,JSON.stringify(S))}
+function persist(){if(!db)lsSet(LKEY,JSON.stringify(LT))}
 function fbErr(e){console.error(e);toast("Erreur de synchronisation : "+(e&&e.message||e),1)}
+/* Réorganisation unique de l'ancienne base (listes à plat) vers la nouvelle arborescence, avec sauvegarde préalable */
+async function migrateIfNeeded(){const ref=db.ref(ROOT+"/config/dbLayout");
+ for(let tries=0;tries<40;tries++){const v=(await ref.once("value")).val();if(v==DB_LAYOUT)return;
+  const lock=await db.ref(ROOT+"/config/dbMigration").transaction(m=>(!m||Date.now()-(+m)>60000)?Date.now():undefined);
+  if(lock.committed){const R=(await db.ref(ROOT).once("value")).val()||{};if(R.config&&R.config.dbLayout==DB_LAYOUT)return;
+   const flat={config:R.config||{}};for(const c of COLS)flat[c]=R[c]||{};for(const r in RAWP)flat[r]=R[r]||{};
+   for(const k in R)if(!COLS.includes(k)&&!RAWP[k]&&k!="config")flat[k]=R[k];
+   const T=flatToTree(flat);delete T.config.dbMigration;const has=COLS.some(c=>R[c]&&Object.keys(R[c]).length);
+   if(has){T.sauvegardes=Object.assign({},R.sauvegardes||{});const b=Object.assign({},R);delete b.sauvegardes;T.sauvegardes["avant_reorganisation_"+dkey(Date.now())]=b}
+   await db.ref(ROOT).set(T);return}
+  await new Promise(r=>setTimeout(r,1500))}}
+let msgRef=null,msgFor=undefined;
+function watchMessages(){if(!db||msgFor===meId)return;if(msgRef)msgRef.off();msgRef=null;msgFor=meId;S.messages={};
+ if(!meId)return;msgRef=db.ref(ROOT+"/messagerie/"+ulog(meId));msgRef.on("value",s=>{S.messages=flattenCol(s.val(),2);schedule()},fbErr)}
 function startData(){
  if(DB_URL&&window.firebase){
   try{firebase.initializeApp({databaseURL:DB_URL});db=firebase.database()}catch(e){bootErr="Impossible d'initialiser Firebase : "+e.message;render();return}
-  const loaded=new Set(),all=[...COLS,"config"];
   db.ref(".info/connected").on("value",s=>{connected=!!s.val();schedule()});
   db.ref(".info/serverTimeOffset").on("value",s=>{srvOff=+s.val()||0});
-  all.forEach(c=>{let r=db.ref(ROOT+"/"+c);if(c=="logs"||c=="messages")r=r.limitToLast(c=="logs"?800:1500);
-   r.on("value",s=>{S[c]=s.val()||{};if(!loaded.has(c)){loaded.add(c);if(loaded.size==all.length)boot()}schedule()},
-   e=>{bootErr="Accès à la base refusé : vérifie l'URL et les règles Firebase. ("+e.message+")";render()})});
-  setTimeout(()=>{if(!ready&&!bootErr){bootErr="La base Firebase ne répond pas. Vérifie l'URL dans le fichier et ta connexion.";render()}},15000);
+  const to=setTimeout(()=>{if(!ready&&!bootErr){bootErr="La base Firebase ne répond pas. Vérifie l'URL dans le fichier et ta connexion.";render()}},25000);
+  migrateIfNeeded().then(()=>{const loaded=new Set(),all=COLS.filter(c=>c!="messages").concat(["config"]);
+   all.forEach(c=>{let r=db.ref(ROOT+"/"+(c=="config"?"config":LAYOUT[c][0]));if(c=="logs")r=r.orderByKey().limitToLast(31);
+    r.on("value",s=>{S[c]=c=="config"?(s.val()||{}):flattenCol(s.val(),LAYOUT[c][1]);if(!loaded.has(c)){loaded.add(c);if(loaded.size==all.length){clearTimeout(to);boot()}}schedule()},
+    e=>{bootErr="Accès à la base refusé : vérifie l'URL et les règles Firebase. ("+e.message+")";render()})})},
+   e=>{bootErr="Réorganisation de la base impossible : "+(e&&e.message||e);render()});
  }else{
   if(DB_URL&&!window.firebase)bootErr="Le SDK Firebase n'a pas pu être chargé (connexion internet ?).";
-  try{const d=JSON.parse(lsGet(LKEY)||"null");if(d){S=d;S.config=S.config||{};COLS.forEach(c=>S[c]=S[c]||{})}}catch(e){}
-  window.addEventListener("storage",e=>{if(e.key==LKEY&&e.newValue){try{S=JSON.parse(e.newValue);schedule()}catch(x){}}});
+  try{const t=JSON.parse(lsGet(LKEY)||"null");if(t)LT=t;else{const d=JSON.parse(lsGet(LKEY_OLD)||"null");if(d){LT=flatToTree(d);lsSet(LKEY,JSON.stringify(LT))}}}catch(e){}
+  S=treeToFlat(LT);
+  window.addEventListener("storage",e=>{if(e.key==LKEY&&e.newValue){try{LT=JSON.parse(e.newValue);S=treeToFlat(LT);schedule()}catch(x){}}});
   boot();
  }
 }
@@ -354,6 +426,7 @@ async function boot(){try{
  }
  if(!Object.keys(S.grades).length)seedGrades();
  if(!S.config||!S.config.siteName)DBX.update("config",{siteName:"Gouvernement de Los Santos",subtitle:"État de San Andreas — Intranet officiel",depts:DEF_DEPTS,tax:8,treasuryStart:250000,banner:{on:true,txt:"Bienvenue sur l'intranet du Gouvernement de Los Santos. ",lvl:"info"},maintenance:{on:false,msg:""}});
+ if(S.config.dbLayout!=DB_LAYOUT)DBX.update("config",{dbLayout:DB_LAYOUT});
  if(!S.config.taxCatsInit){const o={},L=[["Hôpitaux",0],["Forces de l'ordre",0],["Concessionnaires",15],["Garages mécaniques",30],["Commerces",10],["Restauration",10]];L.forEach(([name,rate],i)=>{o[nid()+i]={name,rate,rank:i}});DBX.update("config",{taxCats:o,taxCatsInit:true})}
  const sid=lsGet("lsgov_session");if(sid&&S.users[sid]&&S.users[sid].active!==false)meId=sid;
 } catch(e){console.error(e);toast("Erreur d'initialisation : "+e.message,1)}
@@ -372,7 +445,7 @@ function say(t){const e=$("#msg");if(e)e.textContent=t;else toast(t,1)}
 /* ---------- Rendu ---------- */
 let schT=0;
 function schedule(){if(schT)return;schT=setTimeout(()=>{schT=0;if(ready)render()},40)}
-function render(){
+function render(){watchMessages();
  const root=$("#root");if(!root)return;
  const ae=document.activeElement;let fid=ae&&ae.id,ss=null,se=null;try{ss=ae.selectionStart;se=ae.selectionEnd}catch(e){}
  root.querySelectorAll("input[id],textarea[id],select[id]").forEach(e=>{if(e.type!="checkbox"&&e.type!="file"&&!e.hasAttribute("data-nokeep"))keep[e.id]=e.value});
@@ -651,7 +724,7 @@ function ecView(){const cat=filt.ecc||"",q=filt.ecq||"",showDel=cat=="_del";cons
  <div class="card tw"><table><tr><th>N° d'acte<th>Catégorie<th>Personne concernée<th>Numéro<th>Naissance<th>Date de l'acte<th>Pièces<th>Enregistré</tr>${L.map(a=>`<tr class="click" onclick="openActe('${a.id}')"><td class="nw b">${esc(a.num)}<td class="nw">${(ECL[a.cat]||["","?","\u{1F4C4}"])[2]} ${esc((ECL[a.cat]||["","Autre"])[1])}<td><b>${esc(a.nom)}</b> ${esc(a.prenom)}<td class="nw">${esc(a.tel||"—")}<td class="nw">${a.naiss?fdd(a.naiss):"—"}<td class="nw">${a.dateActe?fdd(a.dateActe):"—"}<td>\u{1F4CE} ${Object.keys(a.files||{}).length}<td class="nw mu sm">${fd(a.t)}<br>${esc(a.byNom||"")}</tr>`).join("")||`<tr><td colspan="8" class="empty">${q?"Aucun acte ne correspond à la recherche.":"Aucun acte enregistré."}</td></tr>`}</table></div></div></div>`}
 const acteCache={};
 function loadActeFiles(id){if(acteCache[id]!==undefined||loadActeFiles.p[id])return;loadActeFiles.p[id]=1;const done=v=>{acteCache[id]=v||{};delete loadActeFiles.p[id];render()};
- if(db)db.ref(ROOT+"/actefiles/"+id).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.actefiles&&S.actefiles[id])}
+ if(db)db.ref(ROOT+"/"+rp("actefiles/"+id)).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.actefiles&&S.actefiles[id])}
 loadActeFiles.p={};
 function fileTile(fk,f,data,rm){const img=(f.type||"").startsWith("image/");
  return `<div class="ftile ${rm?"rm":""}">${data?(img?`<img src="${data}" alt="${esc(f.name)}" onclick="modal.zoom='${fk}';render()">`:`<div class="fdoc">${ic("file")}<span>PDF</span></div>`):`<div class="fdoc mu">…</div>`}<div class="fname" title="${esc(f.name)}">${esc(f.name)}</div>
@@ -781,7 +854,7 @@ function archView(){const P=curPeriod(),A=vals(S.archives).sort((a,b)=>b.to-a.to
  <div class="card tw"><h3>Périodes archivées</h3><table><tr><th>Période<th>Du<th>Au<th>Décl.<th class="r">CA déclaré<th class="r">Impôts déclarés<th class="r">Encaissés<th class="r">Impayés à la clôture<th>Clôturée par</tr>${A.map(a=>`<tr class="click" onclick="openM('archive','${a.id}')"><td class="b">${esc(a.name)}<td class="nw">${a.from?fd(a.from):"—"}<td class="nw">${fd(a.to)}<td>${a.nDecl}<td class="r">${money(a.ca)}<td class="r b">${money(a.emis)}<td class="r">${money(a.paye)}<td class="r" style="${num(a.impaye)>0?"color:var(--no)":""}">${money(a.impaye)}<td>${esc(a.byNom)}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucune période archivée.</td></tr>`}</table></div>`}
 const archCache={};
 function loadArch(id){if(archCache[id]!==undefined||loadArch.p[id])return;loadArch.p[id]=1;const done=v=>{archCache[id]=v||null;delete loadArch.p[id];render()};
- if(db)db.ref(ROOT+"/archdata/"+id).once("value").then(s=>done(s.val()),e=>{fbErr(e);done(null)});else done(S.archdata&&S.archdata[id])}
+ if(db)db.ref(ROOT+"/"+rp("archdata/"+id)).once("value").then(s=>done(s.val()),e=>{fbErr(e);done(null)});else done(S.archdata&&S.archdata[id])}
 loadArch.p={};
 function MArchive(a){if(!a||!(can("fin.view")||can("fin.archive")))return null;const d=archCache[a.id];if(d===undefined)loadArch(a.id);
  const E=Object.entries(a.perEnt||{}).map(([id,e])=>Object.assign({id},e)).sort((x,y)=>num(y.impot)-num(x.impot));const t=modal.tab||"ent";
@@ -1055,7 +1128,7 @@ const IDL=Object.fromEntries(ID_T.map(t=>[t[0],t]));
 const idType=r=>IDL[r.type]||["old","Ancienne fiche","\u{1F4C4}"];
 const idCache={};
 function loadIdFiles(id){if(idCache[id]!==undefined||loadIdFiles.p[id])return;loadIdFiles.p[id]=1;const done=v=>{idCache[id]=v||{};delete loadIdFiles.p[id];render()};
- if(db)db.ref(ROOT+"/idfiles/"+id).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.idfiles&&S.idfiles[id])}
+ if(db)db.ref(ROOT+"/"+rp("idfiles/"+id)).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.idfiles&&S.idfiles[id])}
 loadIdFiles.p={};
 function idView(){const ty=filt.idt||"",q=filt.idq||"",A=vals(S.identites),ed=can("reg.civ.edit");
  const L=A.filter(r=>!ty||(IDL[r.type]?r.type:"old")==ty).filter(r=>match(q,r.num,r.nom,r.prenom,r.tel,r.prenom+" "+r.nom,r.nom+" "+r.prenom,idType(r)[1],r.dateEm?fdd(r.dateEm):"")).sort((a,b)=>(b.dateEm||"").localeCompare(a.dateEm||"")||(b.t||0)-(a.t||0));
@@ -1150,7 +1223,7 @@ const RST={attente:["En attente","wa"],acceptee:["Acceptée","ok"],refusee:["Ref
 const recOk=()=>can("rec.view")||can("rec.cv");
 const cvCache={};
 function loadCv(id){if(cvCache[id]!==undefined||loadCv.p[id])return;loadCv.p[id]=1;const done=v=>{cvCache[id]=v||{};delete loadCv.p[id];render()};
- if(db)db.ref(ROOT+"/cvfiles/"+id).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.cvfiles&&S.cvfiles[id])}
+ if(db)db.ref(ROOT+"/"+rp("cvfiles/"+id)).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.cvfiles&&S.cvfiles[id])}
 loadCv.p={};
 const pname=(p,n)=>NRM((p||"")+" "+(n||""));
 function blHits(nom,prenom,tel){const a=pname(prenom,nom),b=pname(nom,prenom),t=String(tel||"").replace(/\D/g,"");if(!NRM(nom)&&!t)return [];
@@ -1363,7 +1436,7 @@ function fallbackCopy(t,cb){const a=document.createElement("textarea");a.value=t
 const proofCache={};
 function loadProof(fid){if(proofCache[fid]!==undefined||loadProof.p[fid])return;loadProof.p[fid]=1;
  const done=v=>{proofCache[fid]=v||null;delete loadProof.p[fid];render()};
- if(db)db.ref(ROOT+"/preuves/"+fid).once("value").then(s=>done(s.val()),e=>{fbErr(e);done(null)});else done(S.preuves&&S.preuves[fid])}
+ if(db)db.ref(ROOT+"/"+rp("preuves/"+fid)).once("value").then(s=>done(s.val()),e=>{fbErr(e);done(null)});else done(S.preuves&&S.preuves[fid])}
 loadProof.p={};
 function proofFile(file){if(!file||!modal||modal.type!="notif")return;
  if(file.type=="application/pdf"){if(file.size>3e6)return toast("PDF trop lourd (3 Mo max). Envoyez plutôt une capture d'écran.",1);const r=new FileReader();r.onload=()=>{modal.proof={data:r.result,name:file.name||"preuve.pdf",type:file.type,size:file.size};render()};r.readAsDataURL(file);return}
@@ -1515,7 +1588,7 @@ function saveSettings(){const dp=val("sdp").split("\n").map(s=>s.trim()).filter(
  DBX.update("config",{siteName:tval("sn")||"Gouvernement de Los Santos",subtitle:tval("ss"),accent:val("sa"),logo:tval("slg")||"logo.png",treasuryStart:num(val("st0")),depts:[...new Set(dp)]});applyTheme();log("Paramètres du site modifiés","","Administration");toast("Paramètres enregistrés.")}
 function resetAccent(){DBX.update("config",{accent:null});setTimeout(applyTheme,50);toast("Couleur par défaut rétablie.")}
 function saveMaint(){const on=val("mo")=="1";DBX.update("config",{maintenance:{on,msg:tval("mm")}});log("Maintenance "+(on?"activée":"désactivée"),"","Administration");toast("Maintenance "+(on?"activée":"désactivée")+".")}
-function exportData(){const data={config:S.config};COLS.forEach(c=>data[c]=S[c]);const b=new Blob([JSON.stringify(data,null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sauvegarde-intranet-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);log("Sauvegarde exportée","","Administration")}
+async function exportData(){let data={config:S.config};COLS.forEach(c=>data[c]=S[c]);if(db){try{const T=(await db.ref(ROOT).once("value")).val()||{};data=treeToFlat(T);for(const r in RAWP)delete data[r]}catch(e){fbErr(e)}}const b=new Blob([JSON.stringify(data,null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sauvegarde-intranet-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);log("Sauvegarde exportée","","Administration")}
 function importData(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let d;try{d=JSON.parse(r.result)}catch(e){return toast("Fichier invalide.",1)}if(!d||!d.users)return toast("Ce fichier n'est pas une sauvegarde de l'intranet.",1);
  ask("Restaurer cette sauvegarde ? Toutes les données actuelles seront remplacées.",()=>{DBX.replaceAll(d).then(()=>{toast("Sauvegarde restaurée.");setTimeout(()=>log("Sauvegarde restaurée","","Administration"),500)})},"Restaurer")};r.readAsText(f);inp.value=""}
 function wipeAll(){ask("Tout effacer définitivement ? Cette action est irréversible.",()=>{DBX.replaceAll({}).then(()=>{meId=null;lsSet("lsgov_session",null);ready=false;S={config:{}};COLS.forEach(c=>S[c]={});setTimeout(boot,600)})},"Tout effacer")}
