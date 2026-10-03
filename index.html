@@ -147,6 +147,7 @@ td input,td select{margin:0;width:110px;padding:5px 8px}
 .bub{max-width:75%;padding:8px 12px;border-radius:12px;background:var(--cd2);border:1px solid var(--bd);white-space:pre-wrap;word-wrap:break-word}
 .bub.me{align-self:flex-end;background:rgba(201,162,74,.16);border-color:rgba(201,162,74,.4)}
 .msep{display:flex;align-items:center;gap:10px;color:var(--mu);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin:6px 0}.msep:before,.msep:after{content:"";flex:1;height:1px;background:var(--bd)}
+.mreq-b{display:flex;flex-direction:column;gap:6px;margin-top:12px}.mreq-b .bub{max-width:100%}
 .bub .mt{margin-top:2px;font-size:10.5px}.bub.grp{margin-top:-5px}
 .splash .sp-t{font-weight:700;letter-spacing:.04em;margin-top:6px}.sp-bar{height:4px;border-radius:99px;background:var(--cd2);overflow:hidden;margin:14px auto 10px;max-width:280px}.sp-bar span{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));transform-origin:left;animation:spfill linear forwards}
 @keyframes spfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}.sp-m{min-height:18px}
@@ -507,7 +508,10 @@ function tickClocks(){document.querySelectorAll("[data-since]").forEach(e=>{e.te
 setInterval(tickClocks,1000);
 /* Conversations supprimées : masquées pour soi seul (le correspondant conserve sa copie) */
 function msgVis(x){const m=ME();if(!m)return false;const w=x.from==m.id?x.to:x.from,c=m.convClear&&m.convClear[w];return !c||num(x.t)>num(c)}
-function unread(){const m=ME();return m?vals(S.messages).filter(x=>x.to==m.id&&!x.read&&msgVis(x)).length:0}
+/* Direction : les nouveaux correspondants passent d'abord par la « Messagerie en attente » */
+function msgPending(w){const m=ME();if(!m||!isDir()||!w)return false;if(m.msgOk&&m.msgOk[w])return false;const o=S.users[w];if(o&&o.role=="direction")return false;
+ return !vals(S.messages).some(x=>x.from==m.id&&x.to==w&&msgVis(x))}
+function unread(){const m=ME();return m?vals(S.messages).filter(x=>x.to==m.id&&!x.read&&msgVis(x)&&!msgPending(x.from)).length:0}
 function notify(){try{notifCheck()}catch(e){console.error(e)}}
 function applyTheme(){setFavicon();const t=lsGet("lsgov_theme")||"dark";document.documentElement.setAttribute("data-theme",t);
  const a=S.config&&S.config.accent;if(a&&/^#[0-9a-f]{6}$/i.test(a)){document.documentElement.style.setProperty("--gold",a);document.documentElement.style.setProperty("--gold2",a)}else{document.documentElement.style.removeProperty("--gold");document.documentElement.style.removeProperty("--gold2")}}
@@ -585,7 +589,9 @@ function navItems(){const u=ME(),n=unread(),I=[];
  if(can("fin.view")||can("fin.budget"))I.push(["finances/stats","Statistiques","grid",0,"f"]);
  if(can("reg.ent.view"))I.push(["registres/entreprises","Registre des entreprises","book",0,"f"]);
  if(secOk())I.push(["securite","Sécurité","eye"]);
- I.push(["messages","Messagerie","mail",n,"c"],["annonces","Annonces","megaphone",0,"c"]);
+ I.push(["messages","Messagerie","mail",n,"c"]);
+ if(isDir())I.push(["msgattente","Messagerie en attente","shield",convs(true).length,"c"]);
+ I.push(["annonces","Annonces","megaphone",0,"c"]);
  if(can("annuaire"))I.push(["annuaire","Annuaire","users"]);
  if(["rh.view","rh.grades","rh.sanction"].some(can))I.push(["personnel","Personnel","shield",0,"g"]);
  I.push(["salaire","Salaire","wallet",(can("pay.all")||isDir())?vals(S.paie).filter(p=>p&&p.st=="soumise").length:0,"g"]);
@@ -941,8 +947,8 @@ const CATS=["Impôts","Amendes","Factures","Salaires","Subventions","Fonctionnem
 V.annonces=()=>`<div class="ph"><h2>Annonces officielles</h2></div>${can("com.post")?`<div class="card"><h3>Publier une annonce</h3><div class="form"><label class="f full">Titre<input id="at1" maxlength="120"></label><label class="f full">Contenu<textarea id="at2" rows="4"></textarea></label>
  <label class="f">Destinataires<select id="at3">${opts([["all","Tout le monde"],["agents","Tous les agents"],["entreprises","Entreprises"]].concat(DEPTS().map(d=>[d,"Département "+d])))}</select></label><label class="ck" style="margin-top:22px"><input type="checkbox" id="at4"><span>Épingler en haut</span></label></div><button class="btn" onclick="addAnn()">Publier</button><p class="err" id="msg"></p></div>`:""}
  ${visibleAnn().map(annCard).join("")||`<div class="card">${empty("Aucune annonce.")}</div>`}`;
-function convs(){const m=meId,o={};vals(S.messages).forEach(x=>{if(x.from!=m&&x.to!=m||!msgVis(x))return;const w=x.from==m?x.to:x.from;if(!o[w])o[w]={w,last:0,n:0,txt:""};if(x.t>o[w].last||(x.t==o[w].last&&String(x.id)>String(o[w].id||""))){o[w].last=x.t;o[w].id=x.id;o[w].txt=x.txt}if(x.to==m&&!x.read)o[w].n++});return Object.values(o).sort((a,b)=>b.last-a.last)}
-V.messages=()=>{const C=convs(),me=ME();if(!convWith&&C.length)convWith=C[0].w;
+function convs(pend){const m=meId,o={};vals(S.messages).forEach(x=>{if(x.from!=m&&x.to!=m||!msgVis(x))return;const w=x.from==m?x.to:x.from;if(!!pend!==msgPending(w))return;if(!o[w])o[w]={w,last:0,n:0,txt:""};if(x.t>o[w].last||(x.t==o[w].last&&String(x.id)>String(o[w].id||""))){o[w].last=x.t;o[w].id=x.id;o[w].txt=x.txt}if(x.to==m&&!x.read)o[w].n++});return Object.values(o).sort((a,b)=>b.last-a.last)}
+V.messages=()=>{const C=convs(),me=ME();if(convWith&&msgPending(convWith))convWith=null;if(!convWith&&C.length)convWith=C[0].w;
  const rec=vals(S.users).filter(u=>u.id!=meId&&u.active!==false&&(me.role!="entreprise"||isAgent(u))).sort((a,b)=>a.nom.localeCompare(b.nom));
  const M=convWith?vals(S.messages).filter(x=>(x.from==meId&&x.to==convWith)||(x.to==meId&&x.from==convWith)).filter(msgVis).sort(msgCmp):[];
  const toRead=M.filter(x=>x.to==meId&&!x.read);if(toRead.length&&view=="messages"){const up={};toRead.forEach(x=>up[x.id+"/read"]=true);setTimeout(()=>DBX.update("messages",up),0)}
@@ -952,6 +958,14 @@ V.messages=()=>{const C=convs(),me=ME();if(!convWith&&C.length)convWith=C[0].w;
  <div class="thread">${w?`<div style="padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button class="btn gh sm" style="order:2;margin-left:auto" onclick="convDel('${convWith}')" title="Supprimer la conversation">Supprimer la conversation</button><b>${esc(w.nom)}</b> <span class="mu">· ${esc(gname(w))}${w.dept?" · "+esc(w.dept):""}</span></div><div class="body">${M.map((x,i)=>{const d=new Date(x.t),day=d.toDateString(),pv=M[i-1],grp=pv&&pv.from==x.from&&x.t-pv.t<120000&&new Date(pv.t).toDateString()==day;
   return `${!pv||new Date(pv.t).toDateString()!=day?`<div class="msep"><span>${day==new Date().toDateString()?"Aujourd'hui":d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}</span></div>`:""}<div class="bub ${x.from==meId?"me":""} ${grp?"grp":""}" title="${d.toLocaleString("fr-FR")}">${esc(x.txt)}<div class="mu sm mt">${d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}${x.from==meId&&x.read?" · lu":""}</div></div>`}).join("")||`<div class="empty">Démarrez la conversation.</div>`}</div>
  <div class="send"><textarea id="mtx" placeholder="Votre message…" onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea><button class="btn" onclick="sendMsg()">Envoyer</button></div>`:`<div class="empty" style="margin:auto">Sélectionnez ou démarrez une conversation.</div>`}</div></div>`};
+
+/* Messagerie en attente (Direction) */
+V.msgattente=()=>{if(!isDir())return empty("Espace réservé à la Direction.");const P=convs(true);
+ return `<div class="ph"><h2>Messagerie en attente</h2><span class="mu">Messages de nouveaux correspondants à accepter ou refuser</span></div>
+ <div class="card"><p class="mu" style="margin:0">Quand une personne écrit pour la première fois à la Direction, sa conversation arrive ici. <b>Accepter</b> ouvre la conversation dans la Messagerie ; <b>Refuser</b> la supprime de votre messagerie (si la personne réécrit, elle reviendra ici).</p></div>
+ ${P.map(c=>{const u=S.users[c.w]||{},M=vals(S.messages).filter(x=>(x.from==c.w&&x.to==meId)&&msgVis(x)).sort(msgCmp);return `<div class="card mreq"><div class="inl" style="justify-content:space-between;align-items:flex-start"><div><b style="font-size:16px">${esc(uname(c.w))}</b><div class="mu sm">${u.role=="entreprise"?"Entreprise":esc(gname(u))}${u.dept?" · "+esc(u.dept):""} · ${M.length} message(s) · dernier le ${fd(c.last)}</div></div>
+  <div class="inl"><button class="btn no" onclick="msgRefuse('${c.w}')">Refuser</button><button class="btn ok" onclick="msgAccept('${c.w}')">Accepter</button></div></div>
+  <div class="mreq-b">${M.slice(-5).map(x=>`<div class="bub"><div>${esc(x.txt)}</div><div class="mu sm mt">${fd(x.t)}</div></div>`).join("")}${M.length>5?`<p class="mu sm">… ${M.length-5} message(s) plus ancien(s)</p>`:""}</div></div>`}).join("")||`<div class="card">${empty("Aucun message en attente.")}</div>`}`};
 
 /* =================== ANNUAIRE =================== */
 V.annuaire=()=>{let L=vals(S.users).filter(u=>isAgent(u)&&u.active!==false);if(filt.ud)L=L.filter(u=>u.dept==filt.ud);L=L.filter(u=>match(filt.uq,u.nom,gname(u),u.matricule,u.tel)).sort((a,b)=>((G(a)||{}).rank??99)-((G(b)||{}).rank??99)||a.nom.localeCompare(b.nom));
@@ -1611,7 +1625,7 @@ function MJdoc(x){if(!x||!canDocs())return null;const F=jdocCache[x.id];if(F===u
 
 /* =================== NOTIFICATIONS =================== */
 function notifList(){const u=ME();if(!u)return [];const N=[],me=u.id,ent=u.role=="entreprise",add=(k,t,ic0,ti,tx,act)=>{if(t)N.push({k,t:+t,ic:ic0,ti,tx,act})};
- vals(S.messages).filter(m=>m.to==me&&!m.read&&msgVis(m)).forEach(m=>add("m_"+m.id,m.t,"mail","Nouveau message",uname(m.from)+" : "+String(m.txt||"").slice(0,90),`convWith='${m.from}';go('messages')`));
+ vals(S.messages).filter(m=>m.to==me&&!m.read&&msgVis(m)).forEach(m=>msgPending(m.from)?add("m_"+m.id,m.t,"mail","Message en attente",uname(m.from)+" : "+String(m.txt||"").slice(0,90),"go('msgattente')"):add("m_"+m.id,m.t,"mail","Nouveau message",uname(m.from)+" : "+String(m.txt||"").slice(0,90),`convWith='${m.from}';go('messages')`));
  visibleAnn().filter(a=>a.by!=me).forEach(a=>add("a_"+a.id,a.t,"megaphone","Nouvelle annonce",a.titre,"go('annonces')"));
  if(ent){vals(S.dossiers).filter(d=>d.ent==me).forEach(d=>{vals(d.comments).filter(c=>!c.internal&&c.u!=me).forEach(c=>add("dc_"+d.id+"_"+c.t,c.t,"folder","Réponse à votre demande",d.num+" — "+c.nom+" : "+String(c.txt||"").slice(0,80),`openM('dossier','${d.id}')`));
    if((d.st=="ok"||d.st=="no")&&d.tt)add("ds_"+d.id+"_"+d.st,d.tt,"folder",d.st=="ok"?"Demande acceptée":"Demande refusée",d.num+" — "+d.objet,`openM('dossier','${d.id}')`)});
@@ -2127,6 +2141,10 @@ function convDel(w){const me=ME();if(!me||!w)return;ask(`Supprimer la conversati
  M.forEach(x=>{up[(x.from==me.id?"envoyés/":"reçus/")+x.id]=null});
  DBX.update("users/"+me.id,{["convClear/"+w]:Math.max(now,last)});if(Object.keys(up).length)DBX.update(base,up);
  convWith=null;toast("Conversation supprimée.")},"Supprimer")}
+function msgAccept(w){if(!isDir())return;DBX.update("users/"+meId,{["msgOk/"+w]:true});convWith=w;toast("Conversation acceptée.");go("messages")}
+function msgRefuse(w){if(!isDir())return;ask(`Refuser les messages de ${uname(w)} ? La conversation sera supprimée de votre messagerie. Si cette personne réécrit, elle reviendra dans la messagerie en attente.`,()=>{
+ const me=ME(),M=vals(S.messages).filter(x=>x.from==w&&x.to==me.id),now=srvNow(),last=M.reduce((a,x)=>Math.max(a,num(x.t)),0),up={};M.forEach(x=>up["reçus/"+x.id]=null);
+ DBX.update("users/"+me.id,{["convClear/"+w]:Math.max(now,last)});if(Object.keys(up).length)DBX.update("messagerie/"+ulog(me.id),up);toast("Messages refusés.")},"Refuser")}
 /* Recrutements */
 function openRecNew(){modal={type:"recNew",files:[]};keep={};render()}
 async function addRecFiles(list){if(!modal||modal.type!="recNew")return;const arr=[...(list||[])];if(!arr.length)return;modal.busy=1;render();modal.files=modal.files||[];
