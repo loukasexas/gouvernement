@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Intranet — Gouvernement de Los Santos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <style>
@@ -250,6 +250,109 @@ td input,td select{margin:0;width:110px;padding:5px 8px}
  .top .who .mu{display:none}
  .gsbtn{min-width:0;padding:7px}.gsbtn span,.gsbtn kbd{display:none}
 }
+/* =================== REFONTE VISUELLE (v2) =================== */
+:root{--r:12px;--r-sm:10px;--r-lg:16px;--ring:0 0 0 3px color-mix(in srgb,var(--gold) 32%,transparent);--sh-sm:0 1px 2px rgba(0,0,0,.25),0 2px 8px rgba(0,0,0,.18);--sh-pop:0 18px 50px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.3);--ff-ui:"Plus Jakarta Sans",Inter,system-ui,sans-serif}
+:root[data-theme="light"]{--sh-sm:0 1px 2px rgba(20,30,60,.06),0 2px 8px rgba(20,30,60,.06);--sh-pop:0 18px 50px rgba(20,30,60,.18),0 2px 6px rgba(20,30,60,.08)}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.003em}
+h1,h2,h3,.btn,.tabs button,.nav button,.kpi .v,.modal .mh h3,th,.acc-h{font-family:var(--ff-ui)}
+h2{font-size:22px;font-weight:800;letter-spacing:-.01em}h3{font-weight:700}
+::selection{background:color-mix(in srgb,var(--gold) 35%,transparent)}
+*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--mu) 45%,transparent) transparent}
+*::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--mu) 40%,transparent);border-radius:99px;border:3px solid transparent;background-clip:content-box}*::-webkit-scrollbar-track{background:transparent}
+/* Champs */
+input,select,textarea{border-radius:var(--r-sm);border:1px solid var(--bd);background:var(--bg2);padding:10px 12px;transition:border-color .15s,box-shadow .15s,background .15s}
+input:hover,select:hover,textarea:hover{border-color:color-mix(in srgb,var(--gold) 45%,var(--bd))}
+input:focus,select:focus,textarea:focus,.cs-btn:focus-visible{outline:0;border-color:var(--gold);box-shadow:var(--ring);background:var(--cd)}
+input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--mu) 80%,transparent)}
+input:disabled,select:disabled,textarea:disabled{opacity:.6;cursor:not-allowed}
+select{appearance:none;-webkit-appearance:none;padding-right:36px;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238b98b4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+label.f{font-weight:600;font-size:12px;letter-spacing:.01em}
+td input,td select{padding:7px 10px;border-radius:9px}
+/* Cases à cocher et boutons radio */
+input[type=checkbox],input[type=radio]{appearance:none;-webkit-appearance:none;width:20px!important;height:20px;min-width:20px;padding:0;margin:0;border:2px solid color-mix(in srgb,var(--mu) 70%,transparent);background:var(--bg2);border-radius:6px;display:inline-grid;place-content:center;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s;vertical-align:middle;flex:none}
+input[type=radio]{border-radius:50%}
+input[type=checkbox]::before{content:"";width:11px;height:11px;transform:scale(0);transition:transform .12s ease-in-out;background:var(--on-gold);clip-path:polygon(14% 44%,0 65%,50% 100%,100% 16%,80% 0,43% 62%)}
+input[type=radio]::before{content:"";width:8px;height:8px;border-radius:50%;transform:scale(0);transition:transform .12s;background:var(--on-gold)}
+input[type=checkbox]:checked,input[type=radio]:checked{background:var(--gold);border-color:var(--gold)}
+input[type=checkbox]:checked::before,input[type=radio]:checked::before{transform:scale(1)}
+input[type=checkbox]:hover:not(:disabled),input[type=radio]:hover:not(:disabled){border-color:var(--gold)}
+input[type=checkbox]:focus-visible,input[type=radio]:focus-visible{box-shadow:var(--ring);outline:0}
+input[type=checkbox]:disabled{opacity:.45;cursor:not-allowed}
+.pck input{width:20px;height:20px}
+.ck{gap:9px}
+/* Boutons */
+.btn{border-radius:var(--r-sm);padding:9px 16px;font-weight:700;letter-spacing:.005em;background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 88%,#fff) 0%,var(--gold) 100%);box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 4px 14px color-mix(in srgb,var(--gold) 28%,transparent);transition:transform .12s,filter .15s,box-shadow .15s,background .15s,border-color .15s;line-height:1.25}
+.btn:hover:not(:disabled){filter:brightness(1.06);transform:translateY(-1px)}
+.btn:active:not(:disabled){transform:translateY(0);filter:brightness(.97)}
+.btn:focus-visible{outline:0;box-shadow:var(--ring)}
+.btn.sec{background:var(--cd2);box-shadow:var(--sh-sm)}.btn.sec:hover:not(:disabled){border-color:color-mix(in srgb,var(--gold) 50%,var(--bd));filter:none}
+.btn.gh{box-shadow:none}.btn.gh:hover:not(:disabled){color:var(--tx);background:var(--cd2);filter:none}
+.btn.ok{background:linear-gradient(180deg,color-mix(in srgb,var(--ok) 85%,#fff),var(--ok));box-shadow:0 4px 14px color-mix(in srgb,var(--ok) 28%,transparent)}
+.btn.no{background:linear-gradient(180deg,color-mix(in srgb,var(--no) 85%,#fff),var(--no));box-shadow:0 4px 14px color-mix(in srgb,var(--no) 28%,transparent)}
+.btn.bl{background:linear-gradient(180deg,color-mix(in srgb,var(--blue) 85%,#fff),var(--blue));box-shadow:0 4px 14px color-mix(in srgb,var(--blue) 28%,transparent)}
+.btn.sm{padding:6px 12px;border-radius:9px;font-size:12.5px}
+.lnk{border-radius:6px}
+/* Cartes, KPI, tableaux */
+.card,.kpi,.pe-card{border-radius:var(--r-lg);box-shadow:var(--sh-sm)}
+.kpi{position:relative;overflow:hidden}.kpi:before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(var(--gold),transparent)}
+.kpi .v{font-weight:800;letter-spacing:-.01em}
+.tw{border-radius:var(--r);overflow:auto}
+th{background:color-mix(in srgb,var(--cd2) 70%,transparent);font-size:11.5px;letter-spacing:.06em}
+th:first-child{border-top-left-radius:10px}th:last-child{border-top-right-radius:10px}
+tbody tr,table tr{transition:background .12s}
+tr.click:hover td,table tr:hover td{background:color-mix(in srgb,var(--cd2) 60%,transparent)}
+tr.click{cursor:pointer}
+/* Badges */
+.bdg{border:1px solid color-mix(in srgb,currentColor 35%,transparent);background:color-mix(in srgb,currentColor 12%,transparent);padding:2px 10px;font-size:11.5px;font-weight:700;letter-spacing:.01em}
+/* Onglets en segments */
+.tabs{border-bottom:0;background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:4px;gap:4px;width:fit-content;max-width:100%}
+.tabs button{border:0;border-radius:9px;padding:7px 14px;font-weight:600;transition:background .15s,color .15s}
+.tabs button:hover{color:var(--tx);background:color-mix(in srgb,var(--cd2) 70%,transparent)}
+.tabs button.on{background:var(--cd);color:var(--gold2);box-shadow:var(--sh-sm);border-bottom-color:transparent}
+/* Navigation */
+.nav button{border-radius:10px;transition:background .12s,color .12s}
+.nav button.on{background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 18%,transparent),transparent);box-shadow:inset 3px 0 0 var(--gold)}
+.top{backdrop-filter:saturate(1.2) blur(8px);background:color-mix(in srgb,var(--cd) 88%,transparent)}
+/* Fenêtres */
+.modal-bg{background:rgba(3,6,14,.62);backdrop-filter:blur(4px)}
+.modal{border-radius:20px;box-shadow:var(--sh-pop);animation:mIn .18s ease-out}
+.modal.wide .mf{border-radius:0 0 20px 20px}
+@keyframes mIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+.modal .mh .x{border-radius:10px;width:34px;height:34px;transition:background .15s}.modal .mh .x:hover{background:var(--cd2)}
+.toast{border-radius:14px;backdrop-filter:blur(6px)}
+.drop{border-radius:var(--r-lg)}
+.acc{border-radius:14px}
+/* Menus déroulants personnalisés */
+.cs{position:relative;display:block;margin:4px 0 10px;min-width:0}
+td .cs,.inl .cs,.form .cs.inl-cs{margin:0}
+.cs>select{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;margin:0}
+.cs-btn{display:flex;align-items:center;gap:8px;width:100%;min-height:42px;padding:9px 12px;border:1px solid var(--bd);border-radius:var(--r-sm);background:var(--bg2);color:var(--tx);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s,background .15s}
+.cs-btn:hover{border-color:color-mix(in srgb,var(--gold) 45%,var(--bd))}
+.cs-btn[aria-expanded="true"]{border-color:var(--gold);box-shadow:var(--ring);background:var(--cd)}
+.cs-btn:disabled{opacity:.6;cursor:not-allowed}
+.cs-v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cs-v.ph{color:var(--mu)}
+.cs-btn svg{width:16px;height:16px;color:var(--mu);flex:none;transition:transform .18s}.cs-btn[aria-expanded="true"] svg{transform:rotate(180deg);color:var(--gold2)}
+td .cs-btn{min-height:34px;padding:6px 10px;border-radius:9px}
+.cs-pop{position:fixed;z-index:400;background:var(--cd);border:1px solid var(--bd);border-radius:14px;box-shadow:var(--sh-pop);padding:6px;display:flex;flex-direction:column;animation:csIn .12s ease-out;min-width:180px}
+@keyframes csIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.cs-pop.up{animation-name:csInU}@keyframes csInU{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.cs-q{margin:0 0 6px;padding:8px 10px;border-radius:9px;font-size:13.5px}
+.cs-l{overflow-y:auto;overscroll-behavior:contain}
+.cs-g{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mu);padding:9px 10px 4px}
+.cs-o{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;border-radius:9px;background:none;color:var(--tx);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.cs-o.act{background:color-mix(in srgb,var(--gold) 14%,var(--cd2))}
+.cs-o.sel{color:var(--gold2);font-weight:600}
+.cs-o i{width:16px;flex:none;display:flex}.cs-o i svg{width:16px;height:16px}
+.cs-o:disabled{opacity:.4;cursor:not-allowed}
+.cs-e{padding:10px;color:var(--mu);font-size:13px}
+input,select,textarea,.cs-btn{font-size:14px;font-weight:500;line-height:1.4}
+label.f>input,label.f>textarea{margin-top:6px}
+.cs-btn{height:42px;min-height:0}.cs-btn .cs-v{line-height:1.4}
+label.f>.cs{margin-top:6px}
+.inl>.cs{margin:0;min-width:160px}.inl>input{margin:0}
+td .cs-btn{height:34px}
+.cs-o{font-weight:500}
+.cs-btn .cs-v{display:block!important;margin:0!important;padding:0!important}.cs-o span{margin:0!important;display:inline!important}
 </style></head>
 <body><div id="root"></div><div class="toasts" id="toasts"></div>
 <script>
@@ -352,6 +455,47 @@ function gradeEditable(g){if(isDir())return true;const m=ME();return can("rh.gra
 
 function setAt(path,v){const p=path.split("/");let o=S;for(let i=0;i<p.length-1;i++){if(!o[p[i]]||typeof o[p[i]]!="object")o[p[i]]={};o=o[p[i]]}
  const k=p[p.length-1];if(v===null||v===undefined)delete o[k];else o[k]=JSON.parse(JSON.stringify(v))}
+/* Menus déroulants personnalisés : remplacent l'affichage natif des <select> (le select reste en place pour la logique) */
+const CSCHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+let csOpen=null;
+function csKey(s){if(s.id)return "#"+s.id;const all=[...document.querySelectorAll("#root select")];return "@"+all.indexOf(s)}
+function csFind(k){if(k[0]=="#")return document.getElementById(k.slice(1));return [...document.querySelectorAll("#root select")][+k.slice(1)]||null}
+function enhanceSelects(root){root.querySelectorAll("select:not([multiple]):not([data-native])").forEach(s=>{if(s.parentNode.classList&&s.parentNode.classList.contains("cs"))return;
+ const w=document.createElement("span");w.className="cs";if(s.getAttribute("style"))w.setAttribute("style",s.getAttribute("style"));s.removeAttribute("style");
+ if(s.closest("td,.inl,.inl-cs,.jp-bar,.pfold"))w.style.margin="0";
+ s.parentNode.insertBefore(w,s);w.appendChild(s);s.tabIndex=-1;
+ const b=document.createElement("button");b.type="button";b.className="cs-btn";b.setAttribute("aria-haspopup","listbox");b.setAttribute("aria-expanded","false");b.disabled=s.disabled;
+ const o=s.options[s.selectedIndex];b.innerHTML=`<span class="cs-v ${!o||o.value===""?"ph":""}">${esc(o?o.text:"")}</span>${ic("chev")}`;
+ b.onclick=e=>{e.stopPropagation();csOpen&&csOpen.s===s?csClose():csShow(s,b)};
+ b.onkeydown=e=>{if(["ArrowDown","ArrowUp","Enter"," "].includes(e.key)){e.preventDefault();csShow(s,b)}};
+ w.appendChild(b);s.addEventListener("change",()=>{const o2=s.options[s.selectedIndex],v=b.querySelector(".cs-v");if(v){v.textContent=o2?o2.text:"";v.classList.toggle("ph",!o2||o2.value==="")}})});
+ if(csOpen){const s=csFind(csOpen.k);if(s&&s.parentNode.classList.contains("cs")){csOpen.s=s;csOpen.b=s.parentNode.querySelector(".cs-btn");csOpen.b.setAttribute("aria-expanded","true");csPlace()}else csClose()}}
+function csItems(s,q){const out=[];const nq=NRM(q||"");[...s.children].forEach(n=>{const add=(o,g)=>{if(!nq||NRM(o.text).includes(nq)||(g&&NRM(g).includes(nq)))out.push({o,g})};
+ if(n.tagName=="OPTGROUP")[...n.children].forEach(o=>add(o,n.label));else add(n,"")});return out}
+function csShow(s,b){csClose();const p=document.createElement("div");p.className="cs-pop";p.setAttribute("role","listbox");p.onclick=e=>e.stopPropagation();document.body.appendChild(p);
+ csOpen={s,b,p,k:csKey(s),q:"",act:Math.max(0,s.selectedIndex)};b.setAttribute("aria-expanded","true");csDraw(true);csPlace();
+ const qi=p.querySelector(".cs-q");(qi||p).focus&&setTimeout(()=>{(qi||p.querySelector(".cs-o.act")||p).focus()},10)}
+function csDraw(first){const c=csOpen;if(!c)return;const many=c.s.options.length>8,I=csItems(c.s,c.q);if(first&&!c.q){const i=I.findIndex(x=>x.o.selected);c.act=i<0?0:i}c.act=Math.min(c.act,Math.max(0,I.length-1));let lg=null;
+ const list=I.map((x,i)=>{let h="";if(x.g&&x.g!==lg){h+=`<div class="cs-g">${esc(x.g)}</div>`;lg=x.g}return h+`<button type="button" class="cs-o ${i==c.act?"act":""} ${x.o.selected?"sel":""}" data-i="${i}" role="option" aria-selected="${x.o.selected}" ${x.o.disabled?"disabled":""}><i>${x.o.selected?CSCHK:""}</i><span>${esc(x.o.text)}</span></button>`}).join("")||`<div class="cs-e">Aucun résultat</div>`;
+ if(first)c.p.innerHTML=`${many?`<input class="cs-q" placeholder="Rechercher…" autocomplete="off">`:""}<div class="cs-l">${list}</div>`;else c.p.querySelector(".cs-l").innerHTML=list;
+ c.items=I;c.p.querySelectorAll(".cs-o").forEach(bt=>{bt.onmousedown=e=>e.preventDefault();bt.onclick=()=>csPick(+bt.dataset.i);bt.onmouseenter=()=>{c.act=+bt.dataset.i;c.p.querySelectorAll(".cs-o").forEach(z=>z.classList.toggle("act",z===bt))}});
+ const q=c.p.querySelector(".cs-q");if(first&&q){q.oninput=()=>{c.q=q.value;c.act=0;csDraw()};q.onkeydown=csKeys}if(first)c.p.onkeydown=csKeys;
+ const a=c.p.querySelector(".cs-o.act");a&&a.scrollIntoView({block:"nearest"})}
+function csKeys(e){const c=csOpen;if(!c)return;const n=(c.items||[]).length;
+ if(e.key=="ArrowDown"||e.key=="ArrowUp"){e.preventDefault();if(n){c.act=(c.act+(e.key=="ArrowDown"?1:-1)+n)%n;c.p.querySelectorAll(".cs-o").forEach(z=>z.classList.toggle("act",+z.dataset.i==c.act));const a=c.p.querySelector(".cs-o.act");a&&a.scrollIntoView({block:"nearest"})}}
+ else if(e.key=="Enter"){e.preventDefault();n&&csPick(c.act)}else if(e.key=="Escape"||e.key=="Tab"){e.preventDefault();e.stopPropagation();const b=c.b;csClose();b&&b.focus()}
+ else if(e.key.length==1&&!c.p.querySelector(".cs-q")){const i=c.items.findIndex(x=>NRM(x.o.text).startsWith(NRM(e.key)));if(i>=0){c.act=i;csDraw()}}}
+function csPick(i){const c=csOpen;if(!c)return;const x=c.items[i];if(!x||x.o.disabled)return;const s=c.s,b=c.b;csClose();
+ if(s.value!==x.o.value){s.value=x.o.value;const v=b.querySelector(".cs-v");if(v){v.textContent=x.o.text;v.classList.toggle("ph",x.o.value==="")}s.dispatchEvent(new Event("input",{bubbles:true}));s.dispatchEvent(new Event("change",{bubbles:true}))}
+ const nb=csFind(csKey(s));const btn=nb&&nb.parentNode.querySelector&&nb.parentNode.querySelector(".cs-btn");(btn&&document.body.contains(btn)?btn:b).focus({preventScroll:true})}
+function csPlace(){const c=csOpen;if(!c||!document.body.contains(c.b))return;const r=c.b.getBoundingClientRect(),vh=innerHeight,vw=innerWidth,below=vh-r.bottom-12,above=r.top-12,up=below<240&&above>below;
+ const mh=Math.max(160,Math.min(360,(up?above:below)));c.p.style.width=Math.max(r.width,200)+"px";c.p.style.left=Math.min(r.left,vw-Math.max(r.width,200)-8)+"px";c.p.classList.toggle("up",up);
+ c.p.style.maxHeight=mh+"px";const l=c.p.querySelector(".cs-l");if(l)l.style.maxHeight=(mh-(c.p.querySelector(".cs-q")?58:12))+"px";
+ if(up){c.p.style.top="";c.p.style.bottom=(vh-r.top+6)+"px"}else{c.p.style.bottom="";c.p.style.top=(r.bottom+6)+"px"}}
+function csClose(){if(!csOpen)return;csOpen.p.remove();if(csOpen.b)csOpen.b.setAttribute("aria-expanded","false");csOpen=null}
+document.addEventListener("click",()=>csClose());
+window.addEventListener("resize",()=>csPlace());
+document.addEventListener("scroll",e=>{if(csOpen&&!csOpen.p.contains(e.target))csPlace()},true);
 /* ---------- Couche de données (Firebase ou local) ---------- */
 /* Organisation de la base : chaque type de donnée est rangé dans un dossier lisible, avec des sous-dossiers
    (département, catégorie, mois, utilisateur…). L'application continue de manipuler des listes à plat (S.xxx[id]) :
@@ -490,7 +634,8 @@ function render(){watchMessages();
  let h;try{h=page()}catch(e){console.error(e);h=`<div class="login"><div class="box card"><h3>Erreur d'affichage</h3><p class="mu">${esc(e.message)}</p><button class="btn" onclick="modal=null;go('accueil')">Revenir à l'accueil</button></div></div>`}
  root.innerHTML=h;
  for(const id in keep){const e=document.getElementById(id);if(e&&e.type!="checkbox"&&!e.hasAttribute("data-nokeep")&&e.value!==keep[id]){if(e.tagName=="SELECT"&&![...e.options].some(o=>o.value==keep[id]))continue;e.value=keep[id]}}
- if(fid){const e=document.getElementById(fid);if(e){e.focus({preventScroll:true});try{if(ss!=null)e.setSelectionRange(ss,se)}catch(x){}}}
+ try{enhanceSelects(root)}catch(x){console.error(x)}
+ if(fid){const e=document.getElementById(fid);if(e){const t=e.tagName=="SELECT"&&e.parentNode.classList.contains("cs")?e.parentNode.querySelector(".cs-btn"):e;t.focus({preventScroll:true});try{if(ss!=null)e.setSelectionRange(ss,se)}catch(x){}}}
  const mb2=root.querySelector(".modal-bg");if(mb2)mb2.scrollTop=ms;const mbd2=root.querySelector(".modal .mb");if(mbd2)mbd2.scrollTop=mbs;
  const tb2=root.querySelector(".thread .body");if(tb2)tb2.scrollTop=tAtEnd?tb2.scrollHeight:ts;
  tickClocks();notify();
