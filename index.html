@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Intranet — Gouvernement de Los Santos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;800&family=Inter:wght@400;500;600;700&family=Mrs+Saint+Delafield&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;800&family=Inter:wght@400;500;600;700&family=Mrs+Saint+Delafield&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" crossorigin="anonymous" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <style>
@@ -437,6 +437,13 @@ td .cs-btn{height:34px}
 .tpl .tn{left:0;right:0;top:97.6%;text-align:center;font-size:1.15cqw;color:#8a8f99;font-family:Inter,system-ui,sans-serif;font-weight:600;letter-spacing:.04em}
 #jdprev .tpl,#sceauprev .tpl{max-width:560px}
 .seal-prev{width:180px;height:180px;border-radius:16px;background:#f7f7f9;display:flex;align-items:center;justify-content:center;padding:12px}.seal-prev img{max-width:100%;max-height:100%;object-fit:contain}
+/* Lien imgbb */
+.ib-c{text-align:center;padding:6px 4px}.ib-c h3{margin:10px 0 4px}
+.ib-ok{width:64px;height:64px;border-radius:50%;background:#22a861;color:#fff;display:flex;align-items:center;justify-content:center;margin:4px auto 0;font-size:30px;font-weight:800}.ib-ok svg{width:34px;height:34px;stroke-width:3}.ib-ko{background:var(--cd2);color:var(--gold2)}.ib-ko svg{width:30px;height:30px}
+.ib-spin{width:46px;height:46px;border-radius:50%;border:4px solid var(--cd2);border-top-color:var(--gold);margin:8px auto;animation:ibs 1s linear infinite}@keyframes ibs{to{transform:rotate(360deg)}}
+.ib-th{display:block;max-width:180px;max-height:240px;margin:14px auto;border-radius:8px;box-shadow:var(--sh-sm)}
+.ib-row{display:flex;gap:8px;margin:12px 0 8px;text-align:left}.ib-row input{flex:1;margin:0;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+.ib-ln{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;font-size:13px}.ib-ln a{color:var(--gold2)}
 </style></head>
 <body><div id="root"></div><div class="toasts" id="toasts"></div>
 <script>
@@ -1935,7 +1942,7 @@ function sceauPrev(){const el=document.getElementById("sceauprev");if(!el)return
 function sceauFile(f){if(!f)return;if(!/^image\//.test(f.type))return toast("Choisissez une image.",1);const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const M=420,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);
  let d=c.toDataURL("image/webp",0.9);if(!d.startsWith("data:image/webp"))d=c.toDataURL("image/png");modal.img=d;render()};im.src=r.result};r.readAsDataURL(f)}
 function saveSceau(){if(!canSeal())return;const up={jusMinNom:tval("smn")||TPL_MIN_DEF.nom,jusMinTitre:tval("smt")||TPL_MIN_DEF.titre};if(modal.img!==undefined)up.jusSceau=modal.img||null;
- DBX.update("config",up);log("Sceau du ministre de la Justice modifié","Justice","Justice");toast("Sceau enregistré.");closeM()}
+ up.jusSceauT=Date.now();DBX.update("config",up);log("Sceau du ministre de la Justice modifié","Justice","Justice");toast("Sceau enregistré.");closeM()}
 /* ---------- Documents officiels ---------- */
 const DOC_T=[
  ["perq","Mandat de perquisition","MP","\u{1F50E}",[["motif","Raison",1,"text","","Ex. : Suspicion de trafic de stupéfiants"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeTel","N° de tél. du juge",0,"text","@jugeTel"],["delivre","Délivré le",1,"date","@today"],["nom","Nom de la personne visée",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["action","Action",1,"text","","Ex. : Perquisition du domicile et du véhicule"],["lieu","Adresse",1],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
@@ -2017,7 +2024,7 @@ function MJdoc(x){if(!x||!canDocs())return null;const F=jdocCache[x.id];if(F===u
  if(modal.zoom&&F&&F[modal.zoom])return {title:esc(x.num)+" — pièce",wide:1,body:`<img src="${F[modal.zoom].data}" style="width:100%;border-radius:10px;cursor:zoom-out" onclick="modal.zoom=null;render()">`,foot:`<button class="btn sec" onclick="modal.zoom=null;render()">Retour</button>`};
  return {title:`${(DOCL[x.type]||[0,"Document"])[1]} — ${esc(x.num)}`,wide:1,body:`${docPaper(x)}${Object.keys(x.files||{}).length?`<h4>Pièces jointes</h4><div class="fgrid">${Object.entries(x.files).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data)).join("")}</div>`:""}
  ${x.st=="annule"?`<p class="mu sm">Annulé le ${fd(x.annT)} par ${esc(x.annNom||"")}${x.annMotif?` — ${esc(x.annMotif)}`:""}</p>`:""}`,
- foot:`${ed||isDir()?`<button class="btn gh" style="margin-right:auto" onclick="jdocDel('${x.id}')">Supprimer</button>`:""}${ed&&x.st!="annule"?`<button class="btn gh" onclick="jdocCancel('${x.id}')">Annuler le document</button><button class="btn sec" onclick="openJdoc('${x.id}')">Modifier</button>`:""}<button class="btn sec" onclick="jdocPrint('${x.id}')">Imprimer / PDF</button><button class="btn sec" onclick="jdocCopy('${x.id}')">Copier pour Discord</button><button class="btn" onclick="closeM()">Fermer</button>`}}
+ foot:`${ed||isDir()?`<button class="btn gh" style="margin-right:auto" onclick="jdocDel('${x.id}')">Supprimer</button>`:""}${ed&&x.st!="annule"?`<button class="btn gh" onclick="jdocCancel('${x.id}')">Annuler le document</button><button class="btn sec" onclick="openJdoc('${x.id}')">Modifier</button>`:""}<button class="btn sec" onclick="jdocPrintPdf('${x.id}')">PDF</button><button class="btn sec" onclick="jdocPrint('${x.id}')">Imprimer</button><button class="btn sec" onclick="jdocCopy('${x.id}')">Copier pour Discord</button><button class="btn" onclick="closeM()">Fermer</button>`}}
 
 /* =================== NOTIFICATIONS =================== */
 function notifList(){const u=ME();if(!u)return [];const N=[],me=u.id,ent=u.role=="entreprise",add=(k,t,ic0,ti,tx,act)=>{if(t)N.push({k,t:+t,ic:ic0,ti,tx,act})};
@@ -2115,7 +2122,7 @@ V.admin=()=>{const c=S.config,bn=c.banner||{},mt=c.maintenance||{},adm=can("adm.
  return `<div class="ph"><h2>Administration</h2></div>
  ${can("com.banner")?`<div class="card"><h3>Bandeau d'information défilant</h3><div class="form"><label class="f full">Texte<input id="bt" value="${esc(bn.txt||"")}"></label><label class="f">Niveau<select id="bl">${opts([["info","Information"],["warn","Avertissement"],["alert","Alerte"]],bn.lvl||"info")}</select></label><label class="f">Affichage<select id="bo">${opts([["1","Affiché"],["0","Masqué"]],bn.on?"1":"0")}</select></label></div><button class="btn" onclick="saveBanner()">Mettre à jour</button></div>`:""}
  ${adm?`<div class="card"><h3>Paramètres généraux</h3><div class="form"><label class="f">Nom du gouvernement<input id="sn" value="${esc(c.siteName||"")}"></label><label class="f">Sous-titre<input id="ss" value="${esc(c.subtitle||"")}"></label>
- <label class="f">Logo (fichier du dépôt ou lien https)<input id="slg" value="${esc(c.logo||"logo.png")}"></label><label class="f">Couleur d'accent<input id="sa" type="color" value="${esc(c.accent||"#c9a24a")}"></label><label class="f">Trésorerie initiale ($)<input id="st0" type="number" value="${num(c.treasuryStart)}"></label>
+ <label class="f">Logo (fichier du dépôt ou lien https)<input id="slg" value="${esc(c.logo||"logo.png")}"></label><label class="f">Couleur d'accent<input id="sa" type="color" value="${esc(c.accent||"#c9a24a")}"></label><label class="f">Trésorerie initiale ($)<input id="st0" type="number" value="${num(c.treasuryStart)}"></label><label class="f">Clé API imgbb (bouton Imprimer)<input id="sik" value="${esc(c.imgbbKey||"")}" placeholder="Clé récupérée sur api.imgbb.com" autocomplete="off"></label>
  
  <div class="f full"><span class="fl">Départements</span>${(()=>{const L=(keep.sdp!=null?keep.sdp:DEPTS().join("\n")).split("\n").map(s=>s.trim()).filter(Boolean),U=vals(S.users),G=vals(S.grades);
   return `<textarea id="sdp" hidden>${esc(L.join("\n"))}</textarea><div class="dl">${L.map((d,i)=>{const n=U.filter(u=>u.dept==d).length;return `<div class="dl-i"><span class="dl-n">${esc(d)}</span><span class="dl-k">${n} agent${n>1?"s":""}</span><button type="button" class="dl-b up" title="Monter" onclick="deptMove(${i},-1)" ${i?"":"disabled"}>${ic("chev")}</button><button type="button" class="dl-b" title="Descendre" onclick="deptMove(${i},1)" ${i<L.length-1?"":"disabled"}>${ic("chev")}</button><button type="button" class="dl-b del" title="Retirer" onclick="deptDel(${i})">×</button></div>`}).join("")}
@@ -2159,7 +2166,7 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="jug")m=MJug();
  else if(modal.type=="jugv")m=MJugV(S.jugements[modal.id]);
  else if(modal.type=="mdt")m=MMdt();
- else if(modal.type=="jdocEdit")m=MJdocEdit();if(modal.type=="sceau")m=MSceau();
+ else if(modal.type=="jdocEdit")m=MJdocEdit();if(modal.type=="sceau")m=MSceau();if(modal.type=="imgbb")m=MImgbb();
  else if(modal.type=="jdoc")m=MJdoc(S.jdocs[modal.id]);
  else if(modal.type=="dossier")m=MDossier(S.dossiers[modal.id]);
  else if(modal.type=="affaire")m=MAffaire(S.affaires[modal.id]);
@@ -2435,7 +2442,7 @@ function delGrade(id){const g=S.grades[id],n=vals(S.users).filter(u=>u.gradeId==
 /* Administration */
 function saveBanner(){DBX.update("config",{banner:{txt:tval("bt"),lvl:val("bl"),on:val("bo")=="1"}});log("Bandeau d'information mis à jour","Communication","Administration");toast("Bandeau mis à jour.")}
 function saveSettings(){const dp=val("sdp").split("\n").map(s=>s.trim()).filter(Boolean);if(!dp.length)return toast("Il faut au moins un département.",1);
- DBX.update("config",{siteName:tval("sn")||"Gouvernement de Los Santos",subtitle:tval("ss"),accent:val("sa"),logo:tval("slg")||"logo.png",treasuryStart:num(val("st0")),depts:[...new Set(dp)]});applyTheme();log("Paramètres du site modifiés","","Administration");toast("Paramètres enregistrés.")}
+ DBX.update("config",{siteName:tval("sn")||"Gouvernement de Los Santos",subtitle:tval("ss"),accent:val("sa"),logo:tval("slg")||"logo.png",treasuryStart:num(val("st0")),imgbbKey:tval("sik")||null,depts:[...new Set(dp)]});applyTheme();log("Paramètres du site modifiés","","Administration");toast("Paramètres enregistrés.")}
 function resetAccent(){DBX.update("config",{accent:null});setTimeout(applyTheme,50);toast("Couleur par défaut rétablie.")}
 function saveMaint(){const on=val("mo")=="1";DBX.update("config",{maintenance:{on,msg:tval("mm")}});log("Maintenance "+(on?"activée":"désactivée"),"","Administration");toast("Maintenance "+(on?"activée":"désactivée")+".")}
 async function exportData(){let data={config:S.config};COLS.forEach(c=>data[c]=S[c]);if(db){try{const T=(await db.ref(ROOT).once("value")).val()||{};data=treeToFlat(T);for(const r in RAWP)delete data[r]}catch(e){fbErr(e)}}const b=new Blob([JSON.stringify(data,null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sauvegarde-intranet-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);log("Sauvegarde exportée","","Administration")}
@@ -2530,7 +2537,48 @@ function jdocSave(){if(!can("jus.docs"))return;const x=modal.id?S.jdocs[modal.id
 function jdocCancel(id){const x=S.jdocs[id];ask(`Annuler le document ${x.num} ? Il restera consultable avec la mention « Annulé ».`,()=>{const u=ME();DBX.update("jdocs/"+id,{st:"annule",annT:Date.now(),annNom:u.nom});log(`Document officiel annulé : ${x.num}`,"Justice","Justice");modal={type:"jdoc",id}},"Annuler le document")}
 function jdocDel(id){if(!(can("jus.docs")||isDir()))return;const x=S.jdocs[id];ask(`Supprimer définitivement le document ${x.num} et ses pièces jointes ?`,()=>{DBX.remove("jdocfiles/"+id);DBX.remove("jdocs/"+id);log(`Document officiel supprimé : ${x.num}`,"Justice","Justice");modal=null},"Supprimer")}
 function jdocCopy(id){copyText(docText(S.jdocs[id])).then(()=>toast("Document copié : collez-le dans Discord."))}
-function jdocPrint(id){const x=S.jdocs[id],w=window.open("","_blank");if(!w)return toast("Autorisez les fenêtres pop-up pour imprimer.",1);
+/* ---------- Imprimer : image du document envoyée sur imgbb (lien permanent) ---------- */
+const H2I_URL="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js";
+const DOCFONT_CSS="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;800&family=Mrs+Saint+Delafield&display=swap";
+let h2iP=null,fontCssP=null;
+function loadH2I(){if(window.htmlToImage)return Promise.resolve(window.htmlToImage);return h2iP||(h2iP=new Promise((ok,ko)=>{const s=document.createElement("script");s.src=H2I_URL;s.onload=()=>window.htmlToImage?ok(window.htmlToImage):ko(new Error("Module d'image indisponible."));s.onerror=()=>{h2iP=null;ko(new Error("Impossible de charger le module de génération d'image (connexion ?)."))};document.head.appendChild(s)}))}
+const blobToData=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
+/* Polices des modèles intégrées dans l'image (sous-ensemble latin uniquement, pour rester léger) */
+function docFontCSS(){return fontCssP||(fontCssP=(async()=>{try{const css=await (await fetch(DOCFONT_CSS)).text();
+ const parts=css.split("/* ").filter(p=>/^latin \*\//.test(p)).map(p=>p.slice(p.indexOf("@font-face")));let out=[];
+ for(const p of parts){let q=p;for(const m of [...p.matchAll(/url\((https:[^)]+)\)/g)]){const d=await blobToData(await (await fetch(m[1])).blob());q=q.replace(m[1],d)}out.push(q)}
+ return out.join("\n")}catch(e){fontCssP=null;return ""}})())}
+async function docImage(x){const H=await loadH2I(),tpl=!!TPL[x.type],w=tpl?1414:820;
+ const box=document.createElement("div");box.style.cssText=`position:fixed;left:-30000px;top:0;width:${w}px;background:#fff;z-index:-1`;box.innerHTML=docPaper(x);document.body.appendChild(box);
+ try{const el=box.firstElementChild;el.style.maxWidth="none";el.style.margin="0";el.style.boxShadow="none";el.style.borderRadius="0";
+  const bg=tpl?TPL_ASSET(TPL[x.type].bg):null;await Promise.all([document.fonts?document.fonts.ready:0,...[...box.querySelectorAll("img")].map(i=>i.decode?i.decode().catch(()=>0):0),bg?new Promise(r=>{const i=new Image();i.onload=i.onerror=r;i.src=bg}):0]);
+  if(tpl)tplFit(box);await new Promise(r=>setTimeout(r,60));
+  const o={cacheBust:false,backgroundColor:"#ffffff",fontEmbedCSS:tpl?await docFontCSS():"",pixelRatio:tpl?1:2};
+  return tpl?await H.toJpeg(el,Object.assign({quality:0.93},o)):await H.toPng(el,o)}finally{box.remove()}}
+async function imgbbUpload(dataUrl,name){const key=(S.config.imgbbKey||"").trim();if(!key)throw new Error("Aucune clé imgbb configurée.");
+ const fd=new FormData();fd.append("image",dataUrl.split(",")[1]);fd.append("name",String(name||"document").replace(/[^\w\-]+/g,"_"));
+ let j;try{const r=await fetch("https://api.imgbb.com/1/upload?key="+encodeURIComponent(key),{method:"POST",body:fd});j=await r.json()}catch(e){throw new Error("Impossible de joindre imgbb.")}
+ if(!j||!j.success)throw new Error((j&&j.error&&j.error.message)||"imgbb a refusé l'envoi (clé API invalide ?).");return j.data}
+function jdocPrint(id,force){const x=S.jdocs[id];if(!x)return;modal={type:"imgbb",id};keep={};
+ if(!(S.config.imgbbKey||"").trim()){modal.st="nokey";return render()}
+ if(!force&&x.img&&(x.imgT||0)>=Math.max(x.mt||0,x.t||0,S.config.jusSceauT||0)){modal.st="ok";modal.url=x.img;modal.viewer=x.imgV||"";render();copyText(x.img).then(()=>toast("Lien imgbb copié dans le presse-papier."));return}
+ modal.st="busy";render();
+ (async()=>{try{const d=await imgbbUpload(await docImage(x),x.num);DBX.update("jdocs/"+id,{img:d.url,imgV:d.url_viewer||"",imgT:Date.now()});log(`Document ${x.num} envoyé sur imgbb`,"Justice","Justice");
+  if(modal&&modal.type=="imgbb"&&modal.id==id){modal.st="ok";modal.url=d.url;modal.viewer=d.url_viewer||"";render()}
+  try{await copyText(d.url);toast("Lien imgbb copié dans le presse-papier.")}catch(e){}}
+ catch(e){console.error(e);if(modal&&modal.type=="imgbb"&&modal.id==id){modal.st="err";modal.msg=e.message;render()}}})()}
+function imgbbKeySave(){const k=tval("ikey");if(!k)return say("Collez la clé API imgbb.");DBX.update("config",{imgbbKey:k});log("Clé API imgbb configurée","","Administration");toast("Clé imgbb enregistrée.");setTimeout(()=>jdocPrint(modal.id),300)}
+function MImgbb(){const x=S.jdocs[modal.id];if(!x)return null;const back=`<button class="btn sec" onclick="openM('jdoc','${x.id}')">Retour au document</button>`;let body="",foot=back;
+ if(modal.st=="busy")body=`<div class="ib-c"><div class="ib-spin"></div><h3>Génération du lien…</h3><p class="mu">Création de l'image du document ${esc(x.num)} et envoi sur imgbb.</p></div>`;
+ else if(modal.st=="ok"){body=`<div class="ib-c"><div class="ib-ok">${ic("check")}</div><h3>Envoi terminé</h3><p class="mu">Lien direct de l'image, conservé sans suppression automatique.</p>
+  <a href="${esc(modal.url)}" target="_blank" rel="noopener"><img class="ib-th" src="${esc(modal.url)}" alt="Aperçu de ${esc(x.num)}"></a>
+  <div class="ib-row"><input id="iburl" data-nokeep readonly value="${esc(modal.url)}" onclick="this.select()"><button class="btn" onclick="copyText('${esc(modal.url)}').then(()=>toast('Lien copié dans le presse-papier.'))">${ic("file")}Copier le lien</button></div>
+  <div class="ib-ln"><a href="${esc(modal.url)}" target="_blank" rel="noopener">Ouvrir l'image</a>${modal.viewer?`<a href="${esc(modal.viewer)}" target="_blank" rel="noopener">Page imgbb</a>`:""}<button class="lnk" onclick="jdocPrint('${x.id}',1)">Régénérer l'image</button><button class="lnk" onclick="jdocPrintPdf('${x.id}')">Imprimer / PDF</button></div></div>`;foot=back+`<button class="btn" onclick="closeM()">Fermer</button>`}
+ else if(modal.st=="err"){body=`<div class="ib-c"><div class="ib-ok ib-ko">!</div><h3>L'envoi a échoué</h3><p class="mu">${esc(modal.msg||"")}</p></div>`;foot=back+`<button class="btn" onclick="jdocPrint('${x.id}',1)">Réessayer</button>`}
+ else{const adm=isDir()||can("adm.site");body=`<div class="ib-c"><div class="ib-ok ib-ko">${ic("settings")}</div><h3>imgbb n'est pas encore configuré</h3><p class="mu">Pour générer un lien, le site a besoin d'une clé API imgbb (gratuite) : créez un compte sur imgbb.com, puis récupérez la clé sur <a href="https://api.imgbb.com/" target="_blank" rel="noopener">api.imgbb.com</a>.</p>
+  ${adm?`<div class="ib-row"><input id="ikey" placeholder="Clé API imgbb" autocomplete="off"><button class="btn" onclick="imgbbKeySave()">Enregistrer</button></div><p class="err" id="msg"></p>`:`<p class="mu">Demandez à la Direction de renseigner la clé dans l'Administration.</p>`}</div>`}
+ return {title:`Imprimer — ${esc(x.num)}`,body,foot}}
+function jdocPrintPdf(id){const x=S.jdocs[id],w=window.open("","_blank");if(!w)return toast("Autorisez les fenêtres pop-up pour imprimer.",1);
  const css=[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n");
  const live=document.querySelector(".modal .tpl"),fonts=[...document.querySelectorAll('link[href*="fonts.googleapis"]')].map(l=>l.outerHTML).join("");
  w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(x.num)}</title>${fonts}<style>${css}\nbody{background:#fff!important;padding:20px}.paper{box-shadow:none;margin:0 auto}.tpl{box-shadow:none;max-width:800px}@page{size:A4;margin:0}@media print{body{padding:0}.tpl{max-width:none;width:100vw;margin:0}}</style></head><body data-theme="light">${live&&TPL[x.type]?live.outerHTML:docPaper(x)}<script>setTimeout(()=>print(),400)<\/script></body></html>`);w.document.close()}
