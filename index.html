@@ -37,6 +37,17 @@ tr.ggrp td{background:var(--cd2);color:var(--gold2);font-weight:700;font-size:12
 .wrap{flex:1;min-width:0;display:flex;flex-direction:column}
 .top{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--cd);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:20}
 .top .who{margin-left:auto;text-align:right;line-height:1.25}
+.gsbtn{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--bd);color:var(--mu);border-radius:9px;padding:6px 8px 6px 10px;font:inherit;font-size:13px;cursor:pointer;min-width:200px}
+.gsbtn:hover{border-color:var(--gold);color:var(--tx)}.gsbtn svg{width:16px;height:16px;flex:none}.gsbtn span{flex:1;text-align:left}
+kbd{font:600 11px/1 ui-monospace,Consolas,monospace;background:var(--cd2);border:1px solid var(--bd);border-radius:5px;padding:3px 6px;color:var(--tx);white-space:nowrap}
+.modal.gsm{max-width:680px;align-self:flex-start;margin-top:8vh}.modal.gsm .mh h3{font-size:12px}.gs-eyebrow{color:var(--gold2);letter-spacing:.12em;text-transform:uppercase;font-weight:800}
+.gs-bar{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:4px 10px}.gs-bar:focus-within{border-color:var(--gold)}.gs-bar svg{width:20px;height:20px;color:var(--gold2);flex:none}
+.gs-bar input,.gs-bar input:focus{flex:1;width:auto;border:0!important;background:transparent!important;box-shadow:none!important;outline:0!important;font-size:15px;padding:10px 0!important;min-width:0}
+.gs-res{max-height:52vh;overflow:auto;margin-top:10px}.gs-cat{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);padding:12px 6px 4px}
+.gs-it{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;border-radius:8px;padding:8px 10px;color:var(--tx);font:inherit;text-align:left;cursor:pointer}.gs-it.on{background:var(--cd2);box-shadow:inset 3px 0 0 var(--gold)}
+.gs-ic{display:flex;width:30px;height:30px;border-radius:8px;background:var(--cd2);align-items:center;justify-content:center;flex:none;color:var(--gold2)}.gs-ic svg{width:16px;height:16px}
+.gs-tx{display:flex;flex-direction:column;min-width:0}.gs-tx b,.gs-tx span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-foot{display:flex;gap:16px;flex-wrap:wrap;border-top:1px solid var(--bd);margin-top:10px;padding-top:10px}.gs-foot kbd{margin-right:3px}
 .burger{display:none;background:none;border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:6px 8px;cursor:pointer}
 .ticker{overflow:hidden;white-space:nowrap;padding:7px 0;font-size:13px;font-weight:500;border-bottom:1px solid var(--bd)}
 .ticker span{display:inline-block;padding-left:100%;animation:tk 28s linear infinite}
@@ -200,6 +211,7 @@ td input,td select{margin:0;width:110px;padding:5px 8px}
  .msgs{grid-template-columns:1fr}
  .kv{grid-template-columns:1fr}
  .top .who .mu{display:none}
+ .gsbtn{min-width:0;padding:7px}.gsbtn span,.gsbtn kbd{display:none}
 }
 </style></head>
 <body><div id="root"></div><div class="toasts" id="toasts"></div>
@@ -330,7 +342,7 @@ function startData(){
 async function boot(){try{
  if(!Object.keys(S.users).length){
   const id=nid();
-  await DBX.set("users/"+id,{id,login:"direction",hash:await hashPw("direction","direction"),nom:"Administrateur",role:"direction",gradeId:"",dept:"",matricule:"admin",active:true,mustChange:true,created:Date.now()});
+  await DBX.set("users/"+id,{id,login:"direction",hash:await hashPw("direction","direction"),nom:"Cabinet du Gouverneur",role:"direction",gradeId:"",dept:"",matricule:"DIR-001",active:true,mustChange:true,created:Date.now()});
  }
  if(!Object.keys(S.grades).length)seedGrades();
  if(!S.config||!S.config.siteName)DBX.update("config",{siteName:"Gouvernement de Los Santos",subtitle:"État de San Andreas — Intranet officiel",depts:DEF_DEPTS,tax:8,treasuryStart:250000,banner:{on:true,txt:"Bienvenue sur l'intranet du Gouvernement de Los Santos. ",lvl:"info"},maintenance:{on:false,msg:""}});
@@ -386,7 +398,7 @@ function closeSide(){$(".side")&&$(".side").classList.remove("open");$(".scrim")
 document.addEventListener("keydown",e=>{if(e.key=="Escape"&&modal){modal.type=="confirm"?askNo():closeM()}});
 
 /* ---------- Icônes ---------- */
-const IC={grid:"M3 3h7v7H3z|M14 3h7v7h-7z|M3 14h7v7H3z|M14 14h7v7h-7z",briefcase:"M3 7h18v13H3z|M8 7V4h8v3|M3 13h18",home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
+const IC={search:"c11,11,7|M21 21l-4.3-4.3",grid:"M3 3h7v7H3z|M14 3h7v7h-7z|M3 14h7v7H3z|M14 14h7v7h-7z",briefcase:"M3 7h18v13H3z|M8 7V4h8v3|M3 13h18",home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
 function ic(n){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(IC[n]||"").split("|").map(p=>p[0]=="c"?(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`)(p.slice(1).split(",")):`<path d="${p}"/>`).join("")}</svg>`}
 function seal(){const src=(S.config&&S.config.logo)||"logo.png";return `<img class="logo" src="${esc(src)}" alt="Sceau du gouvernement" onerror="this.outerHTML=sealSvg()">`}
 function setFavicon(){let l=document.querySelector("link[rel=icon]");if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l)}l.href=(S.config&&S.config.logo)||"logo.png"}
@@ -414,7 +426,7 @@ function page(){
  <div class="side-foot">${DB_URL?(connected?'<span class="dot ok"></span>Synchronisé':'<span class="dot no"></span>Hors ligne — reconnexion…'):'<span class="dot"></span>Mode local (non partagé)'}</div></aside>
  <div class="wrap"><div class="top"><button class="burger" onclick="openSide()" aria-label="Menu">${ic("menu").replace("<svg",'<svg width="20" height="20"')}</button>
  <div class="who"><div class="b">${esc(u.nom)}</div><div class="mu">${esc(gname(u))}${u.dept?" · "+esc(u.dept):""}</div></div>
- <button class="btn gh sm" onclick="toggleTheme()" title="Thème clair / sombre" aria-label="Changer de thème">${ic("sun").replace("<svg",'<svg width="16" height="16"')}</button></div>
+ <button class="gsbtn" onclick="openGs()" title="Recherche globale (Ctrl+K)" aria-label="Recherche globale">${ic("search")}<span>Rechercher…</span><kbd>Ctrl K</kbd></button><button class="btn gh sm" onclick="toggleTheme()" title="Thème clair / sombre" aria-label="Changer de thème">${ic("sun").replace("<svg",'<svg width="16" height="16"')}</button></div>
  ${bn.on&&bn.txt?`<div class="ticker ${esc(bn.lvl||"info")}">${tickerSpan(bn.txt)}</div>`:""}
  <main>${(V[view]||V.accueil)()}</main></div></div>${modalH()}`;
 }
@@ -1063,6 +1075,39 @@ function MSanc(){const T=vals(S.users).filter(canSanction).sort((a,b)=>(a.dept||
  <label class="ck"><input type="checkbox" id="sap"><span>Diviser le salaire par 2 tant que la sanction est active</span></label>`:`<p class="mu">Aucun agent que vous pouvez sanctionner (agents de votre département de rang inférieur au vôtre).</p>`}<p class="err" id="msg"></p>`,
  foot:`<button class="btn sec" onclick="closeM()">Annuler</button>${T.length?`<button class="btn no" onclick="sancSave()">Appliquer la sanction</button>`:""}`}}
 
+/* =================== RECHERCHE GLOBALE =================== */
+function gsIndex(){const u=ME(),ent=u.role=="entreprise",R=[];const add=(cat,ic0,t,s,act,hay)=>R.push({cat,ic:ic0,t,s,act,hay:NRM([t,s].concat(hay||[]).join(" "))});const q1=v=>String(v).replace(/'/g,"\\'");
+ navItems().forEach(([k,l,i])=>add("Pages",i,l,"Ouvrir la page","go('"+k+"')"));
+ if(ent){vals(S.dossiers).filter(d=>d.ent==u.id).forEach(d=>add("Mes demandes","folder",d.num+" — "+d.objet,d.dept+" · "+((DST[d.st]||[d.st])[0]),`openM('dossier','${d.id}')`,[d.det]));
+  vals(S.factures).filter(f=>f.ent==u.id).forEach(f=>add("Factures","wallet",f.num+" — "+f.motif,money(f.montant)+" · "+((FST[f.st]||[f.st])[0]),"go('factures')"));}
+ else{
+  if(can("annuaire")||isDir())vals(S.users).filter(x=>isAgent(x)&&x.active!==false).forEach(x=>add("Agents","users",x.nom,[gname(x),x.dept,x.matricule].filter(Boolean).join(" · "),`filt.uq='${q1(x.nom)}';go('annuaire')`,[x.login,x.tel,x.matricule]));
+  if(can("dos.view"))vals(S.dossiers).filter(d=>myDepts().includes(d.dept)).forEach(d=>add("Dossiers","folder",d.num+" — "+d.objet,d.entNom+" · "+d.dept+" · "+((DST[d.st]||[d.st])[0]),`openM('dossier','${d.id}')`,[d.det,d.type]));
+  if(can("jus.view"))vals(S.affaires).filter(affVisible).forEach(a=>add("Affaires judiciaires","scale",a.num+" — "+a.titre,[a.plaignant,a.accuse].filter(Boolean).join(" c/ ")||a.type||"",`go('justice');openM('affaire','${a.id}')`,[a.desc]));
+  if(can("reg.ent.view"))vals(S.entreprises).forEach(e=>add("Registre des entreprises","book",e.nom,[e.type,((e.gerantPrenom||"")+" "+(e.gerantNom||"")).trim(),e.tel].filter(Boolean).join(" · "),`go('registres','entreprises');openM('reg','${e.id}',{reg:'entreprises'})`,[e.mail,e.notes]));
+  if(can("fin.view")||can("fin.bill")||isDir())vals(S.users).filter(x=>x.role=="entreprise").forEach(x=>add("Comptes entreprise","coins",x.nom,"Type : "+taxCatName(x)+" · taxe "+taxRate(x)+" %",`go('finances','fisc')`,[x.login]));
+  if(can("reg.civ.view")){vals(S.actes).filter(a=>!a.del||isDir()).forEach(a=>add("Actes d'état civil","file",(a.prenom||"")+" "+a.nom,a.num+" · "+((ECL[a.cat]||["","Acte"])[1])+(a.dateActe?" · "+fdd(a.dateActe):""),`go('registres','etatcivil');openActe('${a.id}')`,[a.tel,a.num]));
+   vals(S.identites).forEach(r=>add("Documents d'identité","user",(r.prenom||"")+" "+r.nom,(r.num?r.num+" · ":"")+idType(r)[1]+(r.dateEm?" · émis le "+fdd(r.dateEm):""),`go('registres','identites');openM('idoc','${r.id}')`,[r.tel]))}
+  if(can("fin.view")||canBill())vals(S.factures).forEach(f=>add("Comptabilité","wallet",f.num+" — "+f.entNom,f.motif+" · "+money(f.montant)+" · "+((FST[f.st]||[f.st])[0]),`go('finances','fact')`));
+  if(can("rec.view")||can("rec.cv"))vals(S.recrutements).filter(r=>can("rec.view")||r.by==meId).forEach(r=>add("Recrutements","briefcase",r.prenom+" "+r.nom,r.num+" · "+RST[r.st][0]+(blHits(r.nom,r.prenom,r.tel).length?" · ⛔ blacklisté":""),`go('recrutements');openM('rec','${r.id}')`,[r.tel]));
+  if(can("rec.view"))vals(S.blacklist).forEach(b=>add("Blacklist Gouvernement","shield",((b.prenom||"")+" "+b.nom).trim(),"⛔ "+(b.motif||"Persona non grata"),`filt.blq='${q1(b.nom)}';go('recrutements','bl')`,[b.tel]));
+  if(secOk())vals(S.patrouilles).forEach(p=>add("Patrouilles","eye",p.num+" — "+((PATL[p.type]||["","Rapport"])[1]),p.byNom+(p.matricule?" ("+p.matricule+")":"")+" · "+fdd(p.date)+" "+p.heure,`go('securite');openM('pat','${p.id}')`,[p.problemes]));
+  if(isDir()||can("rh.sanction"))vals(S.sanctions).filter(s=>isDir()||s.dept==u.dept).forEach(s=>add("Sanctions","shield",s.uNom+" — "+SANC_T[s.type][0],s.motif,`go('personnel','sanc')`));
+  if(can("rh.grades")||isDir())vals(S.grades).forEach(g=>add("Grades","shield",g.name,(g.dept||"Direction")+" · "+ROLES[g.role],`go('personnel','grades');openM('grade','${g.id}')`));}
+ visibleAnn().forEach(a=>add("Annonces","megaphone",a.titre,a.nom||"",`go('annonces')`,[a.txt]));
+ return R}
+function gsResults(q){const T=NRM(q).split(" ").filter(Boolean);if(!T.length)return [];const all=gsIndex().filter(r=>T.every(t=>r.hay.includes(t)));
+ const by={};all.forEach(r=>{(by[r.cat]=by[r.cat]||[]).push(r)});return Object.entries(by).map(([c,L])=>[c,L.slice(0,6),L.length])}
+function openGs(){modal={type:"gs",sel:0};keep={gsq:keep.gsq||""};render();setTimeout(()=>{const e=document.getElementById("gsq");if(e){e.focus();e.select()}},30)}
+function MGs(){const q=keep.gsq||"",G=gsResults(q),flat=G.flatMap(g=>g[1]),sel=Math.min(modal.sel||0,Math.max(0,flat.length-1));let i=-1;
+ return {cls:"gsm",title:`<span class="gs-eyebrow">Recherche globale</span>`,body:`<div class="gs-bar">${ic("search")}<input id="gsq" placeholder="Rechercher un nom, un numéro, un dossier, une entreprise, un matricule…" autocomplete="off" oninput="keep.gsq=this.value;modal.sel=0;render()" onkeydown="gsKey(event)"><kbd>Échap</kbd></div>
+ <div class="gs-res">${!q.trim()?`<p class="mu" style="padding:14px 4px">Saisissez un nom, un numéro de dossier ou d'acte, un matricule, un téléphone, une entreprise… La recherche porte sur tout ce que vos permissions vous permettent de voir.</p>`:!flat.length?`<p class="mu" style="padding:14px 4px">Aucun résultat pour « ${esc(q)} ».</p>`:
+ G.map(([c,L,n])=>`<div class="gs-cat">${esc(c)}${n>L.length?` <span class="mu">· ${L.length} sur ${n}</span>`:""}</div>${L.map(r=>{i++;return `<button class="gs-it ${i==sel?"on":""}" data-i="${i}" onmouseenter="modal.sel=${i};document.querySelectorAll('.gs-it').forEach(b=>b.classList.toggle('on',b.dataset.i=='${i}'))" onclick="gsGo(${i})"><span class="gs-ic">${ic(r.ic)}</span><span class="gs-tx"><b>${esc(r.t)}</b><span class="mu sm">${esc(r.s||"")}</span></span></button>`}).join("")}`).join("")}</div>
+ <div class="gs-foot mu sm"><span><kbd>↑</kbd><kbd>↓</kbd> naviguer</span><span><kbd>Entrée</kbd> ouvrir</span><span><kbd>Ctrl</kbd>+<kbd>K</kbd> rechercher partout</span></div>`}}
+function gsGo(i){const flat=gsResults(keep.gsq||"").flatMap(g=>g[1]),r=flat[i];if(!r)return;modal=null;keep={};try{(new Function(r.act))()}catch(e){console.error(e)}render()}
+function gsKey(e){const n=gsResults(keep.gsq||"").flatMap(g=>g[1]).length;if(e.key=="ArrowDown"||e.key=="ArrowUp"){e.preventDefault();if(!n)return;modal.sel=((modal.sel||0)+(e.key=="ArrowDown"?1:-1)+n)%n;render();const el=document.querySelector('.gs-it.on');el&&el.scrollIntoView({block:"nearest"})}else if(e.key=="Enter"){e.preventDefault();gsGo(modal.sel||0)}}
+document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&(e.key=="k"||e.key=="K")){if(!ME()||ME().mustChange)return;e.preventDefault();if(modal&&modal.type=="gs")closeM();else openGs()}});
+
 /* =================== RECRUTEMENTS =================== */
 const RST={attente:["En attente","wa"],acceptee:["Acceptée","ok"],refusee:["Refusée","no"]};
 const recOk=()=>can("rec.view")||can("rec.cv");
@@ -1159,6 +1204,7 @@ function MVerif(f){if(!f||!(can("fin.bill")||can("fin.view")))return null;const 
 /* =================== MODALES =================== */
 function modalH(){if(!modal)return "";let m=null;
  if(modal.type=="confirm")m={title:"Confirmation",sm:1,body:`<p class="pre">${esc(modal.msg)}</p>`,foot:`<button class="btn sec" onclick="askNo()">Annuler</button><button class="btn no" onclick="askOk()">${esc(modal.label)}</button>`};
+ else if(modal.type=="gs")m=MGs();
  else if(modal.type=="dossier")m=MDossier(S.dossiers[modal.id]);
  else if(modal.type=="affaire")m=MAffaire(S.affaires[modal.id]);
  else if(modal.type=="affaireNew")m=MAffaireNew();
@@ -1185,7 +1231,7 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="payret")m={title:"Renvoyer la paie pour correction",sm:1,body:`<label class="f">Ce qu'il faut corriger<textarea id="prm" rows="3"></textarea></label><p class="err" id="msg"></p>`,foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="payReturnDo()">Renvoyer</button>`};
  else if(modal.type=="acteEdit")m=MActeEdit();
  if(!m){modal=null;return ""}
- return `<div class="modal-bg" onclick="if(event.target===this)${modal.type=="confirm"?"askNo()":"closeM()"}"><div class="modal ${m.sm?"sm":""} ${m.wide?"wide":""}" role="dialog" aria-modal="true"><div class="mh"><h3>${m.title}</h3><button class="x" onclick="${modal.type=="confirm"?"askNo()":"closeM()"}" aria-label="Fermer">×</button></div><div class="mb">${m.body}</div>${m.foot?`<div class="mf">${m.foot}</div>`:""}</div></div>`}
+ return `<div class="modal-bg" onclick="if(event.target===this)${modal.type=="confirm"?"askNo()":"closeM()"}"><div class="modal ${m.sm?"sm":""} ${m.wide?"wide":""} ${m.cls||""}" role="dialog" aria-modal="true"><div class="mh"><h3>${m.title}</h3><button class="x" onclick="${modal.type=="confirm"?"askNo()":"closeM()"}" aria-label="Fermer">×</button></div><div class="mb">${m.body}</div>${m.foot?`<div class="mf">${m.foot}</div>`:""}</div></div>`}
 </script>
 <script>
 /* =================== ACTIONS =================== */
