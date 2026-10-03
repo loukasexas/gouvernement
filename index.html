@@ -904,8 +904,8 @@ const NAVG={j:["Justice","scale"],e:["État Civil","user"],f:["Finances","coins"
 const navGOpen={};Object.keys(NAVG).forEach(k=>{try{navGOpen[k]=localStorage.getItem(k=="g"?"lsgov_navg":"lsgov_navg_"+k)!=="0"}catch(e){navGOpen[k]=true}});
 function navGToggle(k){navGOpen[k]=!navGOpen[k];try{localStorage.setItem(k=="g"?"lsgov_navg":"lsgov_navg_"+k,navGOpen[k]?"1":"0")}catch(e){}render()}
 function navH(N){let h="";const done=new Set();
- N.forEach(n=>{const g=n[4];if(!g||!NAVG[g]){h+=navBtn(n);return}if(done.has(g))return;done.add(g);const Gi=N.filter(x=>x[4]==g),act=Gi.some(x=>navOn(x[0])),open=navGOpen[g]||act,c=Gi.reduce((s,x)=>s+num(x[3]),0);
-  h+=`<div class="ngrp ${open?"open":""}"><button class="nghead ${act?"act":""}" onclick="navGToggle('${g}')" aria-expanded="${open}">${ic(NAVG[g][1])}<span>${NAVG[g][0]}</span>${!open&&c?`<span class="cnt">${c}</span>`:""}<span class="ngchev">${ic("chev")}</span></button>${open?`<div class="ngbody">${Gi.map(x=>navBtn(x,1)).join("")}</div>`:""}</div>`});return h}
+ N.forEach(n=>{const g=n[4];if(!g||!NAVG[g]){h+=navBtn(n);return}if(done.has(g))return;done.add(g);const Gi=N.filter(x=>x[4]==g),act=Gi.some(x=>navOn(x[0])),open=!!navGOpen[g],c=Gi.reduce((s,x)=>s+num(x[3]),0),shown=open?Gi:Gi.filter(x=>navOn(x[0])),cr=Gi.filter(x=>!shown.includes(x)).reduce((s,x)=>s+num(x[3]),0);
+  h+=`<div class="ngrp ${open?"open":""}"><button class="nghead ${act?"act":""}" onclick="navGToggle('${g}')" aria-expanded="${open}">${ic(NAVG[g][1])}<span>${NAVG[g][0]}</span>${!open&&cr?`<span class="cnt">${cr}</span>`:""}<span class="ngchev">${ic("chev")}</span></button>${shown.length?`<div class="ngbody">${shown.map(x=>navBtn(x,1)).join("")}</div>`:""}</div>`});return h}
 /* Le bandeau suit l'horloge : il reprend là où il en était après chaque changement de page */
 function tickerSpan(t){const d=Math.max(20,Math.round(14+String(t).length*.2)),ph=(Date.now()/1000)%d;return `<span style="animation-duration:${d}s;animation-delay:-${ph.toFixed(2)}s">${esc(t)}</span>`}
 function navItems(){const u=ME(),n=unread(),I=[];
