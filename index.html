@@ -799,6 +799,7 @@ function render(){watchMessages();
   mSeen=modal}else if(!modal)mSeen=null;
  const ae=document.activeElement;let fid=ae&&ae.id,ss=null,se=null;try{ss=ae.selectionStart;se=ae.selectionEnd}catch(e){}
  root.querySelectorAll("input[id],textarea[id],select[id]").forEach(e=>{if(e.type!="checkbox"&&e.type!="file"&&!e.hasAttribute("data-nokeep"))keep[e.id]=e.value});
+ const sd=root.querySelector(".side"),sds=sd?sd.scrollTop:0;
  const mbd=root.querySelector(".modal .mb"),mbs=mbd?mbd.scrollTop:0;const mb=root.querySelector(".modal-bg"),ms=mb?mb.scrollTop:0,tb=root.querySelector(".thread .body"),ts=tb?tb.scrollTop:0,tAtEnd=tb?tb.scrollHeight-tb.scrollTop-tb.clientHeight<40:true;
  let h;try{h=page()}catch(e){console.error(e);h=`<div class="login"><div class="box card"><h3>Erreur d'affichage</h3><p class="mu">${esc(e.message)}</p><button class="btn" onclick="modal=null;go('accueil')">Revenir à l'accueil</button></div></div>`}
  root.innerHTML=h;
@@ -808,6 +809,7 @@ function render(){watchMessages();
  try{enhanceSelects(root);enhanceDates(root);enhanceColors(root)}catch(x){console.error(x)}
  if(fid){const e=document.getElementById(fid);if(e){const t=e.tagName=="SELECT"&&e.parentNode.classList.contains("cs")?e.parentNode.querySelector(".cs-btn"):e;t.focus({preventScroll:true});try{if(ss!=null)e.setSelectionRange(ss,se)}catch(x){}}}
  const mb2=root.querySelector(".modal-bg");if(mb2)mb2.scrollTop=ms;const mbd2=root.querySelector(".modal .mb");if(mbd2)mbd2.scrollTop=mbs;
+ {const sd2=root.querySelector(".side");if(sd2&&sds)sd2.scrollTop=sds}
  const tb2=root.querySelector(".thread .body");if(tb2)tb2.scrollTop=tAtEnd?tb2.scrollHeight:ts;
  tickClocks();notify();
  document.title=(unread()?"("+unread()+") ":"")+"Intranet — "+(S.config.siteName||"Gouvernement de Los Santos");
