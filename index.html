@@ -30,6 +30,17 @@ h2{font-size:20px}h3{font-size:16px}h4{font-size:14px;color:var(--mu);text-trans
 .nav button.on{background:var(--cd2);color:var(--gold2);box-shadow:inset 3px 0 0 var(--gold)}
 .nav svg{width:18px;height:18px;flex:none}
 tr.ggrp td{background:var(--cd2);color:var(--gold2);font-weight:700;font-size:12px;letter-spacing:.04em;text-transform:uppercase;padding-top:8px;padding-bottom:8px}
+.icat{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:700;background:color-mix(in srgb,var(--ic) 22%,transparent);color:var(--tx);border:1px solid color-mix(in srgb,var(--ic) 65%,transparent);white-space:nowrap}
+.ipr{font-weight:700}.ipr.y{color:var(--wa)}.ipr.perp{color:var(--no)}.iq{display:inline-block;font-size:11px;padding:2px 7px;border-radius:99px;background:var(--cd2);border:1px solid var(--bd);margin:1px 0;white-space:nowrap}
+.inft td{vertical-align:top}.inft td.b{min-width:220px}.inft .idef{min-width:260px;max-width:420px;white-space:normal;color:var(--mu)}.jft select{min-width:130px}tr.fnon td{opacity:.55}tr.fnon td b{text-decoration:line-through}
+.ck input[type=checkbox]{width:18px!important;height:18px;flex:none;margin:0}
+.sz{padding:6px 0;border-bottom:1px solid var(--bd)}
+.paper{background:#fdfcf8;color:#1d2433;border-radius:6px;padding:34px 40px;max-width:760px;margin:0 auto 14px;box-shadow:0 6px 30px rgba(0,0,0,.35);font-family:Georgia,"Times New Roman",serif;position:relative}
+.paper .mu{color:#5b6475}.pp-h{display:flex;align-items:center;gap:14px;border-bottom:2px solid #b08a3c;padding-bottom:12px}.pp-seal{width:64px;height:64px;flex:none}.pp-seal img,.pp-seal svg{width:100%;height:100%}
+.pp-g{font-weight:700;font-size:17px;letter-spacing:.03em;text-transform:uppercase}.pp-d{font-size:13px;color:#5b6475}.pp-n{margin-left:auto;text-align:right;font-size:12.5px;color:#5b6475;font-family:ui-monospace,Consolas,monospace}
+.pp-t{text-align:center;text-transform:uppercase;letter-spacing:.08em;font-size:21px;margin:24px 0 18px;color:#1d2433}.pp-b p{line-height:1.65;margin:0 0 12px;text-align:justify}
+.pp-s{margin-top:30px;text-align:right}.pp-sig{font-family:"Brush Script MT","Segoe Script",cursive;font-size:26px;margin:8px 0 2px;color:#1a3a7a}
+.pp-x{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%) rotate(-18deg);font-size:64px;font-weight:900;color:rgba(200,30,30,.22);border:6px solid rgba(200,30,30,.22);padding:4px 24px;pointer-events:none}
 .ngrp{margin:2px 0}.nav .nghead.act{color:var(--gold2)}.ngchev{margin-left:auto;display:flex;transition:transform .15s}.ngchev svg{width:15px;height:15px}.ngrp:not(.open) .ngchev{transform:rotate(-90deg)}.ngrp .cnt+.ngchev{margin-left:6px}
 .ngbody{margin:2px 0 4px 17px;padding-left:8px;border-left:1px solid var(--bd)}.nav button.nsub{padding:7px 10px;font-size:13.5px}.nav button.nsub svg{width:16px;height:16px}
 .nav .cnt{margin-left:auto;background:var(--no);color:#fff;border-radius:99px;font-size:11px;padding:0 7px;line-height:18px}
@@ -232,7 +243,7 @@ const ROOT = "lsgov";
 /* ---------- Constantes ---------- */
 const DEF_DEPTS=["Finances","État-Civil","Justice","Intérieur","Communication","Sécurité"];
 const ROLES={entreprise:"Entreprise",fonctionnaire:"Fonctionnaire",encadrement:"Corps d'encadrement",direction:"Direction"};
-const COLS=["users","grades","dossiers","affaires","entreprises","identites","actes","transactions","factures","declarations","archives","paie","paiearch","patrouilles","patarch","recrutements","blacklist","sanctions","annonces","messages","logs"];
+const COLS=["users","grades","dossiers","affaires","entreprises","identites","actes","transactions","factures","declarations","archives","paie","paiearch","patrouilles","patarch","recrutements","blacklist","sanctions","infractions","jugements","jdocs","annonces","messages","logs"];
 const DOS_TYPES={
  "Finances":["Déclaration fiscale","Demande de subvention","Contestation d'amende","Échéancier de paiement"],
  "État-Civil":["Enregistrement d'identité","Changement d'adresse","Acte de mariage","Acte de décès"],
@@ -247,6 +258,7 @@ const PERMS=[
  ["Général",[["dash","Peut voir le tableau de bord global"],["annuaire","Peut consulter l'annuaire des agents"]],"home"],
  ["Dossiers administratifs",[["dos.view","Peut voir les dossiers de son département"],["dos.treat","Peut accepter ou refuser un dossier"],["dos.assign","Peut assigner un dossier à un agent"],["dos.all","Peut voir les dossiers de tous les départements"],["dos.delete","Peut supprimer un dossier"]],"folder"],
  ["Affaires judiciaires",[["jus.view","Peut voir la liste des affaires"],["jus.open","Peut ouvrir une affaire"],["jus.instruct","Peut instruire une affaire (pièces, auditions, notes)"],["jus.status","Peut changer le statut, le juge et l'audience (clore / rouvrir)"],["jus.verdict","Peut rendre un jugement"],["jus.secret","Peut voir les affaires confidentielles"],["jus.delete","Peut supprimer une affaire"]],"scale"],
+ ["Outils de justice",[["jus.tool","Outil de justice : consulter les jugements"],["jus.judge","Outil de justice : créer et modifier les jugements, générer la note MDT"],["jus.grid","Modifier la grille des infractions"],["jus.docs.view","Consulter les documents officiels"],["jus.docs","Rédiger des documents officiels"]],"scale"],
  ["Registre des entreprises",[["reg.ent.view","Peut consulter le registre des entreprises"],["reg.ent.edit","Peut créer, modifier et supprimer des fiches entreprise (département Finances uniquement)"]],"book"],
  ["État civil",[["reg.civ.view","Peut consulter les actes et fiches d'état civil"],["reg.civ.edit","Peut enregistrer, modifier et supprimer des actes d'état civil"]],"user"],
  ["Finances",[["fin.view","Peut consulter la trésorerie"],["fin.edit","Peut saisir des recettes et des dépenses"],["fin.bill","Peut émettre des factures et des amendes"],["fin.decl","Peut valider les déclarations fiscales"],["fin.budget","Peut gérer les taux d'imposition"],["fin.archive","Peut clôturer une période fiscale et gérer les archives"]],"coins"],
@@ -348,8 +360,11 @@ const LAYOUT={
  blacklist:["recrutements/blacklist",1,(x,id)=>[id]],
  annonces:["communication/annonces",1,(x,id)=>[id]],
  messages:["messagerie",3,(x,id,U)=>[ulog(x.from,U)+"/envoyés/"+id,ulog(x.to,U)+"/reçus/"+id]],
- logs:["journal",2,(x,id)=>[dkey(x.t)+"/"+id]]};
-const RAWP={preuves:"finances/preuves_paiement",archdata:"finances/archives_fiscales_detail",actefiles:"registres/etat_civil_pieces",cvfiles:"recrutements/cv",idfiles:"registres/documents_identite_images"};
+ logs:["journal",2,(x,id)=>[dkey(x.t)+"/"+id]],
+ infractions:["justice/infractions",2,(x,id)=>[fk(x.cat)+"/"+id]],
+ jugements:["justice/jugements",2,(x,id)=>[fk((JSTM[x.st]||["Autres"])[0])+"/"+id]],
+ jdocs:["justice/documents",2,(x,id)=>[fk((DOCL[x.type]||["","Autres"])[1])+"/"+id]]};
+const RAWP={preuves:"finances/preuves_paiement",archdata:"finances/archives_fiscales_detail",actefiles:"registres/etat_civil_pieces",cvfiles:"recrutements/cv",idfiles:"registres/documents_identite_images",jugfiles:"justice/jugements_pieces",jdocfiles:"justice/documents_pieces"};
 const rp=p=>{const s=String(p).split("/");return RAWP[s[0]]?[RAWP[s[0]]].concat(s.slice(1)).join("/"):p};
 const itemPaths=(col,x,id,U)=>x&&typeof x=="object"?LAYOUT[col][2](x,id,U).map(p=>LAYOUT[col][0]+"/"+p):[];
 const clone=v=>v===undefined?null:JSON.parse(JSON.stringify(v));
@@ -426,6 +441,7 @@ async function boot(){try{
  }
  if(!Object.keys(S.grades).length)seedGrades();
  if(!S.config||!S.config.siteName)DBX.update("config",{siteName:"Gouvernement de Los Santos",subtitle:"État de San Andreas — Intranet officiel",depts:DEF_DEPTS,tax:8,treasuryStart:250000,banner:{on:true,txt:"Bienvenue sur l'intranet du Gouvernement de Los Santos. ",lvl:"info"},maintenance:{on:false,msg:""}});
+ infSeed();
  if(S.config.dbLayout!=DB_LAYOUT)DBX.update("config",{dbLayout:DB_LAYOUT});
  if(!S.config.taxCatsInit){const o={},L=[["Hôpitaux",0],["Forces de l'ordre",0],["Concessionnaires",15],["Garages mécaniques",30],["Commerces",10],["Restauration",10]];L.forEach(([name,rate],i)=>{o[nid()+i]={name,rate,rank:i}});DBX.update("config",{taxCats:o,taxCatsInit:true})}
  const sid=lsGet("lsgov_session");if(sid&&S.users[sid]&&S.users[sid].active!==false)meId=sid;
@@ -519,11 +535,12 @@ function page(){
  <main>${(V[view]||V.accueil)()}</main></div></div>${modalH()}`;
 }
 const navBtn=([k,l,i,c],sub)=>`<button class="${k==view?"on":""}${sub?" nsub":""}" onclick="go('${k}')">${ic(i)}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`;
-let navGOpen=(()=>{try{return localStorage.getItem("lsgov_navg")!=="0"}catch(e){return true}})();
-function navGToggle(){navGOpen=!navGOpen;try{localStorage.setItem("lsgov_navg",navGOpen?"1":"0")}catch(e){}render()}
-function navH(N){let h="",done=false;const Gi=N.filter(n=>n[4]=="g");
- N.forEach(n=>{if(n[4]!="g"){h+=navBtn(n);return}if(done)return;done=true;const act=Gi.some(x=>x[0]==view),open=navGOpen||act,c=Gi.reduce((s,x)=>s+num(x[3]),0);
-  h+=`<div class="ngrp ${open?"open":""}"><button class="nghead ${act?"act":""}" onclick="navGToggle()" aria-expanded="${open}">${ic("grid")}<span>Gestion</span>${!open&&c?`<span class="cnt">${c}</span>`:""}<span class="ngchev">${ic("chev")}</span></button>${open?`<div class="ngbody">${Gi.map(x=>navBtn(x,1)).join("")}</div>`:""}</div>`});return h}
+const NAVG={j:["Justice","scale"],g:["Gestion","grid"]};
+const navGOpen={};Object.keys(NAVG).forEach(k=>{try{navGOpen[k]=localStorage.getItem(k=="g"?"lsgov_navg":"lsgov_navg_"+k)!=="0"}catch(e){navGOpen[k]=true}});
+function navGToggle(k){navGOpen[k]=!navGOpen[k];try{localStorage.setItem(k=="g"?"lsgov_navg":"lsgov_navg_"+k,navGOpen[k]?"1":"0")}catch(e){}render()}
+function navH(N){let h="";const done=new Set();
+ N.forEach(n=>{const g=n[4];if(!g||!NAVG[g]){h+=navBtn(n);return}if(done.has(g))return;done.add(g);const Gi=N.filter(x=>x[4]==g),act=Gi.some(x=>x[0]==view),open=navGOpen[g]||act,c=Gi.reduce((s,x)=>s+num(x[3]),0);
+  h+=`<div class="ngrp ${open?"open":""}"><button class="nghead ${act?"act":""}" onclick="navGToggle('${g}')" aria-expanded="${open}">${ic(NAVG[g][1])}<span>${NAVG[g][0]}</span>${!open&&c?`<span class="cnt">${c}</span>`:""}<span class="ngchev">${ic("chev")}</span></button>${open?`<div class="ngbody">${Gi.map(x=>navBtn(x,1)).join("")}</div>`:""}</div>`});return h}
 /* Le bandeau suit l'horloge : il reprend là où il en était après chaque changement de page */
 function tickerSpan(t){const d=Math.max(20,Math.round(14+String(t).length*.2)),ph=(Date.now()/1000)%d;return `<span style="animation-duration:${d}s;animation-delay:-${ph.toFixed(2)}s">${esc(t)}</span>`}
 function navItems(){const u=ME(),n=unread(),I=[];
@@ -531,7 +548,10 @@ function navItems(){const u=ME(),n=unread(),I=[];
   return [["accueil","Accueil","home"],["demande","Nouvelle demande","plus"],["mesdem","Mes demandes","folder"],["factures","Factures & impôts","wallet",imp],["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n],["profil","Mon profil","user"]]}
  I.push(["accueil","Accueil","home"]);
  if(can("dos.view")){const p=vals(S.dossiers).filter(d=>myDepts().includes(d.dept)&&d.st=="attente").length;I.push(["dossiers","Dossiers","folder",p])}
- if(can("jus.view"))I.push(["justice","Justice","scale"]);
+ if(canTool())I.push(["jtool","Outil de justice","scale",0,"j"]);
+ if(can("jus.view"))I.push(["justice","Affaires judiciaires","folder",0,"j"]);
+ I.push(["infractions","Grille des infractions","list",0,"j"]);
+ if(canDocs())I.push(["jdocs","Documents officiels","file",0,"j"]);
  if(secOk())I.push(["securite","Sécurité","eye"]);
  if(recOk())I.push(["recrutements","Recrutements","briefcase",can("rec.treat")?vals(S.recrutements).filter(r=>r.st=="attente").length:0]);
  if(["reg.ent.view","reg.civ.view"].some(can))I.push(["registres","Registres","book"]);
@@ -1079,7 +1099,7 @@ function MPaieArch(a){if(!a)return null;const F=payFolders();if(!F.some(f=>f[0]=
 const GCOL={_dir:"#c9a24a",fin:"#22c55e",ec:"#a78bfa",jus:"#94a3b8",int:"#3b82f6",com:"#ec4899",sec:"#f97316"};
 /* Permissions par défaut de chaque grade officiel (cohérentes avec le poste) */
 const DEFP_DEPT={fin:["fin.view","fin.edit","fin.bill","fin.decl","fin.budget","fin.archive","reg.ent.view","reg.ent.edit"],ec:["reg.civ.view","reg.civ.edit","rec.view","rec.treat","rec.cv","rec.bl"],
- jus:["jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view"],int:["reg.ent.view","reg.civ.view","dos.all"],com:["com.post","com.banner"],sec:["sec.archive","reg.civ.view"]};
+ jus:["jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view","jus.tool","jus.judge","jus.grid","jus.docs.view","jus.docs"],int:["reg.ent.view","reg.civ.view","dos.all"],com:["com.post","com.banner"],sec:["sec.archive","reg.civ.view"]};
 const DEFP={
  fin:{"Directeur Financier":["dash","dos.assign","fin.view","fin.edit","fin.bill","fin.decl","fin.budget","fin.archive","reg.ent.view","reg.ent.edit","rh.view","rh.sanction"],
   "Secrétaire des Finances":["fin.view","fin.edit","fin.bill","fin.decl","reg.ent.view","reg.ent.edit"],
@@ -1089,13 +1109,13 @@ const DEFP={
   "Contrôleur Fiscal":["fin.view","fin.bill","fin.decl","reg.ent.view"],"Comptable":["fin.view","fin.edit","fin.bill","reg.ent.view"],"Assistant Comptable":["fin.view","fin.bill","reg.ent.view"]},
  ec:{"Directeur RH":["dash","dos.assign","reg.civ.view","reg.civ.edit","rec.view","rec.treat","rec.cv","rec.bl","rh.view","rh.create","rh.edit","rh.sanction"],
   "Formateur E.C":["reg.civ.view","reg.civ.edit","rec.view","rec.cv"],"Ressources Humaines":["reg.civ.view","reg.civ.edit","rec.view","rec.cv","rh.view"],"Secrétaire":["reg.civ.view","reg.civ.edit"]},
- jus:{"Responsable Judiciaire":["dash","dos.assign","jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view","rh.view","rh.sanction"],
-  "Secrétaire Justice":["jus.view","jus.open","jus.instruct","jus.status","reg.civ.view"],
-  "Chief Justice":["jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view"],
-  "Procureur Général":["jus.view","jus.open","jus.instruct","jus.status","jus.secret","reg.civ.view","reg.ent.view"],
-  "Juge":["jus.view","jus.instruct","jus.status","jus.verdict","fin.bill","reg.civ.view"],"Procureur":["jus.view","jus.open","jus.instruct","reg.civ.view"],
-  "Juge Assesseur":["jus.view","jus.instruct","jus.status"],"Substitut du Procureur":["jus.view","jus.open","jus.instruct"],
-  "Commissaire de Justice":["jus.view","jus.instruct","fin.bill","reg.ent.view"],"Secrétaire Juridique":["jus.view","jus.open"]},
+ jus:{"Responsable Judiciaire":["dash","dos.assign","jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view","rh.view","rh.sanction","jus.tool","jus.judge","jus.grid","jus.docs.view","jus.docs"],
+  "Secrétaire Justice":["jus.view","jus.open","jus.instruct","jus.status","reg.civ.view","jus.tool","jus.docs.view","jus.docs"],
+  "Chief Justice":["jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view","jus.tool","jus.judge","jus.grid","jus.docs.view","jus.docs"],
+  "Procureur Général":["jus.view","jus.open","jus.instruct","jus.status","jus.secret","reg.civ.view","reg.ent.view","jus.tool","jus.docs.view","jus.docs"],
+  "Juge":["jus.view","jus.instruct","jus.status","jus.verdict","fin.bill","reg.civ.view","jus.tool","jus.judge","jus.docs.view","jus.docs"],"Procureur":["jus.view","jus.open","jus.instruct","reg.civ.view","jus.tool","jus.docs.view","jus.docs"],
+  "Juge Assesseur":["jus.view","jus.instruct","jus.status","jus.tool","jus.docs.view"],"Substitut du Procureur":["jus.view","jus.open","jus.instruct","jus.tool","jus.docs.view","jus.docs"],
+  "Commissaire de Justice":["jus.view","jus.instruct","fin.bill","reg.ent.view","jus.tool","jus.docs.view"],"Secrétaire Juridique":["jus.view","jus.open","jus.tool","jus.docs.view","jus.docs"]},
  int:{"Secrétaire de l'Intérieur":["dos.assign","dos.all","reg.ent.view","reg.civ.view"],"Superviseur":["dos.all","reg.ent.view","reg.civ.view"]},
  com:{"Directeur Communication":["dash","com.post","com.banner","rh.view","rh.sanction"],"Secrétaire Com":["com.post","com.banner"],"Responsable Com":["com.post","com.banner"],
   "Responsable Prod":["com.post"],"Chargé de production":["com.post"],"Chargé de communication":["com.post"]},
@@ -1204,6 +1224,9 @@ function gsIndex(){const u=ME(),ent=u.role=="entreprise",R=[];const add=(cat,ic0
   if(secOk())vals(S.patrouilles).forEach(p=>add("Patrouilles","eye",p.num+" — "+((PATL[p.type]||["","Rapport"])[1]),p.byNom+(p.matricule?" ("+p.matricule+")":"")+" · "+fdd(p.date)+" "+p.heure,`go('securite');openM('pat','${p.id}')`,[p.problemes]));
   if(isDir()||can("rh.sanction"))vals(S.sanctions).filter(s=>isDir()||s.dept==u.dept).forEach(s=>add("Sanctions","shield",s.uNom+" — "+SANC_T[s.type][0],s.motif,`go('personnel','sanc')`));
   if(can("rh.grades")||isDir())vals(S.grades).forEach(g=>add("Grades","shield",g.name,(g.dept||"Direction")+" · "+ROLES[g.role],`go('personnel','grades');openM('grade','${g.id}')`));}
+ if(!ent){if(canTool())vals(S.jugements).forEach(j=>add("Jugements","scale",(j.prenom||"")+" "+j.nom+" — "+j.num,(JSTM[j.st]||[""])[0]+(j.dateJug?" · "+fdd(j.dateJug):""),`go('jtool');openM('jugv','${j.id}')`,[(j.faits||[]).map(f=>f.n).join(" "),j.juge]));
+  if(canDocs())vals(S.jdocs).forEach(x=>add("Documents officiels","file",(DOCL[x.type]||[0,"Document"])[1]+" — "+x.num,docPerson(x),`go('jdocs');openM('jdoc','${x.id}')`));
+  vals(S.infractions).forEach(x=>add("Grille des infractions","list",x.nom,x.cat+" · "+money(x.amende)+(x.prison==="P"?" · perpétuité":num(x.prison)?" · "+prisonTxt(x.prison):""),`filt.iq='${q1(x.nom)}';go('infractions')`,[x.def]))}
  visibleAnn().forEach(a=>add("Annonces","megaphone",a.titre,a.nom||"",`go('annonces')`,[a.txt]));
  return R}
 function gsResults(q){const T=NRM(q).split(" ").filter(Boolean);if(!T.length)return [];const all=gsIndex().filter(r=>T.every(t=>r.hay.includes(t)));
@@ -1217,6 +1240,343 @@ function MGs(){const q=keep.gsq||"",G=gsResults(q),flat=G.flatMap(g=>g[1]),sel=M
 function gsGo(i){const flat=gsResults(keep.gsq||"").flatMap(g=>g[1]),r=flat[i];if(!r)return;modal=null;keep={};try{(new Function(r.act))()}catch(e){console.error(e)}render()}
 function gsKey(e){const n=gsResults(keep.gsq||"").flatMap(g=>g[1]).length;if(e.key=="ArrowDown"||e.key=="ArrowUp"){e.preventDefault();if(!n)return;modal.sel=((modal.sel||0)+(e.key=="ArrowDown"?1:-1)+n)%n;render();const el=document.querySelector('.gs-it.on');el&&el.scrollIntoView({block:"nearest"})}else if(e.key=="Enter"){e.preventDefault();gsGo(modal.sel||0)}}
 document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&(e.key=="k"||e.key=="K")){if(!ME()||ME().mustChange)return;e.preventDefault();if(modal&&modal.type=="gs")closeM();else openGs()}});
+
+/* =================== GRILLE DES INFRACTIONS (données de départ) =================== */
+/* [catégorie, infraction, amende, années de prison ("P" = réclusion à perpétuité), qui s'en charge (P=Policiers R=Procureur J=Juge F=Juge fédéral S=Crime de sang), définition, supplément] */
+const INF_CATS=[["Justice","#7cb35b"],["Contravention","#5b8def"],["Délit Mineur","#e9c046"],["Délit Majeur","#f0a35e"],["Crime","#e06666"],["Crime Fédéral","#c00000"]];
+const INF_QUI=[["P","Policiers"],["R","Procureur"],["J","Juge"],["F","Juge fédéral"],["S","Crime de sang"]];
+const INF_PPA="Retrait du PPA obligatoire + Saisie des armes (décision libre arbitre du juge)";
+const INF_SEED=[
+["Justice","Frais de justice [1]",15000,0,"RJF","//",""],
+["Justice","Frais de justice [2]",30000,0,"JF","//",""],
+["Justice","Amende forfaitaire Gouvernementale",100000,0,"J","Sanction financière d'un montant fixé à l'avance par les autorités publiques, appliquée lorsqu'une personne ou une entreprise commet une infraction prévue par la réglementation.",""],
+["Justice","Licenciement abusif",50000,0,"J","Licenciement effectué sans motif valable, sans justification suffisante ou en violation des règles applicables à la rupture du contrat de travail.",""],
+["Justice","Retard de taxes : 5% en plus / jour de retard (sur chiffre d'affaire)",10000,0,"J","Non-paiement d'une taxe ou d'un impôt dans le délai prévu par la réglementation. Ce retard peut entraîner une majoration de 5 % par jour de retard, calculée sur le chiffre d'affaires lorsque cette règle est applicable.",""],
+["Justice","Mauvaise déclaration de taxe légère",150000,0,"J","Déclaration comportant une erreur ou une omission limitée concernant le montant, la nature ou les informations relatives aux taxes dues, sans caractère important ou frauduleux établi.",""],
+["Justice","Mauvaise déclaration de taxe moyenne",450000,0,"J","Déclaration comportant une erreur ou une omission significative ayant pour conséquence de modifier de manière notable le montant des taxes normalement dues.",""],
+["Justice","Mauvaise déclaration de taxes forte",750000,0,"J","Déclaration comportant des erreurs, omissions ou informations inexactes importantes ayant pour effet de réduire de manière conséquente les taxes dues ou de fausser substantiellement la situation fiscale déclarée.",""],
+["Justice","Mauvaise déclaration de taxes extrême",1250000,0,"J","Déclaration présentant des erreurs, omissions ou informations volontairement ou gravement inexactes ayant pour conséquence une importante dissimulation de l'activité ou une réduction majeure des taxes normalement dues.",""],
+["Justice","Amende forfaitaire. Mauvaise déclaration de taxes récidive",10000000,0,"J","Sanction financière forfaitaire appliquée lorsqu'une personne ou une entreprise commet à nouveau une mauvaise déclaration de taxes après avoir déjà été sanctionnée pour des faits similaires.",""],
+["Contravention","Usage abusif du Klaxon",5000,0,"P","L'usage du klaxon en agglomération est strictement interdit, sauf en cas de danger immédiat pour les usagers de la route (conducteurs ou piétons).",""],
+["Contravention","Non respect des distances de sécurité (1,5 m)",5000,0,"P","Le non-respect des distances de sécurité impose une distance d'au moins 1,5 mètre entre chaque véhicule et piéton.",""],
+["Contravention","Franchissement d'une ligne continue",5000,0,"P","Tout franchissement ou chevauchement d'une ligne continue par le conducteur d'un véhicule.",""],
+["Contravention","Stationnement gênant et / ou interdit (bande rouge)",6000,0,"P","Tout stationnement entraînant une gêne partielle ou totale pour les autres usagers (conducteurs et/ou piétons).","Mise en fourrière"],
+["Contravention","Insulte envers un civil",10000,0,"P","Toute insulte verbale envers un civil dans le but de blesser ou d'offenser.",""],
+["Contravention","Non respect d'un véhicule prioritaire",10000,0,"P","Le non-respect des règles de priorité d'un véhicule de service public (forces de l'ordre / EMS) pendant l'exercice de ses fonctions (gyrophare et/ou sirène allumés).",""],
+["Contravention","Conduite Hors route / hors piste",10000,0,"P","Conduire un véhicule hors de la route ou hors des pistes prévues à cet effet, incluant les montagnes, champs ou tout autre terrain non autorisé à la circulation.",""],
+["Contravention","Non respect d'un feu rouge (Stop & go)",8000,0,"P","Le non-respect d'un feu tricolore (feu rouge = arrêt obligatoire).",""],
+["Contravention","Non respect d'un stop",5000,0,"P","Le non-respect d'un panneau STOP (arrêt obligatoire et cédez le passage).",""],
+["Contravention","Conduite avec un véhicule non en état (plaque, dégradé…)",5000,0,"P","Conduire un véhicule dégradé (vitres ou phares cassés), en mauvais état, ou avec une plaque illisible (ex. : pneu manquant).","Mise en fourrière"],
+["Contravention","Demi-tour non autorisé",5000,0,"P","Effectuer un demi-tour dans un lieu inadapté sans autorisation des forces de l'ordre.",""],
+["Contravention","Participation à une manifestation illégale",10000,0,"P","Être présent, après sommations verbales, visuelles ou sonores, à une manifestation non autorisée.",""],
+["Contravention","Ivresse ou consommation de stupéfiants sur la voie publique",10000,0,"P","Toute personne présentant des signes manifestes de consommation de drogue ou d'alcool entraînant un état second.","Dégrisement / Test du médecin"],
+["Contravention","Excès de vitesse < 5 km/h",10000,0,"P","Excès de vitesse en agglomération : à partir de 95 km/h.",""],
+["Contravention","Excès de vitesse 5-15 km/h",15000,0,"P","Excès de vitesse sur autoroute : à partir de 135 km/h.",""],
+["Contravention","Circulation à contresens",15000,0,"P","Rouler en sens inverse sans respecter le marquage au sol.",""],
+["Contravention","Dépassement dangereux (Drift, Wheeling…)",15000,0,"P","Dépasser un véhicule en excédant la vitesse autorisée, en ne respectant pas la distance de sécurité (1,5 m), en effectuant un drift ou en levant la roue avant.",""],
+["Contravention","Violation de propriété privée (Entreprise,…)",20000,0,"P","Pénétrer dans une propriété privée sans y être invité, sauf autorisation judiciaire ou flagrant délit pour les forces de l'ordre.",""],
+["Contravention","Entrave à la circulation",17000,0,"P","Placer volontairement ou non un objet perturbant la circulation sur la voie publique.",""],
+["Contravention","Exhibition en public",15000,0,"P","L'exhibition consiste à dévoiler volontairement une partie intime au regard d'autrui sur la voie publique.",""],
+["Contravention","Occupation illégale de l'espace public",25000,0,"P","L'occupation illégale consiste à occuper un espace public sans autorisation.",""],
+["Contravention","Mendicité",4500,0,"P","La mendicité consiste à solliciter un don sans contrepartie.",""],
+["Délit Mineur","Dégradation de biens publics",20000,0,"P","Dégradation, détérioration ou destruction d'un bien public.",""],
+["Délit Mineur","Trouble à l'ordre public",15000,0,"P","Le trouble à l'ordre public désigne tout comportement, acte ou situation qui perturbe la paix, la sécurité, la tranquillité ou la salubrité publique.",""],
+["Délit Mineur","Tentative de vol de véhicule",30000,0,"P","Tentative de vol de véhicule sans en être propriétaire ni détenteur des clés.",""],
+["Délit Mineur","Organisation d'une manifestation illégale",30000,0,"P","Organisation ou participation à une manifestation non autorisée.",""],
+["Délit Mineur","Mise en danger de la vie d'autrui",80000,0,"P","Mise en danger de la vie d'autrui par non-respect des règles de sécurité.",""],
+["Délit Mineur","Outrage envers un représentant de l'État",70000,0,"P","Outrage envers un représentant de l'État dans l'exercice de ses fonctions.",""],
+["Délit Mineur","Entrave à la cour et/ou jugement",70000,0,"P","L'entrave à la cour et/ou au jugement désigne tout acte, comportement ou manœuvre visant à perturber, retarder ou empêcher le bon déroulement d'une audience ou d'une procédure judiciaire.",""],
+["Délit Mineur","Chantage",60000,0,"P","Chantage : obtenir argent, avantage ou information sous menace.",""],
+["Délit Mineur","Entrave à une opération des forces de l'ordre",85000,0,"P","L'entrave à une opération des forces de l'ordre désigne tout acte ou comportement visant à gêner, retarder, empêcher ou compliquer l'intervention d'agents chargés d'une mission légale.",""],
+["Délit Mineur","Entrave aux opérations gouvernementales",120000,0,"P","L'entrave aux opérations gouvernementales désigne tout acte, comportement ou manœuvre visant à perturber, retarder, empêcher ou compromettre l'exécution d'une mission officielle menée par une autorité publique.",""],
+["Délit Mineur","Arme blanche sortie en public",80000,0,"P","Le fait de sortir ou d'exhiber une arme blanche sur la voie publique ou dans un lieu accessible au public, sans motif légitime, constitue une infraction.","Confiscation de l'arme"],
+["Délit Mineur","Possession de produits illégaux mineurs (moins de 10)",50000,0,"P","Possession de produits définis comme illégaux par la loi (quantités variables selon barème).",""],
+["Délit Mineur","Excès de vitesse 15-30 km/h",65000,0,"P","Excès de vitesse : Agglomération : à partir de 95 km/h. Autoroute : à partir de 135 km/h. (Barèmes supérieurs applicables selon la tranche de vitesse.)",""],
+["Délit Mineur","Refus d'obtempérer",62000,0,"P","Refus d'obtempérer suite à l'ordre d'un agent.",""],
+["Délit Mineur","Délit de fuite",60000,2,"P","Délit de fuite après avoir causé un dommage matériel ou corporel.",""],
+["Délit Mineur","Conduite d'un véhicule volé",60000,0,"P","Conduire un véhicule sans en être propriétaire ni détenteur autorisé.",""],
+["Délit Mineur","Conduite sans permis",65000,0,"P","Conduire sans permis adapté au type de véhicule.",""],
+["Délit Mineur","Diffamation",65000,0,"P","La diffamation est le fait d'alléguer ou d'imputer à une personne (physique ou morale) un fait précis qui porte atteinte à son honneur, à sa réputation ou à sa considération, sans pouvoir en apporter la preuve.",""],
+["Délit Mineur","Utilisation et / ou présentation de faux",70000,2,"P","L'utilisation et/ou la présentation de faux désigne le fait de faire usage, de produire ou de présenter un document falsifié, modifié ou frauduleusement établi, en le faisant passer pour authentique.",""],
+["Délit Mineur","Discrimination",55000,0,"P","Discrimination fondée sur des caractéristiques personnelles.",""],
+["Délit Mineur","Atteinte au droit à l'image",60000,0,"P","L'atteinte au droit à l'image désigne toute utilisation, diffusion ou reproduction de l'image d'une personne / entité sans son consentement, que ce soit à des fins personnelles, commerciales ou publiques.","Suppression des images"],
+["Délit Mineur","Harcèlement",65000,0,"P","Ensemble de comportements répétés qui portent atteinte à la dignité, à la santé mentale ou physique d'une personne, créant un climat hostile, intimidant ou offensant.",""],
+["Délit Mineur","Dissimulation du visage sur la voie publique",70000,0,"P","Action de cacher volontairement son visage afin d'échapper à l'identification, à la surveillance ou à l'application de la loi.",""],
+["Délit Mineur","Port d'un gilet par balle",80000,0,"P","Fait de porter un équipement de protection balistique dans le cadre de la commission d'une infraction pénalement répréhensible.",""],
+["Délit Mineur","Excès de vitesse > 30 km/h",70000,0,"P","Circulation à une vitesse supérieure d'au moins 30 km/h à la limite légale autorisée, augmentant les risques d'accidents graves.","Retrait de permis + mise en fourrière"],
+["Délit Mineur","Vol (racket, vol de véhicule, effraction)",70000,0,"P","Action de s'approprier illégalement un bien appartenant à une autre personne, privant ainsi son propriétaire de l'usage ou de la possession.","Restitution des biens volés"],
+["Délit Mineur","Extorsion / Escroquerie",110000,0,"P","Obtention de biens, d'argent ou d'avantages par tromperie, menace, pression ou manœuvres frauduleuses envers autrui.","Restitution des biens volés/extorqués + décision du juge"],
+["Délit Mineur","Devoir de Réserve / Secret Médical et professionnel",100000,3,"P","Obligation de ne pas divulguer d'informations confidentielles liées à sa profession ou à l'exercice de ses fonctions.",""],
+["Délit Mineur","Abus de confiance",90000,0,"P","Utilisation frauduleuse ou détournement d'un bien, d'une somme d'argent ou d'un droit qui a été confié par une autre personne.","Réparation du préjudice"],
+["Délit Mineur","Usurpation d'identité ou de fonction",105000,2,"P","Action de se faire passer pour une autre personne ou pour un représentant officiel afin d'obtenir un avantage ou tromper autrui.",""],
+["Délit Mineur","Violation de la vie privée",70000,0,"P","Atteinte à l'intimité, aux informations personnelles ou aux données privées d'une personne sans son consentement.",""],
+["Délit Mineur","Non présentation à une convocation de police / de justice",75000,0,"PRJ","Fait de ne pas se présenter à une audition ou convocation légale, retardant ou empêchant le déroulement normal de la procédure.",""],
+["Délit Mineur","Entrave / Obstruction à la Justice",120000,0,"RJ","Tout acte ou comportement qui gêne, retarde ou empêche le bon déroulement d'une procédure judiciaire ou l'exécution d'une décision de justice.",""],
+["Délit Mineur","Course illégale",85000,0,"P","Participation à une compétition de véhicules sur la voie publique, non autorisée et présentant des risques élevés pour la sécurité des participants et du public.",""],
+["Délit Mineur","Combat clandestin",105000,0,"P","Affrontement physique organisé en dehors des règles légales et sans encadrement officiel, souvent secret et potentiellement dangereux pour les participants et spectateurs.",""],
+["Délit Mineur","Outrage à Magistrat",80000,0,"RJ","Outrage envers un représentant de l'État dans l'exercice de ses fonctions.",""],
+["Délit Majeur","Outrage à Magistrat (pendant un procès)",80000,0,"RJ","Insulte, menace ou comportement irrespectueux envers un magistrat pendant l'exercice de ses fonctions judiciaires.",""],
+["Délit Majeur","Violence animalière",70000,0,"RS","Actes de cruauté ou maltraitance infligés à un animal, entraînant souffrance ou risque pour sa santé.",""],
+["Délit Majeur","Arme létale sortie en public",75000,2,"R","Fait de sortir ou exhiber une arme létale dans un lieu public ou accessible à tous, augmentant le risque pour autrui.",""],
+["Délit Majeur","Braquage d'ATM",85000,0,"R","Vol ou tentative de vol d'un distributeur automatique de billets (ATM).",""],
+["Délit Majeur","Non paiement d'un salaire",80000,0,"J","Fait de ne pas verser la rémunération due à un salarié pour son travail effectué.","Paiement x2 du salaire manqué"],
+["Délit Majeur","Intrusion dans un PDP ou dans les locaux d'une agence de l'État",80000,0,"R","Entrer dans des locaux officiels ou d'un poste de police sans autorisation, perturbant le fonctionnement légal.",""],
+["Délit Majeur","Association de malfaiteurs",80000,3,"J","Association de personnes en vue de commettre des infractions ou actes criminels.",""],
+["Délit Majeur","Abus de pouvoir",100000,0,"J","Usage abusif ou détournement du pouvoir pour obtenir un avantage personnel ou influencer une situation.","Donne directement accès à la victime à une protection juridique"],
+["Délit Majeur","Vol à main armée",80000,2,"R","Vol commis en utilisant une arme ou en menaçant avec une arme pour contraindre la victime.",INF_PPA+" + Restitution du vol"],
+["Délit Majeur","Fabrication de produit stupéfiant",85000,3,"R","Production, fabrication ou préparation de substances stupéfiantes interdites par la loi.",""],
+["Délit Majeur","Vol de véhicule",75000,0,"R","S'approprier ou utiliser le véhicule d'une autre personne sans autorisation.",""],
+["Délit Majeur","Possession de produits illégaux supérieurs (10 à 48)",70000,0,"R","Possession de substances illégales dans des quantités supérieures aux seuils légaux définis.",""],
+["Délit Majeur","Escroquerie à la personne",100000,3,"R","Tromper ou escroquer une personne pour obtenir un avantage financier ou matériel.",""],
+["Délit Majeur","Menace et/ou intimidation envers un représentant de l'État",130000,3,"R","Actes ou paroles visant à créer la peur ou l'intimidation envers un représentant de l'État dans l'exercice de ses fonctions.",""],
+["Délit Majeur","Trafic de produits illégaux (49 et +)",140000,4,"R","Trafic de substances ou produits interdits en grande quantité, au-delà des seuils légaux.",""],
+["Délit Majeur","Coups et blessures sur dépositaire de l'autorité publique",250000,4,"RS","Blessures physiques ou coups portés à un dépositaire de l'autorité publique, mettant en danger son intégrité.",""],
+["Délit Majeur","Coups et blessures sur civil",70000,2,"RS","Blessures physiques ou coups portés à un civil, affectant son intégrité corporelle.",""],
+["Délit Majeur","Menace et/ou intimidation envers un civil",70000,0,"R","Actes ou paroles visant à créer la peur ou l'intimidation chez un civil pour influencer son comportement ou limiter sa liberté.",""],
+["Délit Majeur","Agression sur un civil",85000,2,"RS","Acte physique ou verbal visant à blesser ou menacer un civil.",""],
+["Délit Majeur","Agression sur un représentant de l'État",140000,4,"RS","Acte physique ou verbal visant à blesser ou menacer un représentant de l'État.",""],
+["Délit Majeur","Port d'arme illégal défaut de licence",70000,0,"R","Porter une arme sans posséder la licence ou autorisation requise par la loi.","Confiscation de l'arme"],
+["Délit Majeur","Port d'arme illégal",85000,2,"R","Possession d'une arme en violation des réglementations légales.","Confiscation de l'arme"],
+["Délit Majeur","Utilisation / port d'équipement illégal",85000,2,"R","Utilisation ou port d'équipements réglementés de manière illégale ou non autorisée.",""],
+["Délit Majeur","Parjure (Faux témoignage)",90000,6,"J","Fournir un faux témoignage sous serment lors d'une procédure judiciaire.",""],
+["Délit Majeur","Escroquerie à l'entreprise",100000,4,"J","Détournement ou tromperie visant une entreprise pour obtenir un avantage matériel ou financier.",""],
+["Délit Majeur","Divulgation d'informations confidentielles",250000,0,"R","Divulgation ou communication non autorisée d'informations confidentielles ou sensibles.",""],
+["Délit Majeur","Falsification de document officiel",200000,5,"J","Fait de créer, modifier, altérer ou utiliser frauduleusement un document émis par une autorité publique ou ayant une valeur officielle, dans le but de tromper autrui ou d'obtenir un avantage indu.",""],
+["Délit Majeur","Usurpation d'identité",120000,4,"R","Se faire passer pour une autre personne afin de tromper ou obtenir un avantage.",""],
+["Délit Majeur","Usurpation d'identité d'un magistrat",250000,6,"J","Prendre l'identité d'un magistrat ou se faire passer pour lui afin de tromper ou obtenir un avantage.",""],
+["Délit Majeur","Non respect d'une mesure d'éloignement",200000,0,"R","Refuser ou ne pas respecter une mesure de protection ou d'éloignement imposée par la loi.",""],
+["Délit Majeur","Récidive d'infraction suite à un jugement de moins de 30 jours",250000,3,"R","Commettre une nouvelle infraction après une condamnation ou jugement de moins de 30 jours.",""],
+["Délit Majeur","Vente d'armes (blanche ou de poing)",100000,2,"J","Vente non autorisée d'armes blanches ou d'armes de poing. Sur la place publique.",""],
+["Délit Majeur","Blanchiment d'argent",175000,6,"J","Action visant à dissimuler la provenance d'argent obtenu illégalement en le réintégrant dans le circuit légal.","Confiscation de l'argent sale"],
+["Délit Majeur","Possession d'argent sale",150000,2,"R","Possession d'argent provenant d'activités illégales ou douteuses.","Confiscation de l'argent sale"],
+["Délit Majeur","Vente de produits illégaux",80000,5,"R","Vente de produits ou biens interdits par la loi.",""],
+["Délit Majeur","Braquage de supérette",150000,3,"RJ","Participation ou complicité à un braquage de supérette.",""],
+["Délit Majeur","Entrave à une enquête judiciaire",90000,2,"RJ","Empêcher, retarder ou perturber une enquête judiciaire en cours.",""],
+["Délit Majeur","Non respect d'une décision de justice d'un citoyen",130000,0,"R","Refuser d'exécuter une décision judiciaire à l'encontre d'un citoyen.",""],
+["Délit Majeur","Non respect d'une décision de justice d'une entreprise, agence…",150000,0,"J","Refuser d'exécuter une décision judiciaire à l'encontre d'une entreprise ou organisation.",""],
+["Délit Majeur","Violence avec une arme blanche",85000,5,"JS","Utilisation d'une arme blanche pour infliger des blessures ou menaces.","Saisie de l'arme + décision du juge"],
+["Délit Majeur","Violence avec une arme à feu",120000,3,"JS","Utilisation d'une arme à feu pour infliger des blessures ou menaces.",INF_PPA],
+["Délit Majeur","Non assistance à personne en danger",150000,2,"R","Ne pas porter assistance à une personne en danger immédiat, alors que l'on en a la possibilité.",""],
+["Délit Majeur","Immigration illégale",65000,0,"R","Entrer ou résider sur un territoire sans respecter les règles d'immigration.",""],
+["Délit Majeur","Corruption",77000,6,"R","Fait de proposer, accepter ou solliciter un avantage indu pour influencer une décision officielle.",""],
+["Crime","Tentative de kidnapping / séquestration",100000,5,"JS","Tentative de privation illégale de liberté d'une personne (séquestration ou enlèvement) sans succès.",""],
+["Crime","Kidnapping / Séquestration",150000,6,"JS","Privation de liberté d'une personne à des fins de rançon, menace ou coercition.",""],
+["Crime","Multiples kidnapping / séquestration",250000,6,"JS","Enlèvement simultané ou multiple de plusieurs personnes dans un but illégal ou coercitif.",""],
+["Crime","Prise d'otage sur un ou des civils",125000,2,"JS","Privation de liberté et détention d'un civil à des fins de rançon ou menace.",""],
+["Crime","Prise d'otage sur représentant(s) de l'État",300000,8,"JS","Privation de liberté et détention d'un représentant de l'État à des fins de rançon ou menace.",""],
+["Crime","Braquage de banque",350000,6,"J","Participation ou complicité à un braquage de banque.",""],
+["Crime","Braquage bijouterie",300000,4,"J","Participation ou complicité à un braquage de bijouterie.",""],
+["Crime","Tentative d'homicide sur civil",170000,3,"JS","Acte délibéré visant à ôter la vie à un civil.",""],
+["Crime","Tentative d'homicide sur un représentant de l'État",340000,5,"JS","Acte délibéré visant à ôter la vie à un représentant de l'État.",""],
+["Crime","Tir sur civil",340000,3,"JS","Action de tirer sur un civil, volontairement ou par imprudence.",INF_PPA],
+["Crime","Tir sur agent de l'État",270000,6,"JS","Action de tirer sur un agent de l'État dans l'exercice de ses fonctions.",INF_PPA],
+["Crime","Meurtre sur civil",250000,4,"JS","Homicide volontaire ou causant un coma chez un civil.",INF_PPA],
+["Crime","Meurtre sur fonctionnaire",500000,10,"JS","Homicide volontaire ou causant un coma chez un fonctionnaire de l'État.",INF_PPA],
+["Crime","Tentative d'évasion",150000,2,"J","Tentative d'évasion d'un lieu de détention ou de police sans succès.",""],
+["Crime","Évasion",300000,5,"J","Évasion réussie d'un lieu de détention ou de police.",""],
+["Crime","Incitation à la violence",400000,2,"J","Incitation, par parole, écrit ou acte, à la violence contre autrui.",""],
+["Crime","Incitation à la haine",400000,2,"J","Incitation, par parole, écrit ou acte, à la haine envers un individu ou un groupe.",""],
+["Crime","Prise d'otage sur un magistrat",300000,10,"JS","Prise d'otage d'un magistrat à des fins de pression ou rançon.",""],
+["Crime","Participation à une fusillade",200000,5,"JS","Participation à une fusillade, volontaire ou indirecte, sur un lieu donné. La complicité doit être légalement prouvée pour inculper un individu de participation à une fusillade (CF. Article 2,2,2 et 2,2,3 du Code Pénal).",INF_PPA],
+["Crime","Attaque sur un convoi de fonds",250000,7,"J","Attaque armée contre un convoi protégé ou organisé.","Saisie de l'argent et des armes"],
+["Crime","Prise d'otage d'un haut fonctionnaire de l'État (gouverneur, chef et sous-chef de police, membre de la Sécurité Intérieure)",800000,"P","JS","La détention illégale d'un haut fonctionnaire de l'État dans le but de contraindre l'administration ou d'obtenir un avantage.","Saisie des armes"],
+["Crime","Prise d'otage dans un bâtiment de la fonction publique",800000,"P","JS","La détention illégale de personnes dans un bâtiment public dans le but de contraindre l'administration ou d'obtenir un avantage.","Saisie des armes"],
+["Crime","Défaut de paiement d'amendes",250000,"P","J","Le fait de ne pas s'acquitter, dans un délai de sept (7) jours suivant sa facturation, d'une amende régulièrement prononcée ou mise à la charge de son débiteur. (Plus de 50 amendes impayées). La peine à perpétuité peut être appliquée après l'envoi d'un dossier auprès de la S.I.","Saisie des biens du débiteur, dans la mesure nécessaire au recouvrement de la somme due."],
+["Crime Fédéral","Actes de barbarie",550000,20,"FS","Actes de cruauté ou barbarie extrême visant à nuire au corps ou à l'esprit d'autrui.",""],
+["Crime Fédéral","Usage illégal d'un moyen d'information légal",250000,3,"F","Utilisation illégale d'informations obtenues légalement à des fins frauduleuses.",""],
+["Crime Fédéral","Usage d'une entreprise à des fins illégales",350000,10,"F","Exploitation d'une entreprise légale pour couvrir des activités illégales.",""],
+["Crime Fédéral","Trafic d'armes (plusieurs éléments)",1500000,15,"F","Vente, transport ou distribution illégale d'armes ou matériels interdits.","Confiscation des armes + saisie de la monnaie d'échange"],
+["Crime Fédéral","Organisation de malfaiteurs",550000,6,"F","Faire partie ou diriger une organisation criminelle, officielle ou non.",""],
+["Crime Fédéral","Chef d'une organisation criminelle",1000000,15,"F","Diriger une organisation criminelle en tant que chef, lieutenant ou bras droit.",""],
+["Crime Fédéral","Accès à des informations confidentielles et/ou secret défense",400000,5,"F","Accès à des informations classifiées ou secret défense sans autorisation.",""],
+["Crime Fédéral","Divulgation d'informations confidentielles et/ou secret défense",350000,10,"F","Divulgation d'informations confidentielles ou classifiées à des personnes non autorisées.",""],
+["Crime Fédéral","Complot / Conspiration",1000000,12,"F","Projet concerté secrètement afin de nuire (à quelqu'un, à une institution).",""],
+["Crime Fédéral","Tentative d'évasion fédérale",500000,5,"F","Tentative d'évasion lors d'un transfert ou de l'exécution d'une peine fédérale.",""],
+["Crime Fédéral","Évasion fédérale",700000,7,"F","Évasion réussie lors d'un transfert ou de la purge d'une peine fédérale.",""],
+["Crime Fédéral","Non respect des procédures pénalement répréhensible",500000,4,"F","Ne pas respecter les procédures pénales légales ou répréhensibles.",""],
+["Crime Fédéral","Intrusion dans les locaux fédéraux",350000,5,"F","Entrer sans autorisation dans des locaux fédéraux ou protégés.",""],
+["Crime Fédéral","Commission d'actes ripoux",2500000,"P","F","Commission d'actes de corruption, malversations ou abus de fonction. Dans le cadre ou relatif à l'exercice des fonctions de l'agent assermenté.","Blacklist métiers légaux pour une durée allant de 6 mois à indéterminée (minimum obligatoire si reconnu coupable)"],
+["Crime Fédéral","Atteinte à la sécurité nationale",3000000,"P","J","Actes commis volontairement et visant directement à compromettre gravement la sécurité, l'intégrité territoriale ou le fonctionnement des institutions fondamentales de l'État. / TERRORISME","Conformément aux dispositions de l'article 3,2 du Code de Procédure pénale, l'individu perd tous ses droits"],
+["Crime Fédéral","Entrave à une opération fédérale",200000,2,"F","Entraver, gêner ou perturber une opération fédérale en cours.",""],
+["Crime Fédéral","Prise d'otage sur agent fédéral",350000,12,"FS","Privation de liberté ou détention d'un agent fédéral à des fins de rançon ou coercition.",""]];
+
+/* =================== JUSTICE : grille, outil de justice, documents officiels =================== */
+const INFC=Object.fromEntries(INF_CATS);
+const infCatB=c=>`<span class="icat" style="--ic:${INFC[c]||"#888"}">${esc(c)}</span>`;
+const prisonTxt=p=>p==="P"?"Perpétuité":num(p)?(String(num(p)).replace(".",",")+" an"+(num(p)>1?"s":"")):"—";
+const prisonVal=p=>p==="P"?Infinity:num(p);
+const infList=()=>vals(S.infractions).sort((a,b)=>INF_CATS.findIndex(c=>c[0]==a.cat)-INF_CATS.findIndex(c=>c[0]==b.cat)||(a.rank??0)-(b.rank??0)||String(a.nom).localeCompare(b.nom));
+const canTool=()=>can("jus.tool")||can("jus.judge");
+const canDocs=()=>can("jus.docs.view")||can("jus.docs");
+
+/* ---------- Grille des infractions ---------- */
+V.infractions=()=>{const q=filt.iq||"",c=filt.ic||"",w=filt.iw||"",ed=can("jus.grid");
+ const L=infList().filter(x=>(!c||x.cat==c)&&(!w||String(x.qui||"").includes(w))&&match(q,x.nom,x.def,x.supp,x.cat));
+ return `<div class="ph"><h2>Grille des infractions</h2>${ed?`<button class="btn" onclick="openM('inf')">${ic("plus")}Nouvelle infraction</button>`:""}</div>
+ <div class="card inl">${search("iq","Rechercher une infraction, une définition…")}<select id="s_ic" onchange="filt.ic=this.value;render()"><option value="">Toutes les peines</option>${opts(INF_CATS.map(x=>x[0]),c)}</select><select id="s_iw" onchange="filt.iw=this.value;render()"><option value="">Qui s'en charge : tous</option>${opts(INF_QUI,w)}</select><span class="mu sm">${L.length} infraction(s)</span></div>
+ <div class="card tw"><table class="inft"><tr><th>Peine<th>Infraction<th class="r">Amende<th class="c">Prison<th>Qui s'en charge<th>Définition<th>Supplément${ed?"<th>":""}</tr>
+ ${L.map(x=>`<tr><td class="nw">${infCatB(x.cat)}<td class="b">${esc(x.nom)}<td class="r nw b">${money(x.amende)}<td class="c nw"><span class="ipr ${x.prison==="P"?"perp":num(x.prison)?"y":""}">${prisonTxt(x.prison)}</span><td>${INF_QUI.filter(k=>String(x.qui||"").includes(k[0])).map(k=>`<span class="iq">${k[1]}</span>`).join(" ")}<td class="sm idef">${esc(x.def||"")}<td class="sm">${esc(x.supp||"")}${ed?`<td class="nw"><button class="btn sec sm" onclick="openM('inf','${x.id}')">Modifier</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune infraction.</td></tr>`}</table></div>`};
+function MInf(){if(!can("jus.grid"))return null;const x=modal.id?S.infractions[modal.id]:{cat:"Contravention",qui:"P"};if(modal.id&&!x)return null;const perp=x.prison==="P";
+ return {title:modal.id?"Modifier l'infraction":"Nouvelle infraction",wide:1,body:`<div class="form"><label class="f">Peine *<select id="ifc">${opts(INF_CATS.map(c=>c[0]),x.cat)}</select></label><label class="f full">Infraction *<input id="ifn" value="${esc(x.nom||"")}"></label>
+ <label class="f">Amende ($) *<input id="ifa" type="number" min="0" value="${x.amende??""}"></label><label class="f">Années de prison<input id="ifp" type="number" min="0" step="0.5" value="${perp?"":num(x.prison)}" placeholder="0"></label>
+ <label class="ck" style="align-self:end"><input type="checkbox" id="ifpp" ${perp?"checked":""}><span>Réclusion à perpétuité</span></label>
+ <div class="f full"><span class="mu sm">Qui s'en charge ?</span><div class="inl" style="margin-top:6px">${INF_QUI.map(([k,l])=>`<label class="ck"><input type="checkbox" id="ifq_${k}" ${String(x.qui||"").includes(k)?"checked":""}><span>${l}</span></label>`).join("")}</div></div>
+ <label class="f full">Définition<textarea id="ifd" rows="3">${esc(x.def||"")}</textarea></label><label class="f full">Supplément<input id="ifs" value="${esc(x.supp||"")}"></label></div><p class="err" id="msg"></p>`,
+ foot:`${modal.id?`<button class="btn gh" style="margin-right:auto" onclick="infDel('${modal.id}')">Supprimer</button>`:""}<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="infSave('${modal.id||""}')">Enregistrer</button>`}}
+
+/* ---------- Outil de justice ---------- */
+const JST=[["attente","En attente de jugement","wa"],["jugement","En jugement","bl"],["coupable","Coupable","no"],["acquitte","Acquitté","ok"],["vdp","Vice de procédure","mu"],["bracelet","Bracelet électronique","bl"],["ajourn","Ajournement","wa"],["ci","Comparution immédiate","bl"]];
+const JSTM=Object.fromEntries(JST.map(s=>[s[0],[s[1],s[2]]]));
+const AGENCES=["Gouvernement","LSPD VP","LSPD MR","FIB","Civil"];
+const AVOC_T=[["","—"],["choisi","Avocat choisi"],["office","Commis d'office"],["bracelet","Retour de bracelet"]];
+const FVERD=[["rep","Reproché"],["oui","Coupable"],["non","Non coupable"]];
+function jugCalc(j){const F=(j.faits||[]).filter(f=>f.v!=="non");const am=F.reduce((s,f)=>s+num(f.a),0);let pr=0;F.forEach(f=>{const v=prisonVal(f.p);if(v>pr)pr=v});
+ const fed=j.fed=="oui"||(j.fed!="non"&&F.some(f=>f.c=="Crime Fédéral"));return {am,pr,prT:pr===Infinity?"Réclusion à perpétuité":pr?prisonTxt(pr):"Aucune",coef:pr===Infinity?"—":pr?String(Math.round(pr/2*100)/100).replace(".",","):"0",fed}}
+const justiceStaff=()=>vals(S.users).filter(u=>isAgent(u)&&u.active!==false&&(u.dept=="Justice"||u.role=="direction")).sort((a,b)=>a.nom.localeCompare(b.nom));
+V.jtool=()=>{if(!canTool())return empty("Accès réservé.");const st=filt.jst||"",q=filt.jq||"";const A=vals(S.jugements);
+ const L=A.filter(j=>!st||j.st==st).filter(j=>match(q,j.num,j.nom,j.prenom,j.juge,j.procureur,j.avocat,j.agence,(j.faits||[]).map(f=>f.n).join(" "))).sort((a,b)=>(b.dateJug||"").localeCompare(a.dateJug||"")||b.t-a.t);
+ return `<div class="ph"><h2>Outil de justice</h2>${can("jus.judge")?`<button class="btn" onclick="openJug()">${ic("plus")}Nouveau jugement</button>`:""}</div>
+ <div class="card inl">${search("jq","Accusé, n°, juge, fait…")}<select id="s_jst" onchange="filt.jst=this.value;render()"><option value="">Tous les statuts (${A.length})</option>${JST.map(s=>`<option value="${s[0]}" ${st==s[0]?"selected":""}>${s[1]} (${A.filter(j=>j.st==s[0]).length})</option>`).join("")}</select></div>
+ <div class="card tw"><table><tr><th>N°<th>Date du jugement<th>Accusé<th>Agence<th>Faits<th class="r">Amende<th>Prison<th>Juge<th>Statut</tr>
+ ${L.map(j=>{const c=jugCalc(j);return `<tr class="click" onclick="openM('jugv','${j.id}')"><td class="nw b">${esc(j.num)}<td class="nw">${j.dateJug?fdd(j.dateJug):"—"}<td><b>${esc(j.prenom||"")} ${esc(j.nom)}</b>${j.naiss?`<div class="mu sm">né(e) le ${fdd(j.naiss)}</div>`:""}<td>${esc(j.agence||"—")}<td>${(j.faits||[]).length}<td class="r nw">${money(c.am)}<td class="nw">${esc(c.prT)}<td>${esc(j.juge||"—")}<td>${bdg(JSTM,j.st)}</tr>`}).join("")||`<tr><td colspan="9" class="empty">Aucun jugement.</td></tr>`}</table></div>`};
+function jugInput(k,l,o){o=o||{};const d=modal.d,v=d[k]??"";return `<label class="f ${o.full?"full":""}">${l}${o.req?" *":""}${o.area?`<textarea data-nokeep rows="${o.rows||3}" oninput="modal.d['${k}']=this.value" placeholder="${esc(o.ph||"")}">${esc(v)}</textarea>`:`<input data-nokeep type="${o.type||"text"}" value="${esc(v)}" ${o.list?`list="${o.list}"`:""} placeholder="${esc(o.ph||"")}" oninput="modal.d['${k}']=this.value">`}</label>`}
+function MJug(){if(!can("jus.judge"))return null;const d=modal.d;if(!d)return null;const c=jugCalc(d),I=infList(),fq=keep.jfq||"",nf=modal.files||[],old=modal.id?S.jugements[modal.id]:null;
+ const optI=INF_CATS.map(([cat])=>{const L=I.filter(x=>x.cat==cat&&match(fq,x.nom));return L.length?`<optgroup label="${esc(cat)}">${L.map(x=>`<option value="${x.id}">${esc(x.nom)} — ${money(x.amende)}${x.prison==="P"?" — perpétuité":num(x.prison)?" — "+prisonTxt(x.prison):""}</option>`).join("")}</optgroup>`:""}).join("");
+ const sel=(k,list,onch)=>`<select data-nokeep onchange="modal.d['${k}']=this.value;${onch?"render()":""}">${opts(list,d[k]||"")}</select>`;
+ const body=`<datalist id="jstaff">${justiceStaff().map(u=>`<option value="${esc(u.nom)}">${esc(gname(u))}</option>`).join("")}</datalist>
+ <div class="pe-card"><h4 style="margin-top:0">Accusé et procédure</h4><div class="form">${jugInput("nom","Nom",{req:1})}${jugInput("prenom","Prénom",{req:1})}${jugInput("naiss","Date de naissance",{type:"date"})}
+ ${jugInput("dateArr","Date de l'arrestation",{type:"date"})}<label class="f">Agence ayant procédé à l'arrestation${sel("agence",[["","—"]].concat(AGENCES.map(a=>[a,a])))}</label>${jugInput("dateJug","Date du jugement",{type:"date"})}
+ <label class="f">Statut de la procédure *${sel("st",JST.map(s=>[s[0],s[1]]),1)}</label>${jugInput("lien","Lien du rapport",{type:"url",ph:"https://…"})}</div>
+ ${d.st=="vdp"?`<div class="form" style="margin-top:6px"><label class="f">Catégorie du vice${sel("vdpCat",[["1","Catégorie 1"],["2","Catégorie 2"],["3","Catégorie 3"]])}</label>${jugInput("vdpRaison","Raison du vice de procédure",{area:1,full:1,req:1,rows:2})}</div>
+ <h4>Document justifiant le vice *</h4>${old&&Object.keys(old.files||{}).length?`<div class="fgrid" style="margin-bottom:8px">${Object.entries(old.files).map(([fk,f])=>fileTile(fk,f,jugCache[old.id]&&jugCache[old.id][fk]&&jugCache[old.id][fk].data,!!(modal.rm||{})[fk])).join("")}</div>`:""}
+ ${nf.length?`<div class="fgrid" style="margin-bottom:8px">${nf.map((f,i)=>`<div class="ftile new">${f.type.startsWith("image/")?`<img src="${f.data}" alt="">`:`<div class="fdoc">${ic("file")}<span>PDF</span></div>`}<div class="fname">${esc(f.name)}</div><button class="lnk" onclick="modal.files.splice(${i},1);render()">Retirer</button></div>`).join("")}</div>`:""}
+ <div class="drop" tabindex="0" onclick="document.getElementById('jgf').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();addJugFiles(event.dataTransfer.files)"><div class="drop-ic">${ic("file")}</div><b>Joindre le document du vice</b><div class="mu">clic, glisser-déposer ou Ctrl+V · image ou PDF</div></div>
+ <input type="file" id="jgf" accept="image/*,application/pdf" multiple style="display:none" onchange="addJugFiles(this.files);this.value=''">${modal.busy?`<p class="mu">Traitement…</p>`:""}`:""}
+ ${d.st=="acquitte"?`<div class="form" style="margin-top:6px">${jugInput("acqRaison","Raison de l'acquittement",{area:1,full:1,rows:2})}</div>`:""}</div>
+ <div class="pe-card"><h4 style="margin-top:0">Faits reprochés</h4>
+ <div class="inl"><input id="jfq" placeholder="Filtrer la grille…" style="max-width:220px" oninput="keep.jfq=this.value;render()"><select data-nokeep id="jfadd" style="flex:1;min-width:260px" onchange="jugAddFait(this.value)"><option value="">+ Ajouter un fait de la grille des infractions…</option>${optI}</select></div>
+ <div class="tw" style="margin-top:10px"><table class="jft"><tr><th>Fait<th class="r">Amende<th>Prison<th>Verdict<th class="c" title="Fait ajouté par le procureur lors de son réquisitoire">Ajouté par le procureur<th></tr>
+ ${(d.faits||[]).map((f,i)=>`<tr class="${f.v=="non"?"fnon":""}"><td>${infCatB(f.c)} <b>${esc(f.n)}</b><td class="r nw">${money(f.a)}<td class="nw">${prisonTxt(f.p)}<td><select data-nokeep onchange="modal.d.faits[${i}].v=this.value;render()">${opts(FVERD,f.v||"rep")}</select><td class="c"><input type="checkbox" data-nokeep ${f.aj?"checked":""} onchange="modal.d.faits[${i}].aj=this.checked;render()"><td><button class="lnk" onclick="modal.d.faits.splice(${i},1);render()">Retirer</button></tr>`).join("")||`<tr><td colspan="6" class="empty">Aucun fait sélectionné.</td></tr>`}</table></div>
+ <div class="kpis" style="margin-top:10px">${kpi("Total des amendes",money(c.am),"gold")}${kpi("Prison encourue (peine la plus haute)",esc(c.prT))}${kpi("Coefficient de prison",c.coef)}${kpi("Peine fédérale",c.fed?"Oui":"Non")}</div>
+ <p class="mu sm" style="margin:0">Les faits « Non coupable » ne sont pas comptés. Les peines de prison ne se cumulent pas : seule la plus haute est retenue ; le coefficient = années ÷ 2.</p></div>
+ <div class="pe-card"><h4 style="margin-top:0">Saisies</h4><div class="inl"><input id="jsq" placeholder="Ex. : Pistolet de combat, 25 000 $ d'argent sale…" style="flex:1" onkeydown="if(event.key=='Enter'){event.preventDefault();jugAddSaisie()}"><button class="btn sec" onclick="jugAddSaisie()">Ajouter</button></div>
+ <div class="grid g2" style="margin-top:10px"><div><h4>Saisies rendues</h4>${(d.saisies||[]).map((s,i)=>s.r?`<div class="inl sz"><span style="flex:1">${esc(s.t)}</span><button class="lnk" onclick="modal.d.saisies[${i}].r=false;render()">→ Non restituée</button><button class="lnk" onclick="modal.d.saisies.splice(${i},1);render()">Retirer</button></div>`:"").join("")||`<p class="mu sm">Aucune.</p>`}</div>
+ <div><h4>Saisies non restituées</h4>${(d.saisies||[]).map((s,i)=>!s.r?`<div class="inl sz"><span style="flex:1">${esc(s.t)}</span><button class="lnk" onclick="modal.d.saisies[${i}].r=true;render()">→ Rendue</button><button class="lnk" onclick="modal.d.saisies.splice(${i},1);render()">Retirer</button></div>`:"").join("")||`<p class="mu sm">Aucune.</p>`}</div></div></div>
+ <div class="pe-card"><h4 style="margin-top:0">Audience</h4><div class="form">${jugInput("juge","Juge de l'affaire",{list:"jstaff"})}${jugInput("procureur","Procureur de l'affaire",{list:"jstaff"})}${jugInput("avocat","Avocat de l'affaire")}
+ <label class="f">Type d'avocat${sel("avocatType",AVOC_T)}</label>${jugInput("agents","Agents présents au jugement",{full:1})}${jugInput("temoins","Témoins éventuels",{full:1})}
+ ${jugInput("rapport","Rapport d'intervention",{area:1,full:1,rows:4})}<label class="f">Amendes impayées${sel("impayees",[["non","Non"],["oui","Oui"]],1)}</label>${d.impayees=="oui"?jugInput("impDetail","Détail des amendes impayées",{ph:"Nombre / montant"}):""}
+ ${jugInput("commentaire","Commentaire",{area:1,full:1,rows:2})}</div></div>
+ <div class="pe-card"><h4 style="margin-top:0">Note MDT</h4><div class="form"><label class="f">Peine fédérale${sel("fed",[["auto","Automatique (crime fédéral retenu)"],["oui","Oui"],["non","Non"]],1)}</label>
+ <div class="f"><span class="mu sm">Retrait</span><div class="inl" style="margin-top:8px"><label class="ck"><input type="checkbox" data-nokeep ${d.retPPA?"checked":""} onchange="modal.d.retPPA=this.checked"><span>P.P.A</span></label><label class="ck"><input type="checkbox" data-nokeep ${d.retPermis?"checked":""} onchange="modal.d.retPermis=this.checked"><span>Permis de conduire</span></label></div></div>
+ <label class="ck" style="align-self:end"><input type="checkbox" data-nokeep ${d.psy?"checked":""} onchange="modal.d.psy=this.checked"><span>Suivi psychologique</span></label></div></div><p class="err" id="msg"></p>`;
+ return {title:old?"Jugement "+esc(old.num):"Nouveau jugement",wide:1,body,foot:`${old?`<button class="btn sec" style="margin-right:auto" onclick="openM('jugv','${old.id}')">Annuler</button>`:`<button class="btn sec" style="margin-right:auto" onclick="closeM()">Annuler</button>`}<button class="btn bl" onclick="mdtCopy(modal.d)">Générer la note MDT</button><button class="btn" ${modal.busy?"disabled":""} onclick="jugSave()">Enregistrer</button>`}}
+const jugCache={};
+function loadJugFiles(id){if(jugCache[id]!==undefined||loadJugFiles.p[id])return;loadJugFiles.p[id]=1;const done=v=>{jugCache[id]=v||{};delete loadJugFiles.p[id];render()};
+ if(db)db.ref(ROOT+"/"+rp("jugfiles/"+id)).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.jugfiles&&S.jugfiles[id])}
+loadJugFiles.p={};
+function MJugV(j){if(!j||!canTool())return null;const c=jugCalc(j),F=jugCache[j.id];if(F===undefined&&Object.keys(j.files||{}).length)loadJugFiles(j.id);const ed=can("jus.judge");
+ if(modal.zoom&&F&&F[modal.zoom])return {title:esc(j.num)+" — pièce",wide:1,body:`<img src="${F[modal.zoom].data}" style="width:100%;border-radius:10px;cursor:zoom-out" onclick="modal.zoom=null;render()">`,foot:`<button class="btn sec" onclick="modal.zoom=null;render()">Retour</button>`};
+ const kv=(k,v)=>v?`<div class="k">${k}</div><div class="pre">${v}</div>`:"";const S0=j.saisies||[];
+ return {title:`Jugement ${esc(j.num)} — ${esc(j.prenom||"")} ${esc(j.nom)}`,wide:1,body:`<div class="inl" style="justify-content:space-between;margin-bottom:10px">${bdg(JSTM,j.st)}<span class="mu sm">Enregistré le ${fd(j.t)} par ${esc(j.byNom||"")}${j.mt?` · modifié le ${fd(j.mt)} par ${esc(j.mNom||"")}`:""}</span></div>
+ <div class="kpis">${kpi("Total des amendes",money(c.am),"gold")}${kpi("Prison encourue",esc(c.prT))}${kpi("Coefficient",c.coef)}${kpi("Peine fédérale",c.fed?"Oui":"Non")}</div>
+ <div class="pe-card"><div class="kv">${kv("Accusé",`<b>${esc(j.prenom||"")} ${esc(j.nom)}</b>`)}${kv("Date de naissance",j.naiss?fdd(j.naiss):"")}${kv("Date de l'arrestation",j.dateArr?fdd(j.dateArr):"")}${kv("Agence",esc(j.agence||""))}${kv("Date du jugement",j.dateJug?fdd(j.dateJug):"")}
+ ${kv("Lien du rapport",j.lien?`<a class="lnk" href="${esc(j.lien)}" target="_blank" rel="noopener">${esc(j.lien)}</a>`:"")}${kv("Juge",esc(j.juge||""))}${kv("Procureur",esc(j.procureur||""))}${kv("Avocat",esc((j.avocat||"")+(j.avocatType?" ("+(AVOC_T.find(a=>a[0]==j.avocatType)||["",""])[1]+")":"")))}
+ ${kv("Agents présents",esc(j.agents||""))}${kv("Témoins",esc(j.temoins||""))}${kv("Amendes impayées",j.impayees=="oui"?"Oui"+(j.impDetail?" — "+esc(j.impDetail):""):"Non")}
+ ${j.st=="vdp"?kv("Vice de procédure",`Catégorie ${esc(j.vdpCat||"1")} — ${esc(j.vdpRaison||"")}`):""}${j.st=="acquitte"?kv("Raison de l'acquittement",esc(j.acqRaison||"")):""}
+ ${kv("Retrait",[j.retPPA?"P.P.A":"",j.retPermis?"Permis de conduire":""].filter(Boolean).join(", ")||"Non")}${kv("Suivi psychologique",j.psy?"Oui":"Non")}${kv("Commentaire",esc(j.commentaire||""))}</div></div>
+ <h4>Faits reprochés</h4><div class="tw"><table><tr><th>Fait<th class="r">Amende<th>Prison<th>Verdict</tr>${(j.faits||[]).map(f=>`<tr class="${f.v=="non"?"fnon":""}"><td>${infCatB(f.c)} ${esc(f.n)}${f.aj?' <span class="bdg bl" style="font-size:10px">Ajouté par le procureur</span>':""}<td class="r">${money(f.a)}<td>${prisonTxt(f.p)}<td>${(FVERD.find(v=>v[0]==(f.v||"rep"))||["",""])[1]}</tr>`).join("")||`<tr><td colspan="4" class="empty">Aucun fait.</td></tr>`}</table></div>
+ <div class="grid g2"><div><h4>Saisies rendues</h4>${S0.filter(s=>s.r).map(s=>`<div>• ${esc(s.t)}</div>`).join("")||`<p class="mu sm">Aucune.</p>`}</div><div><h4>Saisies non restituées</h4>${S0.filter(s=>!s.r).map(s=>`<div>• ${esc(s.t)}</div>`).join("")||`<p class="mu sm">Aucune.</p>`}</div></div>
+ ${j.rapport?`<h4>Rapport d'intervention</h4><div class="pre card" style="margin:0">${esc(j.rapport)}</div>`:""}
+ ${Object.keys(j.files||{}).length?`<h4>Pièces jointes</h4><div class="fgrid">${Object.entries(j.files).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data)).join("")}</div>`:""}`,
+ foot:`${ed||isDir()?`<button class="btn gh" style="margin-right:auto" onclick="jugDel('${j.id}')">Supprimer</button>`:""}${ed?`<button class="btn sec" onclick="openJug('${j.id}')">Modifier</button><button class="btn bl" onclick="mdtCopy(S.jugements['${j.id}'])">Générer la note MDT</button>`:""}<button class="btn" onclick="closeM()">Fermer</button>`}}
+/* Note MDT */
+function mdtText(j){const L=a=>a.length?a.map(x=>"- "+x).join("\n"):"- Aucun";const F=j.faits||[],S0=j.saisies||[],me=ME();
+ const sig=`${gname(me)} de la Justice du comté de Los Santos,\n${me.nom}`;const rend=L(S0.filter(s=>s.r).map(s=>s.t)),nonr=L(S0.filter(s=>!s.r).map(s=>s.t));const c=jugCalc(j);
+ if(j.st=="coupable"||j.st=="bracelet"){const ret=[j.retPPA?"P.P.A":"",j.retPermis?"Permis de conduire":""].filter(Boolean).join(", ")||"Non";
+  return `Reconnu coupable de :\n${L(F.filter(f=>!f.aj&&f.v!=="non").map(f=>f.n))}\nNon-coupable de :\n${L(F.filter(f=>!f.aj&&f.v==="non").map(f=>f.n))}\nFaits ajoutés :\n${L(F.filter(f=>f.aj&&f.v!=="non").map(f=>f.n))}\n\nSaisies restituées :\n${rend}\nSaisies non rendues :\n${nonr}\n\nJugé par : ${j.juge||""}\nPeine fédérale : ${c.fed?"Oui":"Non"}\nRetrait : ${ret}\nSuivi psychologique : ${j.psy?"Oui":"Non"}${j.st=="bracelet"?"\nBracelet électronique : Oui":""}\n\n${sig}`}
+ if(j.st=="acquitte")return `Relaxé de tous les faits reprochés\n${L(F.map(f=>f.n))}\n\nSaisies restituées :\n${rend}\n\nSaisies non rendues :\n${nonr}\n\nJugé par : ${j.juge||""}\nRaison de l'acquittement : ${j.acqRaison||""}\n\n${sig}`;
+ if(j.st=="vdp")return `Relaxé de tous les faits reprochés pour cause de vice de procédure (catégorie ${j.vdpCat||"1"})\n${L(F.map(f=>f.n))}\n\nJugé par : ${j.juge||""}\nRaison du VDP : ${j.vdpRaison||""}\n\n${sig}`;
+ return null}
+
+/* ---------- Documents officiels ---------- */
+const DOC_T=[
+ ["perq","Mandat de perquisition","MP","\u{1F50E}",[["nom","Nom de la personne visée"],["prenom","Prénom"],["lieu","Lieu / adresse à perquisitionner",1],["objet","Éléments recherchés",1,"area"],["motif","Motif",1,"area"],["agence","Agence chargée de l'exécution",0,"agence"],["validite","Valable jusqu'au",0,"date"]]],
+ ["arret","Mandat d'arrêt","MA","\u{1F6A8}",[["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["signalement","Signalement / informations utiles",0,"area"],["faits","Faits reprochés",1,"area"],["agence","Agence chargée de l'exécution",0,"agence"],["validite","Valable jusqu'au",0,"date"]]],
+ ["info","Mandat d'information","MI","\u{1F4C2}",[["cible","Personne ou entité visée",1],["detenteur","Organisme sollicité (banque, entreprise, opérateur…)",1],["infos","Informations demandées",1,"area"],["motif","Motif",1,"area"],["validite","Valable jusqu'au",0,"date"]]],
+ ["conv","Convocation en justice","CJ","\u{1F4E8}",[["nom","Nom",1],["prenom","Prénom",1],["tel","Téléphone"],["qualite","Convoqué(e) en qualité de",1,"select",["Prévenu(e)","Témoin","Victime","Partie civile","Expert"]],["dateConv","Date et heure de la convocation",1,"datetime-local"],["lieu","Lieu",1,"text","Palais de justice de Los Santos"],["motif","Motif",1,"area"]]],
+ ["gav","Prolongation de GAV","PG","⏱️",[["nom","Nom",1],["prenom","Prénom",1],["debut","Début de la garde à vue",0,"datetime-local"],["duree","Durée de la prolongation (heures)",1,"number"],["agence","Agence",0,"agence"],["motif","Motif de la prolongation",1,"area"]]],
+ ["fed","Mise en fédérale","MF","\u{1F3DB}️",[["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["duree","Durée de la peine",1,"text","",'Ex. : 6 ans'],["etab","Établissement",0,"text","Pénitencier fédéral de Bolingbroke"],["faits","Faits retenus",1,"area"],["affaire","Référence du jugement"]]],
+ ["dedo","Dédommagement","DD","\u{1F4B0}",[["nature","Nature",1,"select",["Civil","Judiciaire"]],["debiteur","Débiteur (qui paie)",1],["beneficiaire","Bénéficiaire",1],["montant","Montant ($)",1,"number"],["delai","À régler avant le",0,"date"],["motif","Motif",1,"area"]]],
+ ["eloign","Mesure d'éloignement","ME","\u{1F6AB}",[["nom","Nom de la personne visée",1],["prenom","Prénom",1],["protege","Personne ou lieu protégé",1],["distance","Distance minimale (mètres)",1,"number"],["duree","Durée de la mesure",1,"text","",'Ex. : 14 jours'],["motif","Motif",1,"area"]]],
+ ["pv","Procès-verbal","PV","\u{1F4DD}",[["objet","Objet",1],["datePV","Date et heure",0,"datetime-local"],["lieu","Lieu"],["personnes","Personnes présentes / concernées",0,"area"],["contenu","Contenu du procès-verbal",1,"area"]]],
+ ["vdp","Déclaration de VDP","VD","⚖️",[["affaire","Affaire / jugement concerné",1],["nom","Nom de la personne concernée"],["prenom","Prénom"],["categorie","Catégorie du vice",1,"select",["Catégorie 1","Catégorie 2","Catégorie 3"]],["motif","Description du vice de procédure",1,"area"],["consequence","Conséquence",1,"select",["Relaxe de tous les faits reprochés","Annulation partielle de la procédure","Remise en liberté immédiate"]]]],
+ ["casier","Extrait de casier judiciaire","EX","\u{1F4DC}",[["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["mentions","Condamnations inscrites",0,"area","",'Laisser vide = « Néant »']]],
+ ["ouv","Ouverture administrative","OA","\u{1F513}",[["entreprise","Entreprise / établissement",1,"ent"],["adresse","Adresse"],["dateEffet","Date d'effet",1,"date"],["motif","Motif et conditions",0,"area"]]],
+ ["ferm","Fermeture administrative","FA","\u{1F512}",[["entreprise","Entreprise / établissement",1,"ent"],["adresse","Adresse"],["dateEffet","Date d'effet",1,"date"],["duree","Durée",0,"text","Jusqu'à nouvel ordre"],["motif","Motif",1,"area"]]],
+ ["expul","Avis d'expulsion","AE","\u{1F3E0}",[["destinataire","Personne ou entreprise visée",1],["lieu","Lieu / propriété concerné(e)",1],["delai","Date limite de départ",1,"date"],["motif","Motif",1,"area"]]],
+ ["demeure","Mise en demeure","MD","✉️",[["destinataire","Destinataire",1],["objet","Objet",1],["montant","Montant réclamé ($)",0,"number"],["delai","Délai accordé (date limite)",1,"date"],["motif","Exposé des faits",1,"area"]]]];
+const DOCL=Object.fromEntries(DOC_T.map(t=>[t[0],t]));
+const DST2={valide:["Valide","ok"],annule:["Annulé","no"]};
+const docPerson=x=>[x.prenom,x.nom].filter(Boolean).join(" ")||x.cible||x.destinataire||x.entreprise||x.debiteur||x.affaire||x.objet||"—";
+const fdt=v=>v?(String(v).includes("T")?new Date(v).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):fdd(v)):"";
+function docBody(x){const t=x.type,v=k=>esc(x[k]||""),p=`${v("prenom")} ${v("nom")}`.trim(),L=[];const P=s=>L.push(s);
+ switch(t){
+ case "perq":P(`Vu les éléments portés à notre connaissance, autorisons ${x.agence?"les agents de <b>"+v("agence")+"</b>":"les agents habilités"} à procéder à la perquisition du lieu suivant : <b>${v("lieu")}</b>${p?`, occupé ou détenu par <b>${p}</b>`:""}.`);P(`<b>Éléments recherchés :</b> ${v("objet")}`);P(`<b>Motif :</b> ${v("motif")}`);if(x.validite)P(`Le présent mandat est valable jusqu'au <b>${fdd(x.validite)}</b>.`);break;
+ case "arret":P(`Ordonnons à ${x.agence?"<b>"+v("agence")+"</b>":"toutes les forces de l'ordre"} de rechercher, d'appréhender et de conduire devant l'autorité judiciaire la personne de <b>${p}</b>${x.naiss?`, née le ${fdd(x.naiss)}`:""}.`);P(`<b>Faits reprochés :</b> ${v("faits")}`);if(x.signalement)P(`<b>Signalement :</b> ${v("signalement")}`);if(x.validite)P(`Le présent mandat est valable jusqu'au <b>${fdd(x.validite)}</b>.`);break;
+ case "info":P(`Requérons de <b>${v("detenteur")}</b> la communication, dans les meilleurs délais, des informations suivantes concernant <b>${v("cible")}</b> :`);P(v("infos"));P(`<b>Motif :</b> ${v("motif")}`);if(x.validite)P(`Le présent mandat est valable jusqu'au <b>${fdd(x.validite)}</b>.`);break;
+ case "conv":P(`<b>${p}</b>${x.tel?` (tél. ${v("tel")})`:""} est convoqué(e) en qualité de <b>${v("qualite").toLowerCase()}</b> le <b>${fdt(x.dateConv)}</b> à l'adresse suivante : <b>${v("lieu")}</b>.`);P(`<b>Motif :</b> ${v("motif")}`);P(`La non-présentation à une convocation de justice constitue une infraction et peut donner lieu à des poursuites.`);break;
+ case "gav":P(`Autorisons la prolongation de la garde à vue de <b>${p}</b>${x.debut?`, débutée le ${fdt(x.debut)}`:""}${x.agence?`, réalisée par ${v("agence")}`:""}, pour une durée supplémentaire de <b>${v("duree")} heure(s)</b>.`);P(`<b>Motif :</b> ${v("motif")}`);break;
+ case "fed":P(`Ordonnons le placement en détention fédérale de <b>${p}</b>${x.naiss?`, né(e) le ${fdd(x.naiss)}`:""}, pour une durée de <b>${v("duree")}</b>, au sein de l'établissement : <b>${v("etab")||"Pénitencier fédéral"}</b>.`);P(`<b>Faits retenus :</b> ${v("faits")}`);if(x.affaire)P(`Référence : ${v("affaire")}`);break;
+ case "dedo":P(`Dédommagement <b>${v("nature").toLowerCase()}</b> : <b>${v("debiteur")}</b> est tenu(e) de verser la somme de <b>${money(x.montant)}</b> à <b>${v("beneficiaire")}</b>${x.delai?`, au plus tard le <b>${fdd(x.delai)}</b>`:""}.`);P(`<b>Motif :</b> ${v("motif")}`);break;
+ case "eloign":P(`Il est fait interdiction à <b>${p}</b> de s'approcher à moins de <b>${v("distance")} mètres</b> de : <b>${v("protege")}</b>, pour une durée de <b>${v("duree")}</b> à compter de la notification du présent document.`);P(`<b>Motif :</b> ${v("motif")}`);P(`Le non-respect d'une mesure d'éloignement constitue un délit majeur.`);break;
+ case "pv":P(`<b>Objet :</b> ${v("objet")}`);if(x.datePV||x.lieu)P(`Le ${fdt(x.datePV)||"—"}${x.lieu?`, à ${v("lieu")}`:""}.`);if(x.personnes)P(`<b>Personnes présentes / concernées :</b> ${v("personnes")}`);P(v("contenu"));break;
+ case "vdp":P(`Constatons un vice de procédure de <b>${v("categorie").toLowerCase()}</b> dans l'affaire <b>${v("affaire")}</b>${p?`, concernant <b>${p}</b>`:""}.`);P(`<b>Description du vice :</b> ${v("motif")}`);P(`<b>Conséquence :</b> ${v("consequence")}.`);break;
+ case "casier":P(`Extrait du casier judiciaire de <b>${p}</b>${x.naiss?`, né(e) le ${fdd(x.naiss)}`:""}.`);P(`<b>Condamnations inscrites :</b><br>${x.mentions?v("mentions"):"Néant"}`);break;
+ case "ouv":P(`Autorisons l'ouverture administrative de l'établissement <b>${v("entreprise")}</b>${x.adresse?`, situé ${v("adresse")}`:""}, à compter du <b>${fdd(x.dateEffet)}</b>.`);if(x.motif)P(`<b>Motif et conditions :</b> ${v("motif")}`);break;
+ case "ferm":P(`Ordonnons la fermeture administrative de l'établissement <b>${v("entreprise")}</b>${x.adresse?`, situé ${v("adresse")}`:""}, à compter du <b>${fdd(x.dateEffet)}</b>, pour une durée : <b>${v("duree")||"jusqu'à nouvel ordre"}</b>.`);P(`<b>Motif :</b> ${v("motif")}`);P(`Toute réouverture sans autorisation expose l'exploitant à des poursuites.`);break;
+ case "expul":P(`Il est notifié à <b>${v("destinataire")}</b> l'obligation de quitter les lieux suivants : <b>${v("lieu")}</b>, au plus tard le <b>${fdd(x.delai)}</b>.`);P(`<b>Motif :</b> ${v("motif")}`);P(`À défaut, l'expulsion pourra être exécutée avec le concours des forces de l'ordre.`);break;
+ case "demeure":P(`<b>${v("destinataire")}</b> est mis(e) en demeure, au sujet de : <b>${v("objet")}</b>${x.montant?`, de régler la somme de <b>${money(x.montant)}</b>`:", de régulariser sa situation"} au plus tard le <b>${fdd(x.delai)}</b>.`);P(`<b>Exposé des faits :</b> ${v("motif")}`);P(`À défaut, des poursuites pourront être engagées sans autre avis.`);break}
+ return L.map(s=>`<p>${String(s).replace(/\n/g,"<br>")}</p>`).join("")}
+function docPaper(x){const T=DOCL[x.type]||["","Document","","\u{1F4C4}"];
+ return `<div class="paper"><div class="pp-h"><div class="pp-seal">${seal()}</div><div><div class="pp-g">${esc(S.config.siteName||"Gouvernement de Los Santos")}</div><div class="pp-d">Département de la Justice — Comté de Los Santos</div></div><div class="pp-n">N° ${esc(x.num)}<br>${fdd(isoDay(x.t))}</div></div>
+ <h2 class="pp-t">${esc(T[1])}${x.type=="dedo"&&x.nature?" — "+esc(x.nature):""}</h2>${x.st=="annule"?`<div class="pp-x">ANNULÉ</div>`:""}
+ <div class="pp-b"><p>Nous, <b>${esc(x.byNom)}</b>, ${esc(x.byPoste||"")} de la Justice du comté de Los Santos,</p>${docBody(x)}</div>
+ <div class="pp-s"><div>Fait à Los Santos, le ${fdd(isoDay(x.t))}</div><div class="pp-sig">${esc(x.byNom)}</div><div class="mu sm">${esc(x.byPoste||"")} de la Justice du comté de Los Santos</div></div></div>`}
+function docText(x){const d=document.createElement("div");d.innerHTML=docBody(x);const T=DOCL[x.type];
+ return `**${T[1]}${x.type=="dedo"&&x.nature?" — "+x.nature:""}** — N° ${x.num}\n\nNous, ${x.byNom}, ${x.byPoste||""} de la Justice du comté de Los Santos,\n\n${[...d.querySelectorAll("p")].map(p=>p.innerText).join("\n\n")}\n\nFait à Los Santos, le ${fdd(isoDay(x.t))}\n${x.byNom}`}
+const jdocCache={};
+function loadJdocFiles(id){if(jdocCache[id]!==undefined||loadJdocFiles.p[id])return;loadJdocFiles.p[id]=1;const done=v=>{jdocCache[id]=v||{};delete loadJdocFiles.p[id];render()};
+ if(db)db.ref(ROOT+"/"+rp("jdocfiles/"+id)).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.jdocfiles&&S.jdocfiles[id])}
+loadJdocFiles.p={};
+V.jdocs=()=>{if(!canDocs())return empty("Accès réservé.");const ty=filt.jdt||"",q=filt.jdq||"",A=vals(S.jdocs);
+ const L=A.filter(x=>!ty||x.type==ty).filter(x=>match(q,x.num,docPerson(x),x.byNom,(DOCL[x.type]||[])[1],...(DOCL[x.type]||[0,0,0,0,[]])[4].map(f=>x[f[0]]))).sort((a,b)=>b.t-a.t);
+ return `<div class="ph"><h2>Documents officiels</h2></div><div class="ec"><aside class="ec-side card"><button class="ec-c ${!ty?"on":""}" onclick="filt.jdt='';render()"><span class="ec-e">\u{1F4CB}</span><span class="ec-n">Tous les documents</span><span class="ec-k">${A.length}</span></button>
+ ${DOC_T.map(([k,l,,e])=>`<button class="ec-c ${ty==k?"on":""}" onclick="filt.jdt='${k}';render()"><span class="ec-e">${e}</span><span class="ec-n">${esc(l)}</span><span class="ec-k">${A.filter(x=>x.type==k).length}</span></button>`).join("")}</aside>
+ <div><div class="card"><div class="inl"><input id="q_jdq" placeholder="Rechercher : n°, personne, entreprise, rédacteur…" value="${esc(q)}" oninput="filt.jdq=this.value;render()" style="flex:1;min-width:200px">${can("jus.docs")?`<button class="btn" onclick="openJdoc(null,'${ty||""}')">${ic("plus")}Nouveau document</button>`:""}</div></div>
+ <div class="card tw"><table><tr><th>N°<th>Type<th>Concerne<th>Rédigé le<th>Par<th>Statut</tr>${L.map(x=>{const T=DOCL[x.type]||["","?","","\u{1F4C4}"];return `<tr class="click" onclick="openM('jdoc','${x.id}')"><td class="nw b">${esc(x.num)}<td class="nw">${T[3]} ${esc(T[1])}${x.type=="dedo"&&x.nature?` <span class="mu sm">(${esc(x.nature)})</span>`:""}<td>${esc(docPerson(x))}<td class="nw">${fd(x.t)}<td>${esc(x.byNom)}<td>${bdg(DST2,x.st||"valide")}</tr>`}).join("")||`<tr><td colspan="6" class="empty">Aucun document.</td></tr>`}</table></div></div></div>`};
+function MJdocEdit(){if(!can("jus.docs"))return null;const x=modal.id?S.jdocs[modal.id]:null;if(modal.id&&!x)return null;const ty=x?x.type:(modal.ty||keep.jdty||"perq"),T=DOCL[ty],d=modal.d,nf=modal.files||[],rm=modal.rm||{},F=x?jdocCache[x.id]:null;if(x&&F===undefined)loadJdocFiles(x.id);
+ if(!x&&modal.dty!==ty){T[4].forEach(f=>{if(modal.d[f[0]]==null||modal.d[f[0]]===""){if(f[3]=="select")modal.d[f[0]]=f[4][0];else if(f[4])modal.d[f[0]]=f[4]}});modal.dty=ty}
+ const fld=([k,l,req,type,def,ph])=>{const v=d[k]??"";const lab=`${esc(l)}${req?" *":""}`;
+  if(type=="area")return `<label class="f full">${lab}<textarea data-nokeep rows="3" placeholder="${esc(ph||"")}" oninput="modal.d['${k}']=this.value">${esc(v)}</textarea></label>`;
+  if(type=="select")return `<label class="f">${lab}<select data-nokeep onchange="modal.d['${k}']=this.value">${opts(def,v)}</select></label>`;
+  if(type=="agence")return `<label class="f">${lab}<select data-nokeep onchange="modal.d['${k}']=this.value">${opts([""].concat(AGENCES),v)}</select></label>`;
+  if(type=="ent")return `<label class="f">${lab}<input data-nokeep list="jdents" value="${esc(v)}" oninput="modal.d['${k}']=this.value"></label>`;
+  return `<label class="f">${lab}<input data-nokeep type="${type||"text"}" value="${esc(v)}" placeholder="${esc(ph||"")}" oninput="modal.d['${k}']=this.value"></label>`};
+ return {title:x?"Modifier "+esc(x.num):"Nouveau document officiel",wide:1,body:`${x?"":`<label class="f">Type de document<select data-nokeep onchange="modal.ty=this.value;render()">${opts(DOC_T.map(t=>[t[0],t[3]+" "+t[1]]),ty)}</select></label>`}
+ <datalist id="jdents">${vals(S.entreprises).map(e=>`<option value="${esc(e.nom)}">`).join("")}${vals(S.users).filter(u=>u.role=="entreprise").map(u=>`<option value="${esc(u.nom)}">`).join("")}</datalist>
+ <div class="pe-card"><h4 style="margin-top:0">${T[3]} ${esc(T[1])}</h4><div class="form">${T[4].map(fld).join("")}</div>
+ ${ty=="casier"?`<button class="btn sec sm" onclick="casierFill()">Remplir depuis l'Outil de justice</button>`:""}</div>
+ <h4>Pièces jointes <span class="mu sm">(facultatif : photos, preuves, documents…)</span></h4>
+ ${x&&Object.keys(x.files||{}).length?`<div class="fgrid" style="margin-bottom:8px">${Object.entries(x.files).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data,!!rm[fk])).join("")}</div>`:""}
+ ${nf.length?`<div class="fgrid" style="margin-bottom:8px">${nf.map((f,i)=>`<div class="ftile new">${f.type.startsWith("image/")?`<img src="${f.data}" alt="">`:`<div class="fdoc">${ic("file")}<span>PDF</span></div>`}<div class="fname">${esc(f.name)}</div><button class="lnk" onclick="modal.files.splice(${i},1);render()">Retirer</button></div>`).join("")}</div>`:""}
+ <div class="drop" tabindex="0" onclick="document.getElementById('jdf').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();addJdocFiles(event.dataTransfer.files)"><div class="drop-ic">${ic("file")}</div><b>Ajouter des pièces jointes</b><div class="mu">clic, glisser-déposer ou Ctrl+V · images ou PDF</div></div>
+ <input type="file" id="jdf" accept="image/*,application/pdf" multiple style="display:none" onchange="addJdocFiles(this.files);this.value=''">${modal.busy?`<p class="mu">Traitement…</p>`:""}<p class="err" id="msg"></p>`,
+ foot:`<button class="btn sec" onclick="${x?`openM('jdoc','${x.id}')`:"closeM()"}">Annuler</button><button class="btn" ${modal.busy?"disabled":""} onclick="jdocSave()">${x?"Enregistrer":"Générer le document"}</button>`}}
+function MJdoc(x){if(!x||!canDocs())return null;const F=jdocCache[x.id];if(F===undefined&&Object.keys(x.files||{}).length)loadJdocFiles(x.id);const ed=can("jus.docs");
+ if(modal.zoom&&F&&F[modal.zoom])return {title:esc(x.num)+" — pièce",wide:1,body:`<img src="${F[modal.zoom].data}" style="width:100%;border-radius:10px;cursor:zoom-out" onclick="modal.zoom=null;render()">`,foot:`<button class="btn sec" onclick="modal.zoom=null;render()">Retour</button>`};
+ return {title:`${(DOCL[x.type]||[0,"Document"])[1]} — ${esc(x.num)}`,wide:1,body:`${docPaper(x)}${Object.keys(x.files||{}).length?`<h4>Pièces jointes</h4><div class="fgrid">${Object.entries(x.files).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data)).join("")}</div>`:""}
+ ${x.st=="annule"?`<p class="mu sm">Annulé le ${fd(x.annT)} par ${esc(x.annNom||"")}${x.annMotif?` — ${esc(x.annMotif)}`:""}</p>`:""}`,
+ foot:`${ed||isDir()?`<button class="btn gh" style="margin-right:auto" onclick="jdocDel('${x.id}')">Supprimer</button>`:""}${ed&&x.st!="annule"?`<button class="btn gh" onclick="jdocCancel('${x.id}')">Annuler le document</button><button class="btn sec" onclick="openJdoc('${x.id}')">Modifier</button>`:""}<button class="btn sec" onclick="jdocPrint('${x.id}')">Imprimer / PDF</button><button class="btn sec" onclick="jdocCopy('${x.id}')">Copier pour Discord</button><button class="btn" onclick="closeM()">Fermer</button>`}}
 
 /* =================== RECRUTEMENTS =================== */
 const RST={attente:["En attente","wa"],acceptee:["Acceptée","ok"],refusee:["Refusée","no"]};
@@ -1315,6 +1675,12 @@ function MVerif(f){if(!f||!(can("fin.bill")||can("fin.view")))return null;const 
 function modalH(){if(!modal)return "";let m=null;
  if(modal.type=="confirm")m={title:"Confirmation",sm:1,body:`<p class="pre">${esc(modal.msg)}</p>`,foot:`<button class="btn sec" onclick="askNo()">Annuler</button><button class="btn no" onclick="askOk()">${esc(modal.label)}</button>`};
  else if(modal.type=="gs")m=MGs();
+ else if(modal.type=="inf")m=MInf();
+ else if(modal.type=="jug")m=MJug();
+ else if(modal.type=="jugv")m=MJugV(S.jugements[modal.id]);
+ else if(modal.type=="mdt")m=MMdt();
+ else if(modal.type=="jdocEdit")m=MJdocEdit();
+ else if(modal.type=="jdoc")m=MJdoc(S.jdocs[modal.id]);
  else if(modal.type=="dossier")m=MDossier(S.dossiers[modal.id]);
  else if(modal.type=="affaire")m=MAffaire(S.affaires[modal.id]);
  else if(modal.type=="affaireNew")m=MAffaireNew();
@@ -1628,6 +1994,61 @@ function sancLift(id){const s=S.sanctions[id];if(!s||!(isDir()||canSanction(S.us
 function sancDel(id){if(!isDir())return;const s=S.sanctions[id];ask(`Supprimer définitivement la sanction de ${s.uNom} de l'historique ?`,()=>{DBX.remove("sanctions/"+id);log(`Sanction supprimée de l'historique : ${SANC_T[s.type][0]} de ${s.uNom}`,s.dept,"Sanctions")},"Supprimer")}
 
 function peDefault(){const g=S.grades[modal.id],d=g&&gradeDefPerms(g);if(!d)return toast("Ce grade ne figure pas dans la grille officielle.",1);modal.draft={};Object.keys(d).forEach(K=>{const k=ALLP.find(x=>pk(x)==K);if(k&&!(modal.lock&&!can(k)))modal.draft[K]=true});toast("Permissions par défaut appliquées : cliquez sur Valider pour enregistrer.");render()}
+/* Justice : grille des infractions */
+function infSeed(){if(Object.keys(S.infractions||{}).length||S.config.infSeeded)return;const o={};INF_SEED.forEach((r,i)=>{const id="inf"+String(i).padStart(3,"0");o[id]={id,cat:r[0],nom:r[1],amende:r[2],prison:r[3],qui:r[4],def:r[5],supp:r[6],rank:i}});DBX.update("infractions",o);DBX.update("config",{infSeeded:true})}
+function infSave(id){if(!can("jus.grid"))return;const nom=tval("ifn"),am=val("ifa");if(!nom||am==="")return say("L'intitulé et l'amende sont obligatoires.");
+ const x={cat:val("ifc"),nom,amende:Math.max(0,num(am)),prison:val("ifpp")?"P":Math.max(0,num(val("ifp"))),qui:INF_QUI.filter(([k])=>val("ifq_"+k)).map(([k])=>k).join(""),def:tval("ifd"),supp:tval("ifs")};
+ if(id)DBX.update("infractions/"+id,x);else{id=nid();x.id=id;x.rank=vals(S.infractions).length;DBX.set("infractions/"+id,x)}
+ log(`Grille des infractions : « ${nom} » ${modal.id?"modifiée":"ajoutée"}`,"Justice","Justice");toast("Infraction enregistrée.");closeM()}
+function infDel(id){if(!can("jus.grid"))return;const x=S.infractions[id];ask(`Supprimer « ${x.nom} » de la grille ? Les jugements déjà enregistrés ne sont pas modifiés.`,()=>{DBX.remove("infractions/"+id);log(`Grille des infractions : « ${x.nom} » supprimée`,"Justice","Justice");modal=null},"Supprimer")}
+
+/* Outil de justice */
+const numFor=(col,prefix)=>{const y=new Date().getFullYear();let mx=0;vals(S[col]).forEach(x=>{const m=String(x.num||"").match(new RegExp("^"+prefix+"-"+y+"-(\\d+)$"));if(m)mx=Math.max(mx,+m[1])});return `${prefix}-${y}-${String(mx+1).padStart(4,"0")}`};
+function openJug(id){if(!can("jus.judge"))return;const j=id?S.jugements[id]:null;const me=ME();
+ const d=j?JSON.parse(JSON.stringify(j)):{st:"attente",dateJug:isoDay(Date.now()),faits:[],saisies:[],impayees:"non",fed:"auto",vdpCat:"1",juge:/juge|chief/i.test(gname(me))?me.nom:""};
+ d.faits=d.faits||[];d.saisies=d.saisies||[];modal={type:"jug",id:id||null,d,files:[],rm:{}};keep={};if(j&&Object.keys(j.files||{}).length)loadJugFiles(j.id);render()}
+function jugAddFait(id){const x=S.infractions[id];if(!x||!modal||!modal.d)return;modal.d.faits.push({i:id,n:x.nom,c:x.cat,a:num(x.amende),p:x.prison,v:"rep",aj:false});render()}
+function jugAddSaisie(){const e=document.getElementById("jsq"),t=e&&e.value.trim();if(!t)return;modal.d.saisies.push({t,r:false});keep.jsq="";e.value="";render();setTimeout(()=>{const f=document.getElementById("jsq");f&&f.focus()},30)}
+async function addJugFiles(list){if(!modal||modal.type!="jug")return;const arr=[...(list||[])];if(!arr.length)return;modal.busy=1;render();for(const f of arr){try{modal.files.push(await fileToData(f))}catch(e){toast(e.message,1)}}modal.busy=0;render()}
+async function addJdocFiles(list){if(!modal||modal.type!="jdocEdit")return;const arr=[...(list||[])];if(!arr.length)return;modal.busy=1;render();for(const f of arr){try{modal.files.push(await fileToData(f))}catch(e){toast(e.message,1)}}modal.busy=0;render()}
+document.addEventListener("paste",e=>{if(!modal||!e.clipboardData||!["jug","jdocEdit"].includes(modal.type)||(modal.type=="jug"&&modal.d.st!="vdp"))return;const fs=[...e.clipboardData.items].filter(i=>i.kind=="file").map(i=>i.getAsFile()).filter(Boolean);if(fs.length){e.preventDefault();modal.type=="jug"?addJugFiles(fs):addJdocFiles(fs)}});
+function saveFiles(col,raw,id,nf,rm,up){const now=Date.now(),meta={};nf.forEach(f=>{const fk=nid();meta[fk]={name:f.name,type:f.type,size:f.size,t:now};DBX.set(`${raw}/${id}/${fk}`,{data:f.data,name:f.name,type:f.type})});
+ Object.entries(meta).forEach(([fk,m])=>up["files/"+fk]=m);Object.keys(rm||{}).filter(k=>rm[k]).forEach(fk=>{up["files/"+fk]=null;DBX.remove(`${raw}/${id}/${fk}`)});return meta}
+function jugSave(){if(!can("jus.judge"))return;const d=modal.d,old=modal.id?S.jugements[modal.id]:null;
+ if(!String(d.nom||"").trim()||!String(d.prenom||"").trim())return say("Nom et prénom de l'accusé obligatoires.");
+ if(d.st=="vdp"){if(!String(d.vdpRaison||"").trim())return say("Indiquez la raison du vice de procédure.");const n=(old?Object.keys(old.files||{}).filter(k=>!(modal.rm||{})[k]).length:0)+modal.files.length;if(!n)return say("Joignez le document justifiant le vice de procédure.")}
+ const u=ME(),now=Date.now(),id=modal.id||nid(),c=jugCalc(d);const rec=Object.assign({},d);delete rec.files;
+ ["nom","prenom","juge","procureur","avocat"].forEach(k=>rec[k]=String(rec[k]||"").trim());rec.amTotal=c.am;rec.prison=c.pr===Infinity?"P":c.pr;
+ const up={};saveFiles("jugements","jugfiles",id,modal.files||[],modal.rm,up);
+ if(old){Object.assign(up,rec,{mt:now,mNom:u.nom});delete up.id;delete up.num;delete up.t;delete up.by;delete up.byNom;DBX.update("jugements/"+id,up)}
+ else{const files={};Object.keys(up).forEach(k=>{if(k.startsWith("files/")&&up[k])files[k.slice(6)]=up[k]});DBX.set("jugements/"+id,Object.assign(rec,{id,num:numFor("jugements","JUG"),files,t:now,by:u.id,byNom:u.nom}))}
+ log(`Jugement ${old?"modifié":"enregistré"} : ${rec.prenom} ${rec.nom} — ${JSTM[rec.st][0]}`,"Justice","Justice");toast("Jugement enregistré.");delete jugCache[id];modal={type:"jugv",id};keep={};render()}
+function jugDel(id){if(!(can("jus.judge")||isDir()))return;const j=S.jugements[id];ask(`Supprimer définitivement le jugement ${j.num} (${j.prenom||""} ${j.nom}) ?`,()=>{DBX.remove("jugfiles/"+id);DBX.remove("jugements/"+id);log(`Jugement supprimé : ${j.num} (${j.prenom||""} ${j.nom})`,"Justice","Justice");modal=null},"Supprimer")}
+async function copyText(t){try{if(navigator.permissions&&navigator.permissions.query){try{await navigator.permissions.query({name:"clipboard-write"})}catch(e){}}await navigator.clipboard.writeText(t);return true}catch(e){return new Promise(r=>fallbackCopy(t,()=>r(true)))}}
+async function mdtCopy(j){if(!j)return;const t=mdtText(j);if(!t)return toast("La note MDT est disponible pour les statuts Coupable, Bracelet électronique, Acquitté et Vice de procédure.",1);
+ if(!(j.faits||[]).length)return toast("Ajoutez au moins un fait reproché.",1);const ok=await copyText(t);modal={type:"mdt",text:t,prev:modal,ok};render();if(ok)toast("Note MDT copiée dans le presse-papiers.")}
+function MMdt(){return {title:"Note MDT",wide:1,body:`<p class="mu sm" style="margin-top:0">${modal.ok?"La note a été copiée dans votre presse-papiers : collez-la dans le MDT (Ctrl+V).":"Copie automatique refusée par le navigateur : copiez le texte ci-dessous."}</p><textarea id="mdtt" data-nokeep rows="18" style="width:100%;font-family:ui-monospace,Consolas,monospace;font-size:13px" readonly>${esc(modal.text)}</textarea>`,
+ foot:`<button class="btn sec" onclick="copyText(modal.text).then(()=>toast('Note copiée.'))">Copier à nouveau</button><button class="btn" onclick="modal=modal.prev;render()">Retour</button>`}}
+
+/* Documents officiels */
+function openJdoc(id,ty){if(!can("jus.docs"))return;const x=id?S.jdocs[id]:null;modal={type:"jdocEdit",id:id||null,ty:ty||"perq",d:x?JSON.parse(JSON.stringify(x)):{},files:[],rm:{}};keep={};render()}
+function casierFill(){const d=modal.d,n=NRM((d.prenom||"")+" "+(d.nom||"")),n2=NRM((d.nom||"")+" "+(d.prenom||""));if(!NRM(d.nom))return toast("Indiquez d'abord le nom et le prénom.",1);
+ const J=vals(S.jugements).filter(j=>["coupable","bracelet"].includes(j.st)&&[n,n2].includes(NRM((j.prenom||"")+" "+(j.nom||"")))).sort((a,b)=>(a.dateJug||"").localeCompare(b.dateJug||""));
+ d.mentions=J.length?J.map(j=>`- ${j.dateJug?fdd(j.dateJug):fd(j.t)} (${j.num}) : ${(j.faits||[]).filter(f=>f.v!=="non").map(f=>f.n).join(", ")} — ${money(jugCalc(j).am)}${jugCalc(j).pr?", "+jugCalc(j).prT:""}`).join("\n"):"";toast(J.length?J.length+" condamnation(s) reprise(s).":"Aucune condamnation trouvée : casier vierge.");render()}
+function jdocSave(){if(!can("jus.docs"))return;const x=modal.id?S.jdocs[modal.id]:null,ty=x?x.type:modal.ty,T=DOCL[ty],d=modal.d;
+ for(const f of T[4])if(f[2]&&!String(d[f[0]]??"").trim())return say("Champ requis : "+f[1]);
+ const u=ME(),now=Date.now(),id=modal.id||nid(),rec={};T[4].forEach(f=>rec[f[0]]=f[3]=="number"?(String(d[f[0]]??"").trim()===""?"":num(d[f[0]])):String(d[f[0]]??"").trim());
+ const up={};saveFiles("jdocs","jdocfiles",id,modal.files||[],modal.rm,up);
+ if(x){Object.assign(up,rec,{mt:now,mNom:u.nom});DBX.update("jdocs/"+id,up)}
+ else{const files={};Object.keys(up).forEach(k=>{if(k.startsWith("files/")&&up[k])files[k.slice(6)]=up[k]});DBX.set("jdocs/"+id,Object.assign(rec,{id,type:ty,num:numFor("jdocs",T[2]),st:"valide",files,t:now,by:u.id,byNom:u.nom,byPoste:gname(u)}))}
+ log(`Document officiel ${x?"modifié":"rédigé"} : ${T[1]} — ${docPerson(Object.assign({},rec))}`,"Justice","Justice");toast(x?"Document mis à jour.":"Document généré.");delete jdocCache[id];modal={type:"jdoc",id};keep={};render()}
+function jdocCancel(id){const x=S.jdocs[id];ask(`Annuler le document ${x.num} ? Il restera consultable avec la mention « Annulé ».`,()=>{const u=ME();DBX.update("jdocs/"+id,{st:"annule",annT:Date.now(),annNom:u.nom});log(`Document officiel annulé : ${x.num}`,"Justice","Justice");modal={type:"jdoc",id}},"Annuler le document")}
+function jdocDel(id){if(!(can("jus.docs")||isDir()))return;const x=S.jdocs[id];ask(`Supprimer définitivement le document ${x.num} et ses pièces jointes ?`,()=>{DBX.remove("jdocfiles/"+id);DBX.remove("jdocs/"+id);log(`Document officiel supprimé : ${x.num}`,"Justice","Justice");modal=null},"Supprimer")}
+function jdocCopy(id){copyText(docText(S.jdocs[id])).then(()=>toast("Document copié : collez-le dans Discord."))}
+function jdocPrint(id){const x=S.jdocs[id],w=window.open("","_blank");if(!w)return toast("Autorisez les fenêtres pop-up pour imprimer.",1);
+ const css=[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n");
+ w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(x.num)}</title><style>${css}\nbody{background:#fff!important;padding:20px}.paper{box-shadow:none;margin:0 auto}@media print{body{padding:0}}</style></head><body data-theme="light">${docPaper(x)}<script>setTimeout(()=>print(),400)<\/script></body></html>`);w.document.close()}
+
 /* Recrutements */
 function openRecNew(){modal={type:"recNew",files:[]};keep={};render()}
 async function addRecFiles(list){if(!modal||modal.type!="recNew")return;const arr=[...(list||[])];if(!arr.length)return;modal.busy=1;render();modal.files=modal.files||[];
