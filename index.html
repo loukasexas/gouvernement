@@ -330,7 +330,7 @@ function startData(){
 async function boot(){try{
  if(!Object.keys(S.users).length){
   const id=nid();
-  await DBX.set("users/"+id,{id,login:"direction",hash:await hashPw("direction","direction"),nom:"Cabinet du Gouverneur",role:"direction",gradeId:"",dept:"",matricule:"DIR-001",active:true,mustChange:true,created:Date.now()});
+  await DBX.set("users/"+id,{id,login:"direction",hash:await hashPw("direction","direction"),nom:"Administrateur",role:"direction",gradeId:"",dept:"",matricule:"admin",active:true,mustChange:true,created:Date.now()});
  }
  if(!Object.keys(S.grades).length)seedGrades();
  if(!S.config||!S.config.siteName)DBX.update("config",{siteName:"Gouvernement de Los Santos",subtitle:"État de San Andreas — Intranet officiel",depts:DEF_DEPTS,tax:8,treasuryStart:250000,banner:{on:true,txt:"Bienvenue sur l'intranet du Gouvernement de Los Santos. ",lvl:"info"},maintenance:{on:false,msg:""}});
