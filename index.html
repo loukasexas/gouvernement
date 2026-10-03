@@ -527,10 +527,10 @@ V.mesdem=()=>{const L=vals(S.dossiers).filter(d=>d.ent==meId).sort((a,b)=>b.t-a.
  ${L.map(d=>`<tr class="click" onclick="openM('dossier','${d.id}')"><td class="nw">${esc(d.num)}<td>${esc(d.objet)}<div class="mu">${esc(d.type||"")}</div><td>${esc(d.dept)}<td>${bdg(DST,d.st)}<td class="nw">${fd(d.t)}<td>${vals(d.comments).filter(c=>!c.internal).length}</tr>`).join("")||`<tr><td colspan="6" class="empty">Aucune demande déposée.</td></tr>`}</table></div>`};
 const FST={due:["À payer","wa"],verif:["Paiement à vérifier","bl"],payee:["Payée","ok"],annulee:["Annulée","mu"]};
 V.factures=()=>{const u=ME(),F=vals(S.factures).filter(f=>f.ent==u.id&&!f.arch).sort((a,b)=>b.t-a.t),Dc=vals(S.declarations).filter(d=>d.ent==u.id&&!d.arch).sort((a,b)=>b.t-a.t),tx=taxRate(u);
- return `<div class="ph"><h2>Factures & impôts</h2></div><div class="grid g2"><div class="card"><h3>Déclarer mon chiffre d'affaires</h3><p class="mu">Pour régler une facture, effectuez le paiement puis cliquez sur <b>Notifier du paiement</b> en joignant votre preuve : un agent des Finances la vérifiera.</p><p class="mu">Votre type d'entreprise : <b>${esc(taxCatName(u))}</b> · Taux d'imposition applicable : <b>${tx} %</b>. Une facture d'impôt est générée automatiquement.</p>
- <div class="form"><label class="f">Période<input id="dp" placeholder="Ex. : Semaine 40 — 2026"></label><label class="f">Chiffre d'affaires ($)<input id="dca" type="number" min="0" oninput="keep.dca=this.value;document.getElementById('dimp').textContent=money(num(this.value)*${tx}/100)"></label></div>
+ return `<div class="ph"><h2>Factures & impôts</h2></div><div class="grid g2"><div class="card"><h3>Déclarer mon activité</h3><p class="mu">Pour régler une facture, effectuez le paiement puis cliquez sur <b>Notifier du paiement</b> en joignant votre preuve : un agent des Finances la vérifiera.</p><p class="mu">Votre type d'entreprise : <b>${esc(taxCatName(u))}</b> · Taux d'imposition applicable : <b>${tx} %</b>. Une facture d'impôt est générée automatiquement.</p>
+ <div class="form"><label class="f">Période<input id="dp" placeholder="Ex. : Semaine 40 — 2026"></label><label class="f">Masse salariale ($)<input id="dms" type="number" min="0" placeholder="Total des salaires versés"></label><label class="f">Chiffre d'affaires ($)<input id="dca" type="number" min="0" oninput="keep.dca=this.value;document.getElementById('dimp').textContent=money(num(this.value)*${tx}/100)"></label></div>
  <p>Impôt estimé : <b id="dimp">${money(num(keep.dca)*tx/100)}</b></p><button class="btn" onclick="declare()">Envoyer la déclaration</button><p class="err" id="msg"></p></div>
- <div class="card"><h3>Mes déclarations</h3><div class="tw"><table><tr><th>Période<th>CA<th>Impôt<th>Statut</tr>${Dc.map(d=>`<tr><td>${esc(d.periode)}<td>${money(d.ca)}<td>${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">En vérification</span>'}</tr>`).join("")||`<tr><td colspan="4" class="empty">Aucune déclaration.</td></tr>`}</table></div></div></div>
+ <div class="card"><h3>Mes déclarations</h3><div class="tw"><table><tr><th>Période<th>CA<th>Masse salariale<th>Impôt<th>Statut</tr>${Dc.map(d=>`<tr><td>${esc(d.periode)}<td>${money(d.ca)}<td>${d.ms!=null?money(d.ms):"—"}<td>${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">En vérification</span>'}</tr>`).join("")||`<tr><td colspan="5" class="empty">Aucune déclaration.</td></tr>`}</table></div></div></div>
  <div class="card tw"><h3>Mes factures et amendes</h3><table><tr><th>N°<th>Nature<th>Motif<th>Montant<th>Échéance<th>Statut<th></tr>${F.map(f=>`<tr><td class="nw">${esc(f.num)}<td>${kindL(f.kind)}<td>${esc(f.motif)}<td class="b">${money(f.montant)}<td>${fdd(f.ech)}<td>${bdg(FST,f.st)}${f.st=="due"&&f.rejet?`<div class="sm" style="color:var(--no);margin-top:4px">Preuve refusée : ${esc(f.rejet)}</div>`:""}${f.st=="verif"?`<div class="mu sm" style="margin-top:4px">Envoyée le ${fd(f.notifT)}</div>`:""}<td class="nw">${f.st=="due"?`<button class="btn sm bl" onclick="openM('notif','${f.id}')">${f.rejet?"Renvoyer une preuve":"Notifier du paiement"}</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune facture.</td></tr>`}</table></div>${entArchH(u)}`};
 function entArchH(u){const A=vals(S.archives).filter(a=>a.perEnt&&a.perEnt[u.id]).sort((a,b)=>b.to-a.to);if(!A.length)return "";
  return `<div class="card tw"><h3>Historique fiscal</h3><p class="mu">Périodes fiscales clôturées et archivées par le Gouvernement.</p><table><tr><th>Période<th>Clôturée le<th>Taux<th class="r">CA déclaré<th class="r">Impôt<th class="r">Payé<th class="r">Reste dû</tr>${A.map(a=>{const e=a.perEnt[u.id];return `<tr><td class="b">${esc(a.name)}<td>${fd(a.to)}<td>${num(e.taux)} %<td class="r">${money(e.ca)}<td class="r">${money(e.impot)}<td class="r">${money(e.paye)}<td class="r ${num(e.reste)>0?"":"mu"}" style="${num(e.reste)>0?"color:var(--no)":""}">${money(e.reste)}</tr>`}).join("")}</table></div>`}
@@ -579,18 +579,15 @@ const REG={
  entreprises:{t:"Entreprises",p:"reg.ent",cols:["nom","type","gerantNom","gerantPrenom","tel","mail","dateEnr"],f:[
   {k:"nom",l:"Raison sociale",req:1},{k:"type",l:"Type d'entreprise",type:"select",o:()=>TCATS().map(c=>c.name)},
   {k:"gerantNom",l:"Nom du gérant",req:1},{k:"gerantPrenom",l:"Prénom du gérant",req:1},{k:"tel",l:"Téléphone"},{k:"mail",l:"Mail",type:"email"},{k:"dateEnr",l:"Date d'enregistrement",type:"date",def:()=>new Date().toISOString().slice(0,10)},
-  {k:"compte",l:"Compte entreprise lié (facultatif)",type:"account"},{k:"notes",l:"Notes",type:"area"}]},
- identites:{t:"Fiches d'identité",p:"reg.civ",cols:["nom","prenom","naiss","sexe","statut","tel"],f:[
-  {k:"nom",l:"Nom",req:1},{k:"prenom",l:"Prénom",req:1},{k:"naiss",l:"Date de naissance",type:"date"},{k:"lieu",l:"Lieu de naissance"},{k:"sexe",l:"Sexe",type:"select",o:["Homme","Femme","Autre"]},{k:"nat",l:"Nationalité"},
-  {k:"adresse",l:"Adresse"},{k:"tel",l:"Téléphone"},{k:"profession",l:"Profession"},{k:"statut",l:"Situation",type:"select",o:["Célibataire","Marié(e)","Pacsé(e)","Divorcé(e)","Veuf(ve)","Décédé(e)"]},{k:"photo",l:"Photo (lien URL)"},{k:"notes",l:"Mentions marginales",type:"area"}]}
+  {k:"compte",l:"Compte entreprise lié (facultatif)",type:"account"},{k:"notes",l:"Notes",type:"area"}]}
 };
 /* Registre des entreprises : écriture réservée au département Finances (et à la Direction) */
 function regCanEdit(s){const R=REG[s];if(!R||!can(R.p+".edit"))return false;if(s=="entreprises"){const u=ME();return isDir()||!!(u&&u.dept=="Finances")}return true}
 const regLabel=(R,k)=>(R.f.find(x=>x.k==k)||{}).l||k;
 function regCell(k,v){if(k=="licSt")return licB(v);if(k=="exp"||k=="naiss"||k=="date"||k=="dateEnr")return fdd(v);if(k=="amende"||k=="prime")return v?money(v):"—";
  if(k=="danger")return `<span class="bdg ${({Faible:"mu",Modérée:"bl",Élevée:"wa",Extrême:"no"}[v]||"mu")}">${esc(v||"—")}</span>`;if(k=="st")return `<span class="bdg ${v=="Levé"?"mu":"no"}">${esc(v||"Actif")}</span>`;return esc(v||"—")}
-V.registres=()=>{const avail=(can("reg.civ.view")?[["etatcivil",{t:"État civil"}]]:[]).concat(Object.entries(REG).filter(([k,R])=>can(R.p+".view")));if(!avail.length)return empty("Aucun registre accessible.");
- const s=avail.some(a=>a[0]==sub)?sub:avail[0][0];if(s=="etatcivil")return `<div class="ph"><h2>Registres officiels</h2></div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}${ecView()}`;
+V.registres=()=>{const avail=(can("reg.civ.view")?[["etatcivil",{t:"État civil"}],["identites",{t:"Documents Identité"}]]:[]).concat(Object.entries(REG).filter(([k,R])=>can(R.p+".view")));if(!avail.length)return empty("Aucun registre accessible.");
+ const s=avail.some(a=>a[0]==sub)?sub:avail[0][0];if(s=="etatcivil")return `<div class="ph"><h2>Registres officiels</h2></div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}${ecView()}`;if(s=="identites")return `<div class="ph"><h2>Registres officiels</h2></div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}${idView()}`;
  const R=REG[s];
  let L=vals(S[s]).filter(r=>match(filt["r_"+s],...R.f.map(f=>r[f.k]))).sort((a,b)=>(a.nom||"").localeCompare(b.nom||""));
  return `<div class="ph"><h2>Registres officiels</h2>${regCanEdit(s)?`<button class="btn" onclick="openM('reg',null,{reg:'${s}'})">${ic("plus")}Nouvelle fiche</button>`:""}</div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}
@@ -701,7 +698,7 @@ V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);i
   (nv?`<div class="card inl" style="border-color:var(--blue)"><b>${nv} paiement(s) en attente de vérification.</b><button class="btn sm bl" onclick="filt.fs='verif';render()">Afficher</button></div>`:"")+`<div class="card inl">${search("fq","N°, destinataire, motif…")}${fsel("fs",Object.entries(FST).map(([k,v])=>[k,v[0]]),"Tous statuts")}${fsel("fk",[["facture","Factures"],["amende","Amendes"],["taxe","Impôts"]],"Toutes natures")}</div>
   <div class="card tw"><table><tr><th>N°<th>Nature<th>Destinataire<th>Motif<th class="r">Montant<th>Échéance<th>Statut<th></tr>${L.map(f=>`<tr><td class="nw">${esc(f.num)}<td>${kindL(f.kind)}<td>${esc(f.entNom)}<td>${esc(f.motif)}<td class="r b nw">${money(f.montant)}<td>${fdd(f.ech)}${f.st=="due"&&f.ech&&f.ech<new Date().toISOString().slice(0,10)?' <span class="bdg no">Retard</span>':""}<td>${bdg(FST,f.st)}${f.st=="due"&&f.rejet?`<div class="sm" style="color:var(--no);margin-top:4px">Preuve refusée</div>`:""}<td class="nw">${f.st=="verif"?`<button class="btn sm bl" onclick="openM('verif','${f.id}')">Vérifier la preuve</button>`:""}${f.st=="payee"&&f.proof?`<button class="btn sm gh" onclick="openM('verif','${f.id}')">Voir la preuve</button>`:""}${canBill()&&f.st=="due"?`<button class="btn sm ok" onclick="payFact('${f.id}')">Marquer payée</button> <button class="btn sm gh" onclick="cancelFact('${f.id}')">Annuler</button>`:""}${canBill()?` <button class="btn sm gh" title="Supprimer définitivement" onclick="openM('factdel','${f.id}')">Supprimer</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune facture.</td></tr>`}</table></div>`}
  if(s=="decl"){const L=vals(S.declarations).filter(d=>!d.arch).sort((a,b)=>(a.st=="validee")-(b.st=="validee")||b.t-a.t);
-  return h+`<div class="card tw"><table><tr><th>Date<th>Entreprise<th>Période<th class="r">CA déclaré<th>Taux<th class="r">Impôt<th>Statut<th></tr>${L.map(d=>`<tr><td class="nw">${fd(d.t)}<td>${esc(d.entNom)}<td>${esc(d.periode)}<td class="r">${money(d.ca)}<td>${d.taux} %<td class="r b">${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">À vérifier</span>'}<td>${can("fin.decl")&&d.st!="validee"?`<button class="btn sm ok" onclick="validDecl('${d.id}')">Valider</button>`:""}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune déclaration.</td></tr>`}</table></div>`}
+  return h+`<div class="card tw"><table><tr><th>Date<th>Entreprise<th>Période<th class="r">CA déclaré<th class="r">Masse salariale<th>Taux<th class="r">Impôt<th>Statut<th></tr>${L.map(d=>`<tr><td class="nw">${fd(d.t)}<td>${esc(d.entNom)}<td>${esc(d.periode)}<td class="r">${money(d.ca)}<td class="r">${d.ms!=null?money(d.ms):"—"}<td>${d.taux} %<td class="r b">${money(d.impot)}<td>${d.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">À vérifier</span>'}<td>${can("fin.decl")&&d.st!="validee"?`<button class="btn sm ok" onclick="validDecl('${d.id}')">Valider</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucune déclaration.</td></tr>`}</table></div>`}
  const ed=can("fin.budget");
  if(s=="fisc")return h+fiscView(ed);
  if(s=="arch")return h+archView();
@@ -768,7 +765,7 @@ function MArchive(a){if(!a||!(can("fin.view")||can("fin.archive")))return null;c
  if(t=="ent")body+=`<div class="tw"><table><tr><th>Entreprise<th>Type<th>Taux<th class="r">CA<th class="r">Impôt<th class="r">Payé<th class="r">Reste</tr>${E.map(e=>`<tr><td class="b">${esc(e.nom)}<td>${esc(e.type)}<td>${num(e.taux)} %<td class="r">${money(e.ca)}<td class="r">${money(e.impot)}<td class="r">${money(e.paye)}<td class="r" style="${num(e.reste)>0?"color:var(--no)":""}">${money(e.reste)}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune entreprise.</td></tr>`}</table></div>`;
  else if(d===undefined)body+=`<p class="mu">Chargement de l'archive…</p>`;
  else if(!d)body+=`<p class="mu">Détail de l'archive introuvable.</p>`;
- else if(t=="decl")body+=`<div class="tw"><table><tr><th>Date<th>Entreprise<th>Période<th class="r">CA<th>Taux<th class="r">Impôt<th>Statut</tr>${(d.decls||[]).map(x=>`<tr><td class="nw">${fd(x.t)}<td>${esc(x.entNom)}<td>${esc(x.periode)}<td class="r">${money(x.ca)}<td>${num(x.taux)} %<td class="r b">${money(x.impot)}<td>${x.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">Non vérifiée</span>'}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune déclaration.</td></tr>`}</table></div>`;
+ else if(t=="decl")body+=`<div class="tw"><table><tr><th>Date<th>Entreprise<th>Période<th class="r">CA<th class="r">Masse salariale<th>Taux<th class="r">Impôt<th>Statut</tr>${(d.decls||[]).map(x=>`<tr><td class="nw">${fd(x.t)}<td>${esc(x.entNom)}<td>${esc(x.periode)}<td class="r">${money(x.ca)}<td class="r">${x.ms!=null?money(x.ms):"—"}<td>${num(x.taux)} %<td class="r b">${money(x.impot)}<td>${x.st=="validee"?'<span class="bdg ok">Validée</span>':'<span class="bdg wa">Non vérifiée</span>'}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucune déclaration.</td></tr>`}</table></div>`;
  else if(t=="fact")body+=`<div class="tw"><table><tr><th>N°<th>Entreprise<th>Motif<th class="r">Montant<th>État à la clôture</tr>${(d.facts||[]).map(x=>`<tr><td class="nw">${esc(x.num)}<td>${esc(x.entNom)}<td>${esc(x.motif)}<td class="r b">${money(x.montant)}<td>${bdg(FST,x.st)}</tr>`).join("")||`<tr><td colspan="5" class="empty">Aucun impôt.</td></tr>`}</table></div>`;
  else body+=`<div class="grid g2"><div><h4>Types d'entreprise</h4><table>${(d.bareme&&d.bareme.cats||[]).map(c=>`<tr><td>${esc(c.name)}<td class="r b">${num(c.rate)} %</tr>`).join("")}<tr><td class="mu">Sans type<td class="r">${num(d.bareme&&d.bareme.def)} %</tr></table></div>
   <div><h4>Taux par entreprise</h4><table>${(d.bareme&&d.bareme.ents||[]).map(e=>`<tr><td>${esc(e.nom)}<div class="mu sm">${esc(e.type)}</div><td class="r b">${num(e.taux)} %${e.own?`<div class="mu sm">propre</div>`:""}</tr>`).join("")||`<tr><td class="empty">—</td></tr>`}</table></div></div>`;
@@ -1001,6 +998,41 @@ function MGridReplace(){if(!isDir())return null;const P=gridPlan();
  ${P.lost.length?`<div class="card" style="border-color:var(--wa)"><b>${P.lost.length} agent(s) perdront leur grade</b> et devront être réaffectés dans Personnel → Comptes :<div class="sm" style="margin-top:6px">${P.lost.map(u=>`${esc(u.nom)} (${esc(gname(u))}${u.dept?", "+esc(u.dept):""})`).join(" · ")}</div></div>`:""}<p class="err" id="msg"></p>`,
  foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="gridReplace()">Remplacer les grades</button>`}}
 
+/* =================== DOCUMENTS D'IDENTITÉ =================== */
+const ID_T=[["cni","Carte d'identité","\u{1FAAA}"],["vtrav","Visa de travail","\u{1F4BC}"],["vsej","Visa de séjour","\u{1F6C2}"]];
+const IDL=Object.fromEntries(ID_T.map(t=>[t[0],t]));
+const idType=r=>IDL[r.type]||["old","Ancienne fiche","\u{1F4C4}"];
+const idCache={};
+function loadIdFiles(id){if(idCache[id]!==undefined||loadIdFiles.p[id])return;loadIdFiles.p[id]=1;const done=v=>{idCache[id]=v||{};delete loadIdFiles.p[id];render()};
+ if(db)db.ref(ROOT+"/idfiles/"+id).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.idfiles&&S.idfiles[id])}
+loadIdFiles.p={};
+function idView(){const ty=filt.idt||"",q=filt.idq||"",A=vals(S.identites),ed=can("reg.civ.edit");
+ const L=A.filter(r=>!ty||(IDL[r.type]?r.type:"old")==ty).filter(r=>match(q,r.num,r.nom,r.prenom,r.tel,r.prenom+" "+r.nom,r.nom+" "+r.prenom,idType(r)[1],r.dateEm?fdd(r.dateEm):"")).sort((a,b)=>(b.dateEm||"").localeCompare(a.dateEm||"")||(b.t||0)-(a.t||0));
+ const old=A.filter(r=>!IDL[r.type]).length;
+ return `<div class="ec"><aside class="ec-side card"><button class="ec-c ${!ty?"on":""}" onclick="filt.idt='';render()"><span class="ec-e">\u{1F4CB}</span><span class="ec-n">Tous les documents</span><span class="ec-k">${A.length}</span></button>
+ ${ID_T.map(([k,l,e])=>`<button class="ec-c ${ty==k?"on":""}" onclick="filt.idt='${k}';render()"><span class="ec-e">${e}</span><span class="ec-n">${esc(l)}</span><span class="ec-k">${A.filter(r=>r.type==k).length}</span></button>`).join("")}
+ ${old?`<button class="ec-c ${ty=="old"?"on":""}" onclick="filt.idt='old';render()"><span class="ec-e">\u{1F4C4}</span><span class="ec-n">Anciennes fiches</span><span class="ec-k">${old}</span></button>`:""}</aside>
+ <div><div class="card"><div class="inl"><input id="q_idq" placeholder="Rechercher : nom, prénom, téléphone, n°, date…" value="${esc(q)}" oninput="filt.idq=this.value;render()" style="flex:1;min-width:200px">${ed?`<button class="btn" onclick="openIdEdit()">${ic("plus")}Nouveau document</button>`:""}</div></div>
+ <div class="card tw"><table><tr><th>N°<th>Type<th>Nom<th>Prénom<th>Téléphone<th>Émis le<th>Par</tr>${L.map(r=>{const t=idType(r);return `<tr class="click" onclick="openM('idoc','${r.id}')"><td class="nw b">${esc(r.num||"—")}<td class="nw">${t[2]} ${esc(t[1])}<td class="b">${esc(r.nom)}<td>${esc(r.prenom||"—")}<td>${esc(r.tel||"—")}<td class="nw">${r.dateEm?fdd(r.dateEm):"—"}<td>${esc(r.byNom||"—")}</tr>`}).join("")||`<tr><td colspan="7" class="empty">Aucun document.</td></tr>`}</table></div></div></div>`}
+function MIdoc(r){if(!r||!can("reg.civ.view"))return null;const F=idCache[r.id];if(F===undefined)loadIdFiles(r.id);const t=idType(r),ed=can("reg.civ.edit");
+ if(modal.zoom&&F&&F[modal.zoom])return {title:esc(r.num||"")+" — "+esc(t[1]),wide:1,body:`<img src="${F[modal.zoom].data}" style="width:100%;border-radius:10px;cursor:zoom-out" onclick="modal.zoom=null;render()">`,foot:`<button class="btn sec" onclick="modal.zoom=null;render()">Retour</button>`};
+ const extra=IDL[r.type]?"":["naiss","lieu","sexe","nat","adresse","profession","statut","notes"].filter(k=>r[k]).map(k=>`<div class="k">${esc({naiss:"Date de naissance",lieu:"Lieu de naissance",sexe:"Sexe",nat:"Nationalité",adresse:"Adresse",profession:"Profession",statut:"Situation",notes:"Mentions"}[k])}</div><div>${k=="naiss"?fdd(r[k]):esc(r[k])}</div>`).join("");
+ return {title:`${t[2]} ${esc(t[1])}${r.num?" — "+esc(r.num):""}`,wide:1,body:`<div class="pe-card"><div class="kv"><div class="k">Titulaire</div><div class="b" style="font-size:16px">${esc(r.prenom||"")} ${esc(r.nom)}</div><div class="k">Téléphone</div><div>${esc(r.tel||"—")}</div><div class="k">Date d'émission</div><div>${r.dateEm?fdd(r.dateEm):"—"}</div><div class="k">Enregistré</div><div>${r.t?fd(r.t):"—"}${r.byNom?" par "+esc(r.byNom):""}${r.mt?` · modifié le ${fd(r.mt)}${r.mNom?" par "+esc(r.mNom):""}`:""}</div>${extra}</div></div>
+ <h4>Document (${Object.keys(r.files||{}).length})</h4><div class="fgrid">${Object.entries(r.files||{}).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data)).join("")||`<p class="mu">Aucune image.</p>`}</div>`,
+ foot:`${ed?`<button class="btn gh" style="margin-right:auto" onclick="idDel('${r.id}')">Supprimer</button><button class="btn sec" onclick="openIdEdit('${r.id}')">Modifier</button>`:""}<button class="btn" onclick="closeM()">Fermer</button>`}}
+function MIdEdit(){if(!can("reg.civ.edit"))return null;const r=modal.id?S.identites[modal.id]:null;if(modal.id&&!r)return null;if(r&&idCache[r.id]===undefined)loadIdFiles(r.id);const F=r?idCache[r.id]:null,nf=modal.files||[],rm=modal.rm||{};const today=new Date().toISOString().slice(0,10);
+ return {title:r?"Modifier le document":"Nouveau document d'identité",wide:1,body:`<div class="pe-card"><div class="form"><label class="f">Type de document *<select id="idty">${opts(ID_T.map(t=>[t[0],t[2]+" "+t[1]]),r&&IDL[r.type]?r.type:(IDL[filt.idt]?filt.idt:"cni"))}</select></label><label class="f">Date d'émission *<input id="iddt" type="date" value="${esc(r?r.dateEm||"":today)}"></label>
+ <label class="f">Nom *<input id="idn" value="${esc(r?r.nom:"")}"></label><label class="f">Prénom *<input id="idp" value="${esc(r?r.prenom||"":"")}"></label>
+ <label class="f">Numéro de téléphone *<input id="idtel" value="${esc(r?r.tel||"":"")}" placeholder="Ex. : 180-4736"></label></div></div>
+ <h4>Image du document *</h4>
+ ${r&&Object.keys(r.files||{}).length?`<div class="fgrid" style="margin-bottom:10px">${Object.entries(r.files).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data,!!rm[fk])).join("")}</div>`:""}
+ ${nf.length?`<div class="fgrid" style="margin-bottom:10px">${nf.map((f,i)=>`<div class="ftile new">${f.type.startsWith("image/")?`<img src="${f.data}" alt="">`:`<div class="fdoc">${ic("file")}<span>PDF</span></div>`}<div class="fname">${esc(f.name)}</div><button class="lnk" onclick="modal.files.splice(${i},1);render()">Retirer</button></div>`).join("")}</div>`:""}
+ <div class="drop" tabindex="0" onclick="document.getElementById('idf').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();addIdFiles(event.dataTransfer.files)">
+ <div class="drop-ic">${ic("file")}</div><b>Cliquez pour ajouter l'image du document</b><div class="mu">ou glissez-déposez, ou collez une capture (Ctrl+V)</div><div class="mu sm" style="margin-top:6px">Images (PNG, JPG…) ou PDF</div></div>
+ <input type="file" id="idf" accept="image/*,application/pdf" multiple style="display:none" onchange="addIdFiles(this.files);this.value=''">
+ ${modal.busy?`<p class="mu">Traitement des fichiers…</p>`:""}<p class="err" id="msg"></p>`,
+ foot:`<button class="btn sec" onclick="${r?`openM('idoc','${r.id}')`:"closeM()"}">Annuler</button><button class="btn" ${modal.busy?"disabled":""} onclick="idSave('${r?r.id:""}')">${r?"Enregistrer":"Enregistrer le document"}</button>`}}
+
 /* =================== RECRUTEMENTS =================== */
 const RST={attente:["En attente","wa"],acceptee:["Acceptée","ok"],refusee:["Refusée","no"]};
 const recOk=()=>can("rec.view")||can("rec.cv");
@@ -1101,6 +1133,8 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="affaire")m=MAffaire(S.affaires[modal.id]);
  else if(modal.type=="affaireNew")m=MAffaireNew();
  else if(modal.type=="reg")m=MReg();
+ else if(modal.type=="idoc")m=MIdoc(S.identites[modal.id]);
+ else if(modal.type=="idEdit")m=MIdEdit();
  else if(modal.type=="grade")m=MGrade();
  else if(modal.type=="user")m=MUser(S.users[modal.id]);
  else if(modal.type=="notif")m=MNotif(S.factures[modal.id]);
@@ -1170,7 +1204,7 @@ function affReopen(id){const a=S.affaires[id];DBX.update("affaires/"+id,{st:"ins
 function affDel(id){const a=S.affaires[id];ask("Supprimer définitivement l'affaire "+a.num+" et toutes ses pièces ?",()=>{DBX.remove("affaires/"+id);log("Affaire supprimée : "+a.num,"Justice","Justice");modal=null},"Supprimer")}
 
 /* Registres */
-const REGD={entreprises:"Intérieur",identites:"État-Civil"};
+const REGD={entreprises:"Intérieur"};
 function regSave(s,id){if(!regCanEdit(s))return say("Seul le département Finances peut modifier ce registre.");const R=REG[s],o={};for(const f of R.f){let v=tval("rf_"+f.k);if(f.type=="number")v=v===""?"":num(v);if(f.req&&v==="")return say("Champ requis : "+f.l);o[f.k]=v}
  if(o.photo&&!/^https?:\/\//.test(o.photo))return say("Le lien de la photo doit commencer par http(s)://");
  if(id){o.mt=Date.now();DBX.update(`${s}/${id}`,o)}else{id=nid();Object.assign(o,{id,t:Date.now(),by:meId});DBX.set(`${s}/${id}`,o)}
@@ -1193,10 +1227,10 @@ function delFact(id){if(!canBill())return;const f=S.factures[id];if(!f)return;co
  if(f.proof)DBX.remove("preuves/"+id);DBX.remove("factures/"+id);
  log(`Suppression en comptabilité : ${f.num} (${kindL(f.kind)}, ${f.entNom}, ${money(f.montant)})${refund?" — encaissement annulé":""}`,"Finances","Finances");toast("Élément supprimé.");modal=null;keep={};render()}
 function cancelFact(id){const f=S.factures[id];if(!canBill())return;ask("Annuler "+f.num+" ?",()=>{DBX.update("factures/"+id,{st:"annulee"});log("Annulation "+f.num,"Finances","Finances")},"Annuler la facture")}
-function declare(){const p=tval("dp"),ca=num(val("dca"));if(!p||ca<=0)return say("Indiquez la période et un chiffre d'affaires.");const u=ME(),tx=taxRate(u),imp=Math.round(ca*tx/100),id=nid(),fid=nid();
- DBX.set("declarations/"+id,{id,ent:u.id,entNom:u.nom,periode:p,ca,taux:tx,impot:imp,st:"declaree",t:Date.now(),fac:fid});
+function declare(){const p=tval("dp"),ca=num(val("dca")),msv=tval("dms");if(!p||ca<=0)return say("Indiquez la période et un chiffre d'affaires.");if(msv===""||num(msv)<0)return say("Indiquez la masse salariale (0 si aucun salarié).");const ms=num(msv);const u=ME(),tx=taxRate(u),imp=Math.round(ca*tx/100),id=nid(),fid=nid();
+ DBX.set("declarations/"+id,{id,ent:u.id,entNom:u.nom,periode:p,ca,ms,taux:tx,impot:imp,st:"declaree",t:Date.now(),fac:fid});
  if(imp>0)DBX.set("factures/"+fid,{id:fid,num:nextNum("factures","FAC"),kind:"taxe",ent:u.id,entNom:u.nom,motif:"Impôt sur le CA — "+p,montant:imp,ech:new Date(Date.now()+7*864e5).toISOString().slice(0,10),dept:"Finances",st:"due",t:Date.now(),by:u.id,byNom:u.nom});
- log(`Déclaration fiscale de ${u.nom} (${p}) : CA ${money(ca)}`,"Finances","Finances");clr("dp","dca");delete keep.dca;toast("Déclaration envoyée. Facture d'impôt générée.")}
+ log(`Déclaration fiscale de ${u.nom} (${p}) : CA ${money(ca)}, masse salariale ${money(ms)}`,"Finances","Finances");clr("dp","dca","dms");delete keep.dca;toast("Déclaration envoyée. Facture d'impôt générée.")}
 function validDecl(id){const d=S.declarations[id];DBX.update("declarations/"+id,{st:"validee",vby:meId,vt:Date.now()});log("Déclaration validée : "+d.entNom+" ("+d.periode+")","Finances","Finances")}
 function setTax(){const t=Math.min(100,Math.max(0,num(val("ctax"))));DBX.update("config",{tax:t});log("Taux par défaut (sans type) fixé à "+t+" %","Finances","Finances");toast("Taux appliqué.")}
 function addCat(){if(!can("fin.budget"))return;const n=tval("ncn"),r=val("ncr");if(!n)return toast("Indiquez le nom du type.",1);const id=nid(),rate=Math.min(100,Math.max(0,num(r)));
@@ -1309,12 +1343,12 @@ function closePeriod(){if(!can("fin.archive"))return;const name=tval("arn");if(!
  ask(`Clôturer « ${name} » ? ${P.D.length} déclaration(s) et ${P.F.length} impôt(s) seront archivés.${P.impaye?` ${money(P.impaye)} d'impôts impayés resteront à recouvrer.`:""}`,()=>{
   const u=ME(),now=Date.now(),id=nid(),per={};const E=vals(S.users).filter(x=>x.role=="entreprise");
   const ent=(uid,nom)=>{if(!per[uid]){const x=S.users[uid];per[uid]={nom:x?x.nom:nom,type:x?taxCatName(x):"—",taux:x?taxRate(x):0,ca:0,impot:0,paye:0,reste:0}}return per[uid]};
-  P.D.forEach(d=>{const e=ent(d.ent,d.entNom);e.ca+=num(d.ca);e.impot+=num(d.impot)});
+  P.D.forEach(d=>{const e=ent(d.ent,d.entNom);e.ca+=num(d.ca);e.ms=(e.ms||0)+num(d.ms);e.impot+=num(d.impot)});
   P.F.forEach(f=>{const e=ent(f.ent||("x_"+f.entNom),f.entNom);if(f.st=="payee")e.paye+=num(f.montant);else e.reste+=num(f.montant)});
   const clean=k=>String(k).replace(/[.#$\/\[\]]/g,"_");const perE={};Object.entries(per).forEach(([k,v])=>perE[clean(k)]=v);
   DBX.set("archives/"+id,{id,name,note:tval("arno"),from:P.from,to:now,by:u.id,byNom:u.nom,nDecl:P.D.length,nFact:P.F.length,ca:P.ca,emis:P.emis,paye:P.paye,impaye:P.impaye,perEnt:perE});
   DBX.set("archdata/"+id,{bareme:{cats:TCATS().map(c=>({name:c.name,rate:num(c.rate)})),def:num(S.config.tax),ents:E.map(x=>({nom:x.nom,type:taxCatName(x),taux:taxRate(x),own:hasOwnRate(x)}))},
-   decls:P.D.map(d=>({t:d.t,ent:d.ent,entNom:d.entNom,periode:d.periode,ca:num(d.ca),taux:num(d.taux),impot:num(d.impot),st:d.st})).sort((a,b)=>a.t-b.t),
+   decls:P.D.map(d=>({t:d.t,ent:d.ent,entNom:d.entNom,periode:d.periode,ca:num(d.ca),ms:d.ms!=null?num(d.ms):null,taux:num(d.taux),impot:num(d.impot),st:d.st})).sort((a,b)=>a.t-b.t),
    facts:P.F.map(f=>({num:f.num,ent:f.ent||"",entNom:f.entNom,motif:f.motif,montant:num(f.montant),st:f.st}))});
   const ud={},uf={};P.D.forEach(d=>ud[d.id+"/arch"]=id);P.F.filter(f=>f.st=="payee").forEach(f=>uf[f.id+"/arch"]=id);
   if(Object.keys(ud).length)DBX.update("declarations",ud);if(Object.keys(uf).length)DBX.update("factures",uf);
@@ -1327,8 +1361,8 @@ function archText(a){const E=Object.values(a.perEnt||{}).sort((x,y)=>num(y.impot
  return [`# Bilan fiscal — ${a.name}`,`Du ${a.from?fd(a.from):"début"} au ${fd(a.to)}`,"",`- Déclarations : ${a.nDecl}`,`- CA déclaré : ${money(a.ca)}`,`- Impôts déclarés : ${money(a.emis)}`,`- Impôts encaissés : ${money(a.paye)}`,`- Impayés : ${money(a.impaye)}`,"","## Détail par entreprise"].concat(E.map(e=>`- ${e.nom} (${num(e.taux)} %) : ${money(e.impot)}${num(e.reste)>0?` — reste dû ${money(e.reste)}`:""}`)).join("\n")}
 function archCopy(id){const t=archText(S.archives[id]),done=()=>toast("Bilan copié : collez-le dans Discord.");if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t,done));else fallbackCopy(t,done)}
 function archCSV(id){const a=S.archives[id],q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
- const rows=[["Entreprise","Type","Taux (%)","CA déclaré","Impôt","Payé","Reste dû"]].concat(Object.values(a.perEnt||{}).map(e=>[e.nom,e.type,num(e.taux),num(e.ca),num(e.impot),num(e.paye),num(e.reste)]));
- rows.push([],["Total","","",a.ca,a.emis,a.paye,a.impaye]);
+ const rows=[["Entreprise","Type","Taux (%)","CA déclaré","Masse salariale","Impôt","Payé","Reste dû"]].concat(Object.values(a.perEnt||{}).map(e=>[e.nom,e.type,num(e.taux),num(e.ca),num(e.ms),num(e.impot),num(e.paye),num(e.reste)]));
+ rows.push([],["Total","","",a.ca,Object.values(a.perEnt||{}).reduce((s,e)=>s+num(e.ms),0),a.emis,a.paye,a.impaye]);
  const csv="\ufeff"+rows.map(r=>r.map(q).join(";")).join("\r\n"),b=new Blob([csv],{type:"text/csv;charset=utf-8"}),l=document.createElement("a");
  l.href=URL.createObjectURL(b);l.download="archive-fiscale-"+a.name.replace(/[^\w\-]+/g,"_")+".csv";document.body.appendChild(l);l.click();setTimeout(()=>{URL.revokeObjectURL(l.href);l.remove()},500)}
 
@@ -1378,6 +1412,22 @@ function gridReplace(){if(!isDir())return;const P=gridPlan(),o={};
  P.cr.forEach((t,j)=>{const id=nid()+j;o[id]={id,name:t.name,role:t.role,dept:t.dept,rank:t.rank,color:t.color,perms:t.perms}});
  P.del.forEach(g=>o[g.id]=null);P.lost.forEach(u=>DBX.update("users/"+u.id,{gradeId:""}));
  DBX.update("grades",o);log(`Grades remplacés par la grille officielle : ${P.up.length} conservé(s), ${P.cr.length} créé(s), ${P.del.length} supprimé(s)`,"","Grades");toast("Grades remplacés par la grille officielle.");closeM()}
+
+/* Documents d'identité */
+function openIdEdit(id){modal={type:"idEdit",id:id||null,files:[],rm:{}};keep={};render()}
+async function addIdFiles(list){if(!modal||modal.type!="idEdit")return;const arr=[...(list||[])];if(!arr.length)return;modal.busy=1;render();modal.files=modal.files||[];
+ for(const f of arr){try{modal.files.push(await fileToData(f))}catch(e){toast(e.message,1)}}modal.busy=0;render()}
+document.addEventListener("paste",e=>{if(!modal||modal.type!="idEdit"||!e.clipboardData)return;const fs=[...e.clipboardData.items].filter(i=>i.kind=="file").map(i=>i.getAsFile()).filter(Boolean);if(fs.length){e.preventDefault();addIdFiles(fs)}});
+function idSave(id){if(!can("reg.civ.edit"))return;const r=id?S.identites[id]:null,ty=val("idty"),nom=tval("idn"),pre=tval("idp"),tel=tval("idtel"),dt=val("iddt"),nf=modal.files||[],rm=modal.rm||{};
+ if(!nom||!pre||!tel||!dt)return say("Nom, prénom, numéro de téléphone et date d'émission sont obligatoires.");
+ const keepN=r?Object.keys(r.files||{}).filter(k=>!rm[k]).length:0;if(!nf.length&&!keepN)return say("Ajoutez l'image du document.");
+ const u=ME(),now=Date.now(),did=id||nid(),fmeta={};nf.forEach(f=>{const fk=nid();fmeta[fk]={name:f.name,type:f.type,size:f.size,t:now};DBX.set(`idfiles/${did}/${fk}`,{data:f.data,name:f.name,type:f.type});if(idCache[did])idCache[did][fk]={data:f.data,name:f.name,type:f.type}});
+ const L=(IDL[ty]||["","Document"])[1];
+ if(!r){DBX.set("identites/"+did,{id:did,num:nextNum("identites","ID"),type:ty,nom,prenom:pre,tel,dateEm:dt,files:fmeta,t:now,by:u.id,byNom:u.nom});log(`Document d'identité enregistré : ${L} — ${pre} ${nom}`,"État-Civil","Registres");toast("Document enregistré.")}
+ else{const up={type:ty,nom,prenom:pre,tel,dateEm:dt,mt:now,mNom:u.nom};if(!r.num)up.num=nextNum("identites","ID");Object.entries(fmeta).forEach(([fk,m])=>up["files/"+fk]=m);Object.keys(rm).filter(k=>rm[k]).forEach(fk=>{up["files/"+fk]=null;DBX.remove(`idfiles/${did}/${fk}`)});
+  DBX.update("identites/"+did,up);log(`Document d'identité modifié : ${L} — ${pre} ${nom}`,"État-Civil","Registres");toast("Document mis à jour.")}
+ modal={type:"idoc",id:did};keep={};render()}
+function idDel(id){if(!can("reg.civ.edit"))return;const r=S.identites[id];ask(`Supprimer définitivement le document ${r.num||""} (${r.prenom||""} ${r.nom}) et son image ?`,()=>{DBX.remove("idfiles/"+id);DBX.remove("identites/"+id);delete idCache[id];log(`Document d'identité supprimé : ${idType(r)[1]} — ${r.prenom||""} ${r.nom}`,"État-Civil","Registres");modal=null},"Supprimer")}
 
 /* Recrutements */
 function openRecNew(){modal={type:"recNew",files:[]};keep={};render()}
