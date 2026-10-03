@@ -353,6 +353,35 @@ label.f>.cs{margin-top:6px}
 td .cs-btn{height:34px}
 .cs-o{font-weight:500}
 .cs-btn .cs-v{display:block!important;margin:0!important;padding:0!important}.cs-o span{margin:0!important;display:inline!important}
+/* Calendrier */
+.dp{position:relative;display:block;margin:4px 0 10px}label.f>.dp{margin-top:6px}
+.dp>input{margin:0!important;padding-right:40px;cursor:pointer}
+.dp>input::-webkit-calendar-picker-indicator{display:none;-webkit-appearance:none}
+.dp-ic{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:8px;background:none;color:var(--mu);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.dp-ic:hover{background:var(--cd2);color:var(--gold2)}.dp-ic svg{width:17px;height:17px}
+.dp-pop{position:fixed;z-index:400;width:288px;background:var(--cd);border:1px solid var(--bd);border-radius:16px;box-shadow:var(--sh-pop);padding:12px;animation:csIn .12s ease-out;font-family:var(--ff-ui)}
+.dp-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.dp-t{background:none;border:0;color:var(--tx);font:inherit;font-weight:700;font-size:15px;text-transform:capitalize;padding:6px 10px;border-radius:9px;cursor:pointer}.dp-t:hover{background:var(--cd2);color:var(--gold2)}
+.dp-h b{font-size:14px}
+.dp-n{width:32px;height:32px;border:0;border-radius:9px;background:var(--cd2);color:var(--tx);display:flex;align-items:center;justify-content:center;cursor:pointer}.dp-n:hover{background:color-mix(in srgb,var(--gold) 20%,var(--cd2));color:var(--gold2)}
+.dp-n svg{width:16px;height:16px;transform:rotate(90deg)}.dp-n.nx svg{transform:rotate(-90deg)}
+.dp-g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.dp-w{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--mu);text-align:center;padding:4px 0;letter-spacing:.04em}
+.dp-d{aspect-ratio:1;border:0;border-radius:10px;background:none;color:var(--tx);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:background .12s,color .12s}
+.dp-d:hover{background:var(--cd2)}.dp-d.we{color:color-mix(in srgb,var(--tx) 75%,var(--mu))}.dp-d.out{color:color-mix(in srgb,var(--mu) 55%,transparent);font-weight:500}
+.dp-d.tod{box-shadow:inset 0 0 0 1.5px var(--gold);color:var(--gold2)}
+.dp-d.sel{background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 88%,#fff),var(--gold));color:var(--on-gold);box-shadow:0 4px 12px color-mix(in srgb,var(--gold) 35%,transparent)}
+.dp-yg{max-height:236px;overflow-y:auto;padding-right:4px}.dp-h span{width:32px}
+.dp-yg,.dp-mg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.dp-mg{grid-template-columns:repeat(3,1fr)}
+.dp-y{border:0;border-radius:10px;background:var(--bg2);color:var(--tx);font:inherit;font-weight:600;font-size:13.5px;padding:10px 0;cursor:pointer;text-transform:capitalize}.dp-y:hover{background:var(--cd2)}.dp-y.tod{box-shadow:inset 0 0 0 1.5px var(--gold)}.dp-y.sel{background:var(--gold);color:var(--on-gold)}
+.dp-tm{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)}.dp-tm .mu{margin-right:auto}.dp-tm select{width:auto;margin:0;padding:7px 30px 7px 10px;background-position:right 8px center}
+.dp-f{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)}.dp-f .lnk{font-weight:600}.dp-f .lnk:first-child{color:var(--mu)}.dp-f .btn{margin-left:auto}.dp-f .lnk+.lnk{margin-left:auto}.dp-f .lnk+.lnk+.btn{margin-left:8px}
+/* Registres d'état civil : catégories */
+.ec-c{gap:10px;padding:8px 10px;border-radius:11px;transition:background .12s,color .12s}
+.ec-e{width:30px;height:30px;border-radius:9px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none}
+.ec-c.on{background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 16%,transparent),transparent);color:var(--tx);box-shadow:inset 3px 0 0 var(--gold)}
+.ec-c.on .ec-e{background:color-mix(in srgb,var(--gold) 22%,var(--cd2))}
+.ec-n{flex:1;line-height:1.25}
 </style></head>
 <body><div id="root"></div><div class="toasts" id="toasts"></div>
 <script>
@@ -496,6 +525,50 @@ function csClose(){if(!csOpen)return;csOpen.p.remove();if(csOpen.b)csOpen.b.setA
 document.addEventListener("click",()=>csClose());
 window.addEventListener("resize",()=>csPlace());
 document.addEventListener("scroll",e=>{if(csOpen&&!csOpen.p.contains(e.target))csPlace()},true);
+/* Calendrier personnalisé pour les champs date / date et heure */
+let dpOpen=null;
+const DP_M=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const p2d=n=>String(n).padStart(2,"0");
+function enhanceDates(root){root.querySelectorAll('input[type=date],input[type=datetime-local]').forEach(inp=>{if(inp.parentNode.classList&&inp.parentNode.classList.contains("dp"))return;
+ const w=document.createElement("span");w.className="dp";if(inp.style.maxWidth){w.style.maxWidth=inp.style.maxWidth;inp.style.maxWidth=""}if(inp.closest("td,.inl"))w.style.margin="0";
+ inp.parentNode.insertBefore(w,inp);w.appendChild(inp);const b=document.createElement("button");b.type="button";b.className="dp-ic";b.tabIndex=-1;b.setAttribute("aria-label","Ouvrir le calendrier");b.innerHTML=ic("cal");b.disabled=inp.disabled;
+ b.onclick=e=>{e.stopPropagation();dpOpen&&dpOpen.i===inp?dpClose():dpShow(inp)};w.appendChild(b);
+ inp.addEventListener("click",e=>{e.stopPropagation();if(!dpOpen||dpOpen.i!==inp)dpShow(inp)});
+ inp.addEventListener("keydown",e=>{if(e.key=="Escape"&&dpOpen){e.stopPropagation();dpClose()}if((e.key==" "||e.key=="Enter")&&!dpOpen){e.preventDefault();dpShow(inp)}})});
+ if(dpOpen){const n=dpOpen.k[0]=="#"?document.getElementById(dpOpen.k.slice(1)):[...document.querySelectorAll("#root input[type=date],#root input[type=datetime-local]")][+dpOpen.k.slice(1)];if(n){dpOpen.i=n;dpPlace()}else dpClose()}}
+function dpParse(inp){const v=inp.value,dt=inp.type=="datetime-local";if(!v)return null;const [d,t]=dt?v.split("T"):[v,""];const [y,m,dd]=d.split("-").map(Number);if(!y)return null;const [hh,mm]=(t||"00:00").split(":").map(Number);return {y,m:m-1,d:dd,hh:hh||0,mm:mm||0}}
+function dpShow(inp){dpClose();if(inp.disabled||inp.readOnly)return;const cur=dpParse(inp),now=new Date(),dt=inp.type=="datetime-local";
+ const p=document.createElement("div");p.className="dp-pop";p.onclick=e=>e.stopPropagation();document.body.appendChild(p);
+ const k=inp.id?"#"+inp.id:"@"+[...document.querySelectorAll("#root input[type=date],#root input[type=datetime-local]")].indexOf(inp);
+ dpOpen={i:inp,p,k,dt,y:cur?cur.y:now.getFullYear(),m:cur?cur.m:now.getMonth(),sel:cur,hh:cur?cur.hh:Math.min(23,now.getHours()+1),mm:cur?cur.mm:0,mode:"d"};dpDraw();dpPlace()}
+function dpDraw(){const o=dpOpen;if(!o)return;const t=new Date(),ty=t.getFullYear(),tm=t.getMonth(),td=t.getDate();let h="";
+ if(o.mode=="y"){h=`<div class="dp-h"><span></span><b>Choisir l'année</b><span></span></div><div class="dp-yg">${Array.from({length:201},(_,i)=>1900+i).map(y=>`<button class="dp-y ${y==o.y?"sel":""} ${y==ty?"tod":""}" data-y="${y}">${y}</button>`).join("")}</div>`}
+ else if(o.mode=="m"){h=`<div class="dp-h"><button class="dp-n" data-a="ymp">${ic("chev")}</button><button class="dp-t" data-a="yr">${o.y}</button><button class="dp-n nx" data-a="ymn">${ic("chev")}</button></div><div class="dp-mg">${DP_M.map((n,i)=>`<button class="dp-y ${i==o.m?"sel":""}" data-m="${i}">${n.slice(0,4)}${n.length>4?".":""}</button>`).join("")}</div>`}
+ else{const first=new Date(o.y,o.m,1),off=(first.getDay()+6)%7,start=new Date(o.y,o.m,1-off);
+  h=`<div class="dp-h"><button class="dp-n" data-a="mp" aria-label="Mois précédent">${ic("chev")}</button><button class="dp-t" data-a="mo">${DP_M[o.m]} ${o.y}</button><button class="dp-n nx" data-a="mn" aria-label="Mois suivant">${ic("chev")}</button></div>
+  <div class="dp-g">${["lu","ma","me","je","ve","sa","di"].map(x=>`<span class="dp-w">${x}</span>`).join("")}${Array.from({length:42},(_,i)=>{const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),y=d.getFullYear(),m=d.getMonth(),dd=d.getDate();
+   const sel=o.sel&&o.sel.y==y&&o.sel.m==m&&o.sel.d==dd,tod=y==ty&&m==tm&&dd==td;return `<button class="dp-d ${m!=o.m?"out":""} ${sel?"sel":""} ${tod?"tod":""} ${i%7>4?"we":""}" data-d="${y}-${m}-${dd}">${dd}</button>`}).join("")}</div>`;
+  if(o.dt)h+=`<div class="dp-tm"><span class="mu sm">Heure</span><select class="dp-hh" data-native>${Array.from({length:24},(_,i)=>`<option value="${i}" ${i==o.hh?"selected":""}>${p2d(i)}</option>`).join("")}</select><b>:</b><select class="dp-mm" data-native>${Array.from({length:12},(_,i)=>i*5).concat(o.mm%5?[o.mm]:[]).sort((a,b)=>a-b).map(i=>`<option value="${i}" ${i==o.mm?"selected":""}>${p2d(i)}</option>`).join("")}</select></div>`}
+ h+=`<div class="dp-f"><button class="lnk" data-a="clr">Effacer</button><button class="lnk" data-a="tod">${o.dt?"Maintenant":"Aujourd'hui"}</button>${o.dt?`<button class="btn sm" data-a="ok">Valider</button>`:""}</div>`;
+ o.p.innerHTML=h;{const s=o.p.querySelector(".dp-yg .sel");if(s){const g=s.parentNode;g.scrollTop=s.offsetTop-g.offsetTop-g.clientHeight/2+s.offsetHeight/2}}
+ o.p.querySelectorAll("button").forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>dpAct(b)});
+ const hs=o.p.querySelector(".dp-hh"),ms=o.p.querySelector(".dp-mm");if(hs)hs.onchange=()=>{o.hh=+hs.value;if(o.sel)dpSet(false)};if(ms)ms.onchange=()=>{o.mm=+ms.value;if(o.sel)dpSet(false)}}
+function dpAct(b){const o=dpOpen,a=b.dataset.a;if(!o)return;
+ if(b.dataset.d){const [y,m,d]=b.dataset.d.split("-").map(Number);o.sel={y,m,d};o.y=y;o.m=m;if(o.dt){dpSet(false);dpDraw()}else dpSet(true);return}
+ if(b.dataset.y){o.y=+b.dataset.y;o.mode="m";return dpDraw()}if(b.dataset.m){o.m=+b.dataset.m;o.mode="d";return dpDraw()}
+ if(a=="mp"){o.m--;if(o.m<0){o.m=11;o.y--}}else if(a=="mn"){o.m++;if(o.m>11){o.m=0;o.y++}}else if(a=="mo")o.mode="m";else if(a=="yr")o.mode="y";
+ else if(a=="ymp")o.y--;else if(a=="ymn")o.y++;else if(a=="yp")o.y-=16;else if(a=="yn")o.y+=16;
+ else if(a=="clr"){const i=o.i;dpClose();if(i.value){i.value="";dpFire(i)}return}
+ else if(a=="tod"){const t=new Date();o.sel={y:t.getFullYear(),m:t.getMonth(),d:t.getDate()};o.y=o.sel.y;o.m=o.sel.m;if(o.dt){o.hh=t.getHours();o.mm=t.getMinutes();dpSet(false);dpDraw()}else dpSet(true);return}
+ else if(a=="ok"){if(o.sel)dpSet(true);else dpClose();return}
+ dpDraw();dpPlace()}
+function dpFire(i){i.dispatchEvent(new Event("input",{bubbles:true}));i.dispatchEvent(new Event("change",{bubbles:true}))}
+function dpSet(close){const o=dpOpen;if(!o||!o.sel)return;const s=o.sel,v=`${s.y}-${p2d(s.m+1)}-${p2d(s.d)}`+(o.dt?`T${p2d(o.hh)}:${p2d(o.mm)}`:"");const i=o.i;
+ if(close)dpClose();if(i.value!==v){i.value=v;dpFire(i)}}
+function dpPlace(){const o=dpOpen;if(!o||!document.body.contains(o.i))return;const r=o.i.getBoundingClientRect(),W=288,H=o.p.offsetHeight||340,vh=innerHeight,up=vh-r.bottom<H+16&&r.top>H+16;
+ o.p.style.left=Math.max(8,Math.min(r.left,innerWidth-W-8))+"px";o.p.style.top=(up?r.top-H-6:r.bottom+6)+"px"}
+function dpClose(){if(!dpOpen)return;dpOpen.p.remove();dpOpen=null}
+document.addEventListener("click",()=>dpClose());window.addEventListener("resize",()=>dpPlace());document.addEventListener("scroll",e=>{if(dpOpen&&!dpOpen.p.contains(e.target))dpPlace()},true);
 /* ---------- Couche de données (Firebase ou local) ---------- */
 /* Organisation de la base : chaque type de donnée est rangé dans un dossier lisible, avec des sous-dossiers
    (département, catégorie, mois, utilisateur…). L'application continue de manipuler des listes à plat (S.xxx[id]) :
@@ -634,7 +707,7 @@ function render(){watchMessages();
  let h;try{h=page()}catch(e){console.error(e);h=`<div class="login"><div class="box card"><h3>Erreur d'affichage</h3><p class="mu">${esc(e.message)}</p><button class="btn" onclick="modal=null;go('accueil')">Revenir à l'accueil</button></div></div>`}
  root.innerHTML=h;
  for(const id in keep){const e=document.getElementById(id);if(e&&e.type!="checkbox"&&!e.hasAttribute("data-nokeep")&&e.value!==keep[id]){if(e.tagName=="SELECT"&&![...e.options].some(o=>o.value==keep[id]))continue;e.value=keep[id]}}
- try{enhanceSelects(root)}catch(x){console.error(x)}
+ try{enhanceSelects(root);enhanceDates(root)}catch(x){console.error(x)}
  if(fid){const e=document.getElementById(fid);if(e){const t=e.tagName=="SELECT"&&e.parentNode.classList.contains("cs")?e.parentNode.querySelector(".cs-btn"):e;t.focus({preventScroll:true});try{if(ss!=null)e.setSelectionRange(ss,se)}catch(x){}}}
  const mb2=root.querySelector(".modal-bg");if(mb2)mb2.scrollTop=ms;const mbd2=root.querySelector(".modal .mb");if(mbd2)mbd2.scrollTop=mbs;
  const tb2=root.querySelector(".thread .body");if(tb2)tb2.scrollTop=tAtEnd?tb2.scrollHeight:ts;
@@ -666,7 +739,7 @@ function closeSide(){$(".side")&&$(".side").classList.remove("open");$(".scrim")
 document.addEventListener("keydown",e=>{if(e.key=="Escape"&&modal){modal.type=="confirm"?askNo():closeM()}});
 
 /* ---------- Icônes ---------- */
-const IC={bell:"M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9|M13.7 21a2 2 0 0 1-3.4 0",search:"c11,11,7|M21 21l-4.3-4.3",grid:"M3 3h7v7H3z|M14 3h7v7h-7z|M3 14h7v7H3z|M14 14h7v7h-7z",briefcase:"M3 7h18v13H3z|M8 7V4h8v3|M3 13h18",home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
+const IC={cal:"M8 2v4|M16 2v4|M3 10h18|M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z",bell:"M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9|M13.7 21a2 2 0 0 1-3.4 0",search:"c11,11,7|M21 21l-4.3-4.3",grid:"M3 3h7v7H3z|M14 3h7v7h-7z|M3 14h7v7H3z|M14 14h7v7h-7z",briefcase:"M3 7h18v13H3z|M8 7V4h8v3|M3 13h18",home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
 function ic(n){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(IC[n]||"").split("|").map(p=>p[0]=="c"?(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`)(p.slice(1).split(",")):`<path d="${p}"/>`).join("")}</svg>`}
 function seal(){const src=(S.config&&S.config.logo)||"logo.png";return `<img class="logo" src="${esc(src)}" alt="Sceau du gouvernement" onerror="this.outerHTML=sealSvg()">`}
 function setFavicon(){let l=document.querySelector("link[rel=icon]");if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l)}l.href=(S.config&&S.config.logo)||"logo.png"}
@@ -914,9 +987,9 @@ function acteMatch(a,q){if(!q)return true;const hay=norm([a.num,a.nom,a.prenom,a
 function ecView(){const cat=filt.ecc||"",q=filt.ecq||"",showDel=cat=="_del";const all=vals(S.actes);const live=all.filter(a=>!a.del);
  let L=(showDel?all.filter(a=>a.del):live.filter(a=>!cat||a.cat==cat)).filter(a=>acteMatch(a,q)).sort((a,b)=>b.t-a.t);
  const cnt=k=>live.filter(a=>a.cat==k).length;
- return `<div class="ec"><aside class="ec-side card"><button class="ec-c ${!cat?"on":""}" onclick="filt.ecc='';render()"><span class="ec-h">#</span><span class="ec-e">\u{1F4DA}</span><span class="ec-s">┊</span><span class="ec-n">Tous les actes</span><span class="ec-k">${live.length}</span></button>
- ${EC_CATS.map(([k,l,e])=>`<button class="ec-c ${cat==k?"on":""}" onclick="filt.ecc='${k}';render()"><span class="ec-h">#</span><span class="ec-e">${e}</span><span class="ec-s">┊</span><span class="ec-n">${esc(l)}</span><span class="ec-k">${cnt(k)}</span></button>`).join("")}
- ${isDir()?`<button class="ec-c ${showDel?"on":""}" onclick="filt.ecc='_del';render()" style="margin-top:8px"><span class="ec-h">#</span><span class="ec-e">\u{1F5D1}\u{FE0F}</span><span class="ec-s">┊</span><span class="ec-n">Actes supprimés</span><span class="ec-k">${all.length-live.length}</span></button>`:""}</aside>
+ return `<div class="ec"><aside class="ec-side card"><button class="ec-c ${!cat?"on":""}" onclick="filt.ecc='';render()"><span class="ec-e">\u{1F4DA}</span><span class="ec-n">Tous les actes</span><span class="ec-k">${live.length}</span></button>
+ ${EC_CATS.map(([k,l,e])=>`<button class="ec-c ${cat==k?"on":""}" onclick="filt.ecc='${k}';render()"><span class="ec-e">${e}</span><span class="ec-n">${esc(l)}</span><span class="ec-k">${cnt(k)}</span></button>`).join("")}
+ ${isDir()?`<button class="ec-c ${showDel?"on":""}" onclick="filt.ecc='_del';render()" style="margin-top:8px"><span class="ec-e">\u{1F5D1}\u{FE0F}</span><span class="ec-n">Actes supprimés</span><span class="ec-k">${all.length-live.length}</span></button>`:""}</aside>
  <div><div class="card"><div class="inl"><input id="q_ecq" placeholder="Rechercher : nom, prénom, numéro, date de naissance, n° d'acte…" value="${esc(q)}" oninput="filt.ecq=this.value;render()" style="flex:1;min-width:220px">${can("reg.civ.edit")&&!showDel?`<button class="btn" onclick="openActeEdit()">${ic("plus")}Nouvel acte${cat&&ECL[cat]?" — "+esc(ECL[cat][1]):""}</button>`:""}</div>
  <div class="mu sm" style="margin-top:6px">${L.length} acte(s)${q?" correspondant à la recherche":""}${cat&&ECL[cat]?" · "+ECL[cat][2]+" "+esc(ECL[cat][1]):showDel?" · supprimés":""}</div></div>
  <div class="card tw"><table><tr><th>N° d'acte<th>Catégorie<th>Personne concernée<th>Numéro<th>Naissance<th>Date de l'acte<th>Pièces<th>Enregistré</tr>${L.map(a=>`<tr class="click" onclick="openActe('${a.id}')"><td class="nw b">${esc(a.num)}<td class="nw">${(ECL[a.cat]||["","?","\u{1F4C4}"])[2]} ${esc((ECL[a.cat]||["","Autre"])[1])}<td><b>${esc(a.nom)}</b> ${esc(a.prenom)}<td class="nw">${esc(a.tel||"—")}<td class="nw">${a.naiss?fdd(a.naiss):"—"}<td class="nw">${a.dateActe?fdd(a.dateActe):"—"}<td>\u{1F4CE} ${Object.keys(a.files||{}).length}<td class="nw mu sm">${fd(a.t)}<br>${esc(a.byNom||"")}</tr>`).join("")||`<tr><td colspan="8" class="empty">${q?"Aucun acte ne correspond à la recherche.":"Aucun acte enregistré."}</td></tr>`}</table></div></div></div>`}
