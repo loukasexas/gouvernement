@@ -115,6 +115,11 @@ td input,td select{margin:0;width:110px;padding:5px 8px}
 .thread .body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;max-height:62vh}
 .bub{max-width:75%;padding:8px 12px;border-radius:12px;background:var(--cd2);border:1px solid var(--bd);white-space:pre-wrap;word-wrap:break-word}
 .bub.me{align-self:flex-end;background:rgba(201,162,74,.16);border-color:rgba(201,162,74,.4)}
+.msep{display:flex;align-items:center;gap:10px;color:var(--mu);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin:6px 0}.msep:before,.msep:after{content:"";flex:1;height:1px;background:var(--bd)}
+.bub .mt{margin-top:2px;font-size:10.5px}.bub.grp{margin-top:-5px}
+.splash .sp-t{font-weight:700;letter-spacing:.04em;margin-top:6px}.sp-bar{height:4px;border-radius:99px;background:var(--cd2);overflow:hidden;margin:14px auto 10px;max-width:280px}.sp-bar span{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));transform-origin:left;animation:spfill linear forwards}
+@keyframes spfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}.sp-m{min-height:18px}
+@media (prefers-reduced-motion:reduce){.sp-bar span{animation:none}}
 .thread .send{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd)}
 .thread .send textarea{margin:0;min-height:42px;height:42px}
 .ann{border-left:3px solid var(--gold)}.ann.pin{border-left-color:var(--no)}
@@ -276,6 +281,8 @@ const money=n=>Math.round(+n||0).toLocaleString("fr-FR")+" $";
 const num=v=>{const n=parseFloat(String(v).replace(",","."));return isNaN(n)?0:n};
 const opts=(a,sel)=>a.map(x=>Array.isArray(x)?`<option value="${esc(x[0])}" ${x[0]==sel?"selected":""}>${esc(x[1])}</option>`:`<option ${x==sel?"selected":""}>${esc(x)}</option>`).join("");
 const bdg=(m,s)=>{const x=m[s]||[s,"mu"];return `<span class="bdg ${x[1]}">${esc(x[0])}</span>`};
+let srvOff=0;const srvNow=()=>Date.now()+srvOff; // heure du serveur (corrige les horloges décalées des joueurs)
+const msgCmp=(a,b)=>(a.t-b.t)||String(a.id).localeCompare(String(b.id));
 const nid=()=>DB_URL&&window.firebase?firebase.database().ref().push().key:(Date.now().toString(36)+Math.random().toString(36).slice(2,9));
 const DEPTS=()=>(S.config.depts&&S.config.depts.length?S.config.depts:DEF_DEPTS);
 const U=id=>S.users[id];
@@ -328,6 +335,7 @@ function startData(){
   try{firebase.initializeApp({databaseURL:DB_URL});db=firebase.database()}catch(e){bootErr="Impossible d'initialiser Firebase : "+e.message;render();return}
   const loaded=new Set(),all=[...COLS,"config"];
   db.ref(".info/connected").on("value",s=>{connected=!!s.val();schedule()});
+  db.ref(".info/serverTimeOffset").on("value",s=>{srvOff=+s.val()||0});
   all.forEach(c=>{let r=db.ref(ROOT+"/"+c);if(c=="logs"||c=="messages")r=r.limitToLast(c=="logs"?800:1500);
    r.on("value",s=>{S[c]=s.val()||{};if(!loaded.has(c)){loaded.add(c);if(loaded.size==all.length)boot()}schedule()},
    e=>{bootErr="Accès à la base refusé : vérifie l'URL et les règles Firebase. ("+e.message+")";render()})});
@@ -410,9 +418,16 @@ function sealSvg(){return `<svg viewBox="0 0 200 200" role="img" aria-label="Sce
 </script>
 <script>
 /* =================== STRUCTURE =================== */
+/* Écran de connexion au serveur : 3 s au chargement du site et à la connexion, jamais pendant l'utilisation */
+const SPLASH_MS=(()=>{try{const v=localStorage.getItem("lsgov_splash_ms");return v!=null?+v:3000}catch(e){return 3000}})();let splashFrom=Date.now(),splashUntil=splashFrom+SPLASH_MS,splashT=null;
+function startSplash(){splashFrom=Date.now();splashUntil=splashFrom+SPLASH_MS;render()}
+function splashH(){const el=Date.now()-splashFrom,left=Math.max(0,splashUntil-Date.now());
+ const st=[[0,"Établissement de la liaison sécurisée…"],[Math.round(SPLASH_MS*.3),"Vérification des accréditations…"],[Math.round(SPLASH_MS*.63),"Synchronisation des registres officiels…"]];
+ if(!splashT&&left>0){const nx=st.map(x=>x[0]).find(x=>x>el);splashT=setTimeout(()=>{splashT=null;render()},(nx!=null?nx-el:left)+30)}const msg=(el>=SPLASH_MS&&!ready)?"Connexion au serveur gouvernemental…":st.filter(s=>el>=s[0]).pop()[1];
+ return `<div class="login"><div class="box splash"><div class="seal">${seal()}</div><div class="sp-t">Connexion au serveur gouvernemental</div><div class="sp-bar"><span style="animation-duration:${SPLASH_MS}ms;animation-delay:-${Math.min(el,SPLASH_MS-1)}ms"></span></div><p class="mu sm sp-m">${esc(msg)}</p></div></div>`}
 function page(){
  if(bootErr&&!ready)return `<div class="login"><div class="box"><div class="seal">${seal()}</div><div class="card"><h3>Connexion à la base impossible</h3><p class="err">${esc(bootErr)}</p></div></div></div>`;
- if(!ready)return `<div class="login"><div class="box"><div class="seal">${seal()}</div><p class="mu">Connexion au serveur gouvernemental…</p></div></div>`;
+ if(!ready||Date.now()<splashUntil)return splashH();
  const u=ME();
  if(!u||u.active===false){meId=null;return loginPage()+modalH()}
  if(u.mustChange)return pwChangePage();
@@ -806,15 +821,16 @@ const CATS=["Impôts","Amendes","Factures","Salaires","Subventions","Fonctionnem
 V.annonces=()=>`<div class="ph"><h2>Annonces officielles</h2></div>${can("com.post")?`<div class="card"><h3>Publier une annonce</h3><div class="form"><label class="f full">Titre<input id="at1" maxlength="120"></label><label class="f full">Contenu<textarea id="at2" rows="4"></textarea></label>
  <label class="f">Destinataires<select id="at3">${opts([["all","Tout le monde"],["agents","Tous les agents"],["entreprises","Entreprises"]].concat(DEPTS().map(d=>[d,"Département "+d])))}</select></label><label class="ck" style="margin-top:22px"><input type="checkbox" id="at4"><span>Épingler en haut</span></label></div><button class="btn" onclick="addAnn()">Publier</button><p class="err" id="msg"></p></div>`:""}
  ${visibleAnn().map(annCard).join("")||`<div class="card">${empty("Aucune annonce.")}</div>`}`;
-function convs(){const m=meId,o={};vals(S.messages).forEach(x=>{if(x.from!=m&&x.to!=m)return;const w=x.from==m?x.to:x.from;if(!o[w])o[w]={w,last:0,n:0,txt:""};if(x.t>o[w].last){o[w].last=x.t;o[w].txt=x.txt}if(x.to==m&&!x.read)o[w].n++});return Object.values(o).sort((a,b)=>b.last-a.last)}
+function convs(){const m=meId,o={};vals(S.messages).forEach(x=>{if(x.from!=m&&x.to!=m)return;const w=x.from==m?x.to:x.from;if(!o[w])o[w]={w,last:0,n:0,txt:""};if(x.t>o[w].last||(x.t==o[w].last&&String(x.id)>String(o[w].id||""))){o[w].last=x.t;o[w].id=x.id;o[w].txt=x.txt}if(x.to==m&&!x.read)o[w].n++});return Object.values(o).sort((a,b)=>b.last-a.last)}
 V.messages=()=>{const C=convs(),me=ME();if(!convWith&&C.length)convWith=C[0].w;
  const rec=vals(S.users).filter(u=>u.id!=meId&&u.active!==false&&(me.role!="entreprise"||isAgent(u))).sort((a,b)=>a.nom.localeCompare(b.nom));
- const M=convWith?vals(S.messages).filter(x=>(x.from==meId&&x.to==convWith)||(x.to==meId&&x.from==convWith)).sort((a,b)=>a.t-b.t):[];
+ const M=convWith?vals(S.messages).filter(x=>(x.from==meId&&x.to==convWith)||(x.to==meId&&x.from==convWith)).sort(msgCmp):[];
  const toRead=M.filter(x=>x.to==meId&&!x.read);if(toRead.length&&view=="messages"){const up={};toRead.forEach(x=>up[x.id+"/read"]=true);setTimeout(()=>DBX.update("messages",up),0)}
  const w=convWith&&U(convWith);
  return `<div class="ph"><h2>Messagerie</h2><div class="inl"><select id="mto" style="max-width:280px"><option value="">Nouvelle conversation avec…</option>${rec.map(u=>`<option value="${u.id}">${esc(u.nom)} — ${esc(gname(u))}${u.dept?" ("+esc(u.dept)+")":""}</option>`).join("")}</select><button class="btn sec" onclick="if(val('mto')){convWith=val('mto');keep.mto='';render()}">Ouvrir</button></div></div>
  <div class="msgs"><div class="conv">${C.map(c=>`<div class="ci ${c.w==convWith?"on":""}" onclick="convWith='${c.w}';render()"><div class="inl" style="justify-content:space-between"><b>${esc(uname(c.w))}</b>${c.n?`<span class="bdg no">${c.n}</span>`:""}</div><div class="mu" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.txt)}</div></div>`).join("")||`<div class="empty">Aucune conversation.</div>`}</div>
- <div class="thread">${w?`<div style="padding:12px 14px;border-bottom:1px solid var(--bd)"><b>${esc(w.nom)}</b> <span class="mu">· ${esc(gname(w))}${w.dept?" · "+esc(w.dept):""}</span></div><div class="body">${M.map(x=>`<div class="bub ${x.from==meId?"me":""}">${esc(x.txt)}<div class="mu sm" style="margin-top:2px">${fd(x.t)}${x.from==meId&&x.read?" · lu":""}</div></div>`).join("")||`<div class="empty">Démarrez la conversation.</div>`}</div>
+ <div class="thread">${w?`<div style="padding:12px 14px;border-bottom:1px solid var(--bd)"><b>${esc(w.nom)}</b> <span class="mu">· ${esc(gname(w))}${w.dept?" · "+esc(w.dept):""}</span></div><div class="body">${M.map((x,i)=>{const d=new Date(x.t),day=d.toDateString(),pv=M[i-1],grp=pv&&pv.from==x.from&&x.t-pv.t<120000&&new Date(pv.t).toDateString()==day;
+  return `${!pv||new Date(pv.t).toDateString()!=day?`<div class="msep"><span>${day==new Date().toDateString()?"Aujourd'hui":d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}</span></div>`:""}<div class="bub ${x.from==meId?"me":""} ${grp?"grp":""}" title="${d.toLocaleString("fr-FR")}">${esc(x.txt)}<div class="mu sm mt">${d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}${x.from==meId&&x.read?" · lu":""}</div></div>`}).join("")||`<div class="empty">Démarrez la conversation.</div>`}</div>
  <div class="send"><textarea id="mtx" placeholder="Votre message…" onkeydown="if(event.key=='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea><button class="btn" onclick="sendMsg()">Envoyer</button></div>`:`<div class="empty" style="margin:auto">Sélectionnez ou démarrez une conversation.</div>`}</div></div>`};
 
 /* =================== ANNUAIRE =================== */
@@ -863,7 +879,7 @@ function MGrade(){const g=modal.id?S.grades[modal.id]:{role:"fonctionnaire",dept
  <label class="f">Rattaché au rôle<select id="gr" onchange="keep.gr=this.value;render()" ${dir?"":"disabled"}>${opts(Object.entries(ROLES).filter(r=>r[0]!="entreprise"),role)}</select></label>
  <label class="f">Département<select id="gd" ${dir?"":"disabled"}>${opts([["","Tous les départements"]].concat(DEPTS().map(d=>[d,d])),g.dept||"")}</select></label></div>
  <details class="pe-pay" open><summary>Rémunération et affichage</summary>${(()=>{const r=modal.id?gridRow(g):null,own=g.pBase!=null&&g.pBase!=="";return `<p class="mu sm" style="margin:10px 0 0">${r?`Grille salariale : <b>${esc(GRILLE[gradeCode(g)][0])} — ${esc(r[0])}</b> · base ${money(r[1])}${r[2]?` · maximal ${money(r[2])} · ${money(r[3])}/h sup.`:" (fixe)"} — laissez les champs vides pour appliquer la grille.`:`Ce grade ne correspond à aucune ligne de la grille salariale : renseignez sa rémunération, sinon son salaire sera nul.`}${dir?"":" Seule la Direction peut modifier la rémunération."}</p><div class="form" style="margin-top:10px"><label class="f">Salaire de base ($)<input id="gpb" type="number" min="0" value="${own?num(g.pBase):""}" placeholder="${r?r[1]:""}" ${dir?"":"disabled"}></label><label class="f">Salaire maximal ($, vide = fixe)<input id="gpm" type="number" min="0" value="${own&&num(g.pMax)?num(g.pMax):""}" placeholder="${r&&r[2]?r[2]:""}" ${dir?"":"disabled"}></label><label class="f">Taux horaire heures sup. ($)<input id="gpr" type="number" min="0" value="${own&&num(g.pRate)?num(g.pRate):""}" placeholder="${r&&r[3]?r[3]:""}" ${dir?"":"disabled"}></label>`})()}<label class="f">Ordre hiérarchique (0 = plus haut)<input id="grk" type="number" min="0" value="${num(g.rank)}"></label><label class="f">Couleur du badge<input id="gc" type="color" value="${esc(g.color||"#c9a24a")}"></label></div></details></div>
- ${role=="direction"?`<div class="pe-card"><p class="mu" style="margin:0">Le rôle Direction dispose automatiquement de toutes les permissions.</p></div>`:permEditor(!dir)}<p class="err" id="msg"></p>`,
+ ${role!="direction"&&modal.id&&gradeDefPerms(g)?`<div class="inl" style="justify-content:flex-end;margin:-4px 0 10px"><span class="mu sm">Ce grade figure dans la grille officielle.</span><button class="btn sec sm" onclick="peDefault()">Appliquer les permissions par défaut du grade</button></div>`:""}${role=="direction"?`<div class="pe-card"><p class="mu" style="margin:0">Le rôle Direction dispose automatiquement de toutes les permissions.</p></div>`:permEditor(!dir)}<p class="err" id="msg"></p>`,
  foot:`${modal.id&&(dir||gradeEditable(g))?`<button class="btn gh" style="margin-right:auto" onclick="delGrade('${modal.id}')">Supprimer</button>`:""}<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="saveGrade('${modal.id||""}')">Valider</button>`}}
 function MUser(u){if(!u||!manageable(u))return null;if(!modal.draft)modal.draft=Object.assign({},u.xperms||{});modal.lock=false;const dir=isDir();const role=keep.er||u.role,dept=dir?(keep.ed??u.dept??""):u.dept;
  const gl=vals(S.grades).filter(g=>g.role==role&&(!g.dept||!dept||g.dept==dept)&&(dir||g.role=="fonctionnaire"));
@@ -988,16 +1004,36 @@ function MPaieArch(a){if(!a)return null;const F=payFolders();if(!F.some(f=>f[0]=
 
 /* Grades officiels générés depuis la grille salariale */
 const GCOL={_dir:"#c9a24a",fin:"#22c55e",ec:"#a78bfa",jus:"#94a3b8",int:"#3b82f6",com:"#ec4899",sec:"#f97316"};
-function gridPerms(dc,name,i){const n=NRM(name),S0=["annuaire","dos.view","dos.treat"],L=[...S0];const add=(...a)=>L.push(...a);
- if(dc!="_dir"&&i<2){add("dash","dos.assign","rh.view","rh.create","rh.edit","rh.grades","rh.sanction","pay.dept","log.dept","rec.view","rec.treat","rec.cv");
-  ({fin:()=>add("fin.view","fin.edit","fin.bill","fin.decl","fin.budget","fin.archive","reg.ent.view","reg.ent.edit"),ec:()=>add("reg.civ.view","reg.civ.edit","rec.bl"),jus:()=>add("jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view"),int:()=>add("reg.ent.view","reg.civ.view"),com:()=>add("com.post","com.banner"),sec:()=>add("sec.archive")}[dc]||(()=>0))()}
- else if(dc=="fin"){add("fin.view","fin.bill","reg.ent.view");if(i<6)add("fin.edit","fin.decl","fin.budget","fin.archive","reg.ent.edit");if(/controle|referent/.test(n))add("fin.decl")}
- else if(dc=="ec"){add("reg.civ.view","reg.civ.edit");if(n.includes("ressources humaines"))add("rec.cv");if(n.includes("directeur rh"))add("rec.view","rec.treat","rec.cv","rec.bl","rh.view");if(n.includes("formateur"))add("rec.view")}
- else if(dc=="jus"){add("jus.view","jus.instruct");if(/responsable|chief|juge/.test(n))add("jus.status","jus.verdict","fin.bill");if(/procureur|responsable|secretaire/.test(n))add("jus.open");if(/responsable|chief|general/.test(n))add("jus.secret")}
- else if(dc=="int")add("reg.ent.view","reg.civ.view");
- else if(dc=="com"){add("com.post");if(i<6)add("com.banner")}
- else if(dc=="sec"){if(i<5)add("sec.archive")}
+/* Permissions par défaut de chaque grade officiel (cohérentes avec le poste) */
+const DEFP_DEPT={fin:["fin.view","fin.edit","fin.bill","fin.decl","fin.budget","fin.archive","reg.ent.view","reg.ent.edit"],ec:["reg.civ.view","reg.civ.edit","rec.view","rec.treat","rec.cv","rec.bl"],
+ jus:["jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view"],int:["reg.ent.view","reg.civ.view","dos.all"],com:["com.post","com.banner"],sec:["sec.archive","reg.civ.view"]};
+const DEFP={
+ fin:{"Directeur Financier":["dash","dos.assign","fin.view","fin.edit","fin.bill","fin.decl","fin.budget","fin.archive","reg.ent.view","reg.ent.edit","rh.view","rh.sanction"],
+  "Secrétaire des Finances":["fin.view","fin.edit","fin.bill","fin.decl","reg.ent.view","reg.ent.edit"],
+  "Responsable Contrôle Fiscaux":["fin.view","fin.bill","fin.decl","fin.budget","fin.archive","reg.ent.view"],
+  "Responsable Comptables":["fin.view","fin.edit","fin.bill","fin.decl","fin.archive","reg.ent.view","reg.ent.edit"],
+  "Référent Fiscal":["fin.view","fin.bill","fin.decl","fin.budget","reg.ent.view"],"Expert Comptable":["fin.view","fin.edit","fin.bill","fin.decl","reg.ent.view","reg.ent.edit"],
+  "Contrôleur Fiscal":["fin.view","fin.bill","fin.decl","reg.ent.view"],"Comptable":["fin.view","fin.edit","fin.bill","reg.ent.view"],"Assistant Comptable":["fin.view","fin.bill","reg.ent.view"]},
+ ec:{"Directeur RH":["dash","dos.assign","reg.civ.view","reg.civ.edit","rec.view","rec.treat","rec.cv","rec.bl","rh.view","rh.create","rh.edit","rh.sanction"],
+  "Formateur E.C":["reg.civ.view","reg.civ.edit","rec.view","rec.cv"],"Ressources Humaines":["reg.civ.view","reg.civ.edit","rec.view","rec.cv","rh.view"],"Secrétaire":["reg.civ.view","reg.civ.edit"]},
+ jus:{"Responsable Judiciaire":["dash","dos.assign","jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view","rh.view","rh.sanction"],
+  "Secrétaire Justice":["jus.view","jus.open","jus.instruct","jus.status","reg.civ.view"],
+  "Chief Justice":["jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view"],
+  "Procureur Général":["jus.view","jus.open","jus.instruct","jus.status","jus.secret","reg.civ.view","reg.ent.view"],
+  "Juge":["jus.view","jus.instruct","jus.status","jus.verdict","fin.bill","reg.civ.view"],"Procureur":["jus.view","jus.open","jus.instruct","reg.civ.view"],
+  "Juge Assesseur":["jus.view","jus.instruct","jus.status"],"Substitut du Procureur":["jus.view","jus.open","jus.instruct"],
+  "Commissaire de Justice":["jus.view","jus.instruct","fin.bill","reg.ent.view"],"Secrétaire Juridique":["jus.view","jus.open"]},
+ int:{"Secrétaire de l'Intérieur":["dos.assign","dos.all","reg.ent.view","reg.civ.view"],"Superviseur":["dos.all","reg.ent.view","reg.civ.view"]},
+ com:{"Directeur Communication":["dash","com.post","com.banner","rh.view","rh.sanction"],"Secrétaire Com":["com.post","com.banner"],"Responsable Com":["com.post","com.banner"],
+  "Responsable Prod":["com.post"],"Chargé de production":["com.post"],"Chargé de communication":["com.post"]},
+ sec:{"Assistant de Direction":["sec.archive","reg.civ.view","rh.view"],"Secrétaire":["sec.archive"],"Chef Sécurité":["sec.archive","reg.civ.view","rh.view","rh.sanction"],
+  "Référent":["reg.civ.view"],"Agent Superviseur":["reg.civ.view"],"Agent Expérimenté":[],"Agent Confirmé":[],"Agent Probatoire":[]}};
+function gridPerms(dc,name,i){if(dc=="_dir")return {};const L=["annuaire","dos.view","dos.treat"];
+ if(i<2){L.push("dash","dos.assign","rh.view","rh.create","rh.edit","rh.sanction","pay.dept","log.dept","rec.view","rec.treat","rec.cv",...(DEFP_DEPT[dc]||[]));if(i==0)L.push("dos.delete","rh.delete","rh.grades");if(i==0&&dc=="jus")L.push("jus.delete")}
+ else{const d=(DEFP[dc]||{})[name];if(d)L.push(...d);else L.push(...(DEFP_DEPT[dc]||[]).filter(k=>/view$/.test(k)))}
  return Object.fromEntries([...new Set(L)].map(k=>[pk(k),true]))}
+/* Permissions par défaut d'un grade existant (d'après sa ligne de la grille) */
+function gradeDefPerms(g){const r=gridRow(g);if(!r)return null;const dc=gradeCode(g),i=GRILLE[dc][1].indexOf(r);return gridPerms(dc,r[0],i)}
 function gridTargets(){const T=[];Object.entries(GRILLE).forEach(([dc,[nm,R]])=>{const dept=dc=="_dir"?"":DEPTS().find(d=>dcode(d)==dc);if(dept===undefined)return;
  R.forEach((r,i)=>T.push({dc,dept,r,i,name:r[0],role:dc=="_dir"?"direction":i<2?"encadrement":"fonctionnaire",rank:i,color:GCOL[dc]||"#c9a24a",perms:dc=="_dir"?{}:gridPerms(dc,r[0],i)}))});return T}
 function gridPlan(){const T=gridTargets(),used=new Set(),G=vals(S.grades),up=[],cr=[];
@@ -1006,7 +1042,8 @@ function gridPlan(){const T=gridTargets(),used=new Set(),G=vals(S.grades),up=[],
 function MGridReplace(){if(!isDir())return null;const P=gridPlan();
  return {title:"Remplacer les grades par la grille officielle",wide:1,body:`<p>Tous les grades seront alignés sur la grille salariale (${P.T.length} grades, classés par département et par rang).</p>
  <div class="kpis">${kpi("Grades conservés et renommés",P.up.length)}${kpi("Grades créés",P.cr.length)}${kpi("Anciens grades supprimés",P.del.length)}</div>
- <p class="mu sm">Les grades conservés gardent leurs agents et leurs permissions actuelles (complétées par les permissions par défaut du poste). Les grades créés reçoivent des permissions par défaut adaptées au poste (modifiables ensuite).</p>
+ <p class="mu sm">Les grades conservés gardent leurs agents. Chaque grade reçoit les permissions par défaut de son poste (un Juge reçoit les permissions judiciaires d'un juge, un agent de sécurité celles de la Sécurité, etc.), modifiables ensuite.</p>
+ <label class="ck"><input type="checkbox" id="grkeep"><span>Conserver en plus les permissions actuelles des grades conservés</span></label>
  ${P.up.filter(x=>x.g.name!=x.t.name).length?`<h4>Renommés</h4><p class="sm">${P.up.filter(x=>x.g.name!=x.t.name).map(x=>`${esc(x.g.name)} → <b>${esc(x.t.name)}</b> (${esc(x.t.dept||"Direction")})`).join(" · ")}</p>`:""}
  ${P.del.length?`<h4>Supprimés</h4><p class="sm">${P.del.map(g=>esc(g.name)+(g.dept?" ("+esc(g.dept)+")":"")).join(" · ")}</p>`:""}
  ${P.lost.length?`<div class="card" style="border-color:var(--wa)"><b>${P.lost.length} agent(s) perdront leur grade</b> et devront être réaffectés dans Personnel → Comptes :<div class="sm" style="margin-top:6px">${P.lost.map(u=>`${esc(u.nom)} (${esc(gname(u))}${u.dept?", "+esc(u.dept):""})`).join(" · ")}</div></div>`:""}<p class="err" id="msg"></p>`,
@@ -1239,7 +1276,7 @@ async function login(){const l=tval("li"),p=val("lp");if(!l||!p)return say("Rens
  const u=vals(S.users).find(x=>x.login.toLowerCase()==l.toLowerCase());
  if(!u||u.hash!==await hashPw(u.login,p))return say("Identifiant ou mot de passe incorrect.");
  if(u.active===false)return say("Ce compte est suspendu. Contactez votre hiérarchie.");
- meId=u.id;lsSet("lsgov_session",u.id);view="accueil";keep={};lastUnread=-1;DBX.update("users/"+u.id,{lastLogin:Date.now()});log("Connexion à l'intranet",u.dept,"Connexion");render()}
+ meId=u.id;lsSet("lsgov_session",u.id);view="accueil";keep={};lastUnread=-1;DBX.update("users/"+u.id,{lastLogin:Date.now()});log("Connexion à l'intranet",u.dept,"Connexion");startSplash()}
 function logout(){meId=null;lsSet("lsgov_session",null);modal=null;keep={};convWith=null;render()}
 async function forcePw(){const a=val("np1"),b=val("np2");if(a.length<4)return say("Au moins 4 caractères.");if(a!==b)return say("Les deux mots de passe diffèrent.");
  const u=ME();if(await hashPw(u.login,a)==u.hash)return say("Choisissez un mot de passe différent de l'ancien.");
@@ -1447,7 +1484,7 @@ function archCSV(id){const a=S.archives[id],q=v=>'"'+String(v==null?"":v).replac
 function addAnn(){const t=tval("at1"),x=tval("at2");if(!t||!x)return say("Titre et contenu requis.");const id=nid(),u=ME();
  DBX.set("annonces/"+id,{id,titre:t,txt:x,cible:val("at3"),pin:!!val("at4"),t:Date.now(),by:u.id,nom:u.nom+" — "+gname(u)});log("Annonce publiée : "+t,u.dept,"Communication");clr("at1","at2","at4");toast("Annonce publiée.")}
 function delAnn(id){const a=S.annonces[id];ask("Supprimer l'annonce « "+a.titre+" » ?",()=>{DBX.remove("annonces/"+id);log("Annonce supprimée : "+a.titre,ME().dept,"Communication")},"Supprimer")}
-function sendMsg(){const t=tval("mtx");if(!t||!convWith)return;const id=nid();DBX.set("messages/"+id,{id,from:meId,to:convWith,txt:t,t:Date.now(),read:false});clr("mtx");setTimeout(()=>{const e=$("#mtx");e&&e.focus()},60)}
+function sendMsg(){const t=tval("mtx");if(!t||!convWith)return;const id=nid();DBX.set("messages/"+id,{id,from:meId,to:convWith,txt:t,t:srvNow(),read:false});clr("mtx");setTimeout(()=>{const e=$("#mtx");e&&e.focus()},60)}
 
 /* Personnel */
 async function addUser(){const dir=isDir(),nom=tval("cn"),l=tval("cl"),p=val("cp"),r=val("cr");
@@ -1484,8 +1521,8 @@ function importData(inp){const f=inp.files[0];if(!f)return;const r=new FileReade
 function wipeAll(){ask("Tout effacer définitivement ? Cette action est irréversible.",()=>{DBX.replaceAll({}).then(()=>{meId=null;lsSet("lsgov_session",null);ready=false;S={config:{}};COLS.forEach(c=>S[c]={});setTimeout(boot,600)})},"Tout effacer")}
 
 
-function gridReplace(){if(!isDir())return;const P=gridPlan(),o={};
- P.up.forEach(({g,t})=>o[g.id]=Object.assign({},g,{name:t.name,role:t.role,dept:t.dept,rank:t.rank,color:t.color,perms:t.role=="direction"?{}:Object.assign({},t.perms,g.perms||{})}));
+function gridReplace(){if(!isDir())return;const P=gridPlan(),o={},kp=!!val("grkeep");
+ P.up.forEach(({g,t})=>o[g.id]=Object.assign({},g,{name:t.name,role:t.role,dept:t.dept,rank:t.rank,color:t.color,perms:t.role=="direction"?{}:(kp?Object.assign({},t.perms,g.perms||{}):t.perms)}));
  P.cr.forEach((t,j)=>{const id=nid()+j;o[id]={id,name:t.name,role:t.role,dept:t.dept,rank:t.rank,color:t.color,perms:t.perms}});
  P.del.forEach(g=>o[g.id]=null);P.lost.forEach(u=>DBX.update("users/"+u.id,{gradeId:""}));
  DBX.update("grades",o);log(`Grades remplacés par la grille officielle : ${P.up.length} conservé(s), ${P.cr.length} créé(s), ${P.del.length} supprimé(s)`,"","Grades");toast("Grades remplacés par la grille officielle.");closeM()}
@@ -1517,6 +1554,7 @@ function sancSave(){const u=S.users[val("sau")];if(!u)return say("Choisissez l'a
 function sancLift(id){const s=S.sanctions[id];if(!s||!(isDir()||canSanction(S.users[s.uid])))return;ask(`Lever la sanction « ${SANC_T[s.type][0]} » de ${s.uNom} ?`,()=>{const m=ME();DBX.update("sanctions/"+id,{rev:true,revT:Date.now(),revNom:m.nom});log(`Sanction levée : ${SANC_T[s.type][0]} de ${s.uNom}`,s.dept,"Sanctions")},"Lever")}
 function sancDel(id){if(!isDir())return;const s=S.sanctions[id];ask(`Supprimer définitivement la sanction de ${s.uNom} de l'historique ?`,()=>{DBX.remove("sanctions/"+id);log(`Sanction supprimée de l'historique : ${SANC_T[s.type][0]} de ${s.uNom}`,s.dept,"Sanctions")},"Supprimer")}
 
+function peDefault(){const g=S.grades[modal.id],d=g&&gradeDefPerms(g);if(!d)return toast("Ce grade ne figure pas dans la grille officielle.",1);modal.draft={};Object.keys(d).forEach(K=>{const k=ALLP.find(x=>pk(x)==K);if(k&&!(modal.lock&&!can(k)))modal.draft[K]=true});toast("Permissions par défaut appliquées : cliquez sur Valider pour enregistrer.");render()}
 /* Recrutements */
 function openRecNew(){modal={type:"recNew",files:[]};keep={};render()}
 async function addRecFiles(list){if(!modal||modal.type!="recNew")return;const arr=[...(list||[])];if(!arr.length)return;modal.busy=1;render();modal.files=modal.files||[];
