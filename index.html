@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Intranet — Gouvernement de Los Santos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;800&family=Inter:wght@400;500;600;700&family=Mrs+Saint+Delafield&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <style>
@@ -428,6 +428,15 @@ td .cs-btn{height:34px}
 .sz{display:flex;align-items:center;gap:6px;padding:8px 10px;margin-bottom:6px;border:1px solid var(--bd);border-radius:11px;background:var(--bg2)}
 .sz-t{flex:1;min-width:0;font-weight:600;overflow-wrap:anywhere}
 .btn.dg{color:#f87171}
+/* Modèles de documents (Canva) */
+.tpl{position:relative;width:100%;max-width:820px;margin:0 auto 14px;aspect-ratio:1414/2000;background:#f7f7f9 center/100% 100% no-repeat;container-type:inline-size;font-family:Cinzel,Georgia,serif;color:#111318;box-shadow:0 6px 30px rgba(0,0,0,.35);overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact;letter-spacing:0}
+.tpl>*{position:absolute}.tpl .tv{white-space:nowrap;line-height:1.05;overflow-wrap:anywhere}.tpl .tv.c{text-align:center}.tpl .tv.tm{line-height:1.4}
+.tpl .tseal{object-fit:contain}
+.tpl .ts{font-family:"Mrs Saint Delafield","Brush Script MT",cursive;color:#14204a;text-align:center;white-space:nowrap;line-height:1;transform:rotate(-7deg);font-weight:400}
+.tpl .tx{left:0;right:0;top:42%;text-align:center;font-weight:900;font-size:15cqw;color:rgba(200,0,0,.3);transform:rotate(-28deg);letter-spacing:.05em}
+.tpl .tn{left:0;right:0;top:97.6%;text-align:center;font-size:1.15cqw;color:#8a8f99;font-family:Inter,system-ui,sans-serif;font-weight:600;letter-spacing:.04em}
+#jdprev .tpl,#sceauprev .tpl{max-width:560px}
+.seal-prev{width:180px;height:180px;border-radius:16px;background:#f7f7f9;display:flex;align-items:center;justify-content:center;padding:12px}.seal-prev img{max-width:100%;max-height:100%;object-fit:contain}
 </style></head>
 <body><div id="root"></div><div class="toasts" id="toasts"></div>
 <script>
@@ -457,7 +466,7 @@ const PERMS=[
  ["Général",[["dash","Peut voir le tableau de bord global"],["annuaire","Peut consulter l'annuaire des agents"]],"home"],
  ["Dossiers administratifs",[["dos.view","Peut voir les dossiers de son département"],["dos.treat","Peut accepter ou refuser un dossier"],["dos.assign","Peut assigner un dossier à un agent"],["dos.all","Peut voir les dossiers de tous les départements"],["dos.delete","Peut supprimer un dossier"]],"folder"],
  ["Traitement des plaintes",[["jus.view","Peut voir les plaintes"],["jus.open","Peut enregistrer et modifier des plaintes"],["jus.instruct","Peut ajouter des notes de suivi"],["jus.status","Peut changer le statut et fixer les audiences"],["jus.delete","Peut supprimer des plaintes"]],"scale"],
- ["Outils de justice",[["jus.tool","Outil de justice : consulter les jugements"],["jus.judge","Outil de justice : créer et modifier les jugements, générer la note MDT"],["jus.grid","Modifier la grille des infractions"],["jus.docs.view","Consulter les documents officiels"],["jus.docs","Rédiger des documents officiels"]],"scale"],
+ ["Outils de justice",[["jus.tool","Outil de justice : consulter les jugements"],["jus.judge","Outil de justice : créer et modifier les jugements, générer la note MDT"],["jus.grid","Modifier la grille des infractions"],["jus.docs.view","Consulter les documents officiels"],["jus.docs","Rédiger des documents officiels"],["jus.seal","Changer le sceau du ministre sur les documents officiels"]],"scale"],
  ["Registre des entreprises",[["reg.ent.view","Peut consulter le registre des entreprises"],["reg.ent.edit","Peut créer, modifier et supprimer des fiches entreprise (département Finances uniquement)"]],"book"],
  ["État civil",[["reg.civ.view","Peut consulter les actes et fiches d'état civil"],["reg.civ.edit","Peut enregistrer, modifier et supprimer des actes d'état civil"],["reg.civ.purge","Peut supprimer définitivement un acte d'état civil (et restaurer les actes supprimés)"]],"user"],
  ["Finances",[["fin.view","Peut consulter la trésorerie"],["fin.edit","Peut saisir des recettes et des dépenses"],["fin.bill","Peut émettre des factures et des amendes"],["fin.decl","Peut valider les déclarations fiscales"],["fin.budget","Peut gérer les taux d'imposition"],["fin.archive","Peut clôturer une période fiscale et gérer les archives"]],"coins"],
@@ -817,6 +826,7 @@ function render(){watchMessages();
  if(pendChk){for(const id in pendChk){const e=document.getElementById(id);if(e&&e.type=="checkbox")e.checked=pendChk[id]}pendChk=null}
  {const me=root.querySelector(".modal"),k=modal?modal.type+"|"+(modal.id||""):null;if(me&&k===mAnimK)me.classList.add("still");mAnimK=me?k:null}
  try{enhanceSelects(root);enhanceDates(root);enhanceColors(root)}catch(x){console.error(x)}
+ try{if(root.querySelector(".tpl"))tplFitSoon(root)}catch(x){}
  if(fid){const e=document.getElementById(fid);if(e){const t=e.tagName=="SELECT"&&e.parentNode.classList.contains("cs")?e.parentNode.querySelector(".cs-btn"):e;t.focus({preventScroll:true});try{if(ss!=null)e.setSelectionRange(ss,se)}catch(x){}}}
  const mb2=root.querySelector(".modal-bg");if(mb2)mb2.scrollTop=ms;const mbd2=root.querySelector(".modal .mb");if(mbd2)mbd2.scrollTop=mbs;
  {const sd2=root.querySelector(".side");if(sd2&&sds)sd2.scrollTop=sds}
@@ -1491,7 +1501,7 @@ const DEFP={
  sec:{"Assistant de Direction":["sec.archive","reg.civ.view","rh.view"],"Secrétaire":["sec.archive"],"Chef Sécurité":["sec.archive","reg.civ.view","rh.view","rh.sanction"],
   "Référent":["reg.civ.view"],"Agent Superviseur":["reg.civ.view"],"Agent Expérimenté":[],"Agent Confirmé":[],"Agent Probatoire":[]}};
 function gridPerms(dc,name,i){if(dc=="_dir")return {};const L=["annuaire","dos.view","dos.treat"];
- if(i<2){L.push("dash","dos.assign","rh.view","rh.create","rh.edit","rh.sanction","pay.dept","log.dept","rec.view","rec.treat","rec.cv",...(DEFP_DEPT[dc]||[]));if(i==0)L.push("dos.delete","rh.delete","rh.grades");if(i==0&&dc=="jus")L.push("jus.delete")}
+ if(i<2){L.push("dash","dos.assign","rh.view","rh.create","rh.edit","rh.sanction","pay.dept","log.dept","rec.view","rec.treat","rec.cv",...(DEFP_DEPT[dc]||[]));if(i==0)L.push("dos.delete","rh.delete","rh.grades");if(i==0&&dc=="jus")L.push("jus.delete","jus.seal")}
  else{const d=(DEFP[dc]||{})[name];if(d)L.push(...d);else L.push(...(DEFP_DEPT[dc]||[]).filter(k=>/view$/.test(k)))}
  return Object.fromEntries([...new Set(L)].map(k=>[pk(k),true]))}
 /* Permissions par défaut d'un grade existant (d'après sa ligne de la grille) */
@@ -1871,9 +1881,64 @@ function mdtText(j,poste){const L=a=>a.length?a.map(x=>"- "+x).join("\n"):"- Auc
  if(j.st=="vdp")return `Relaxé de tous les faits reprochés pour cause de vice de procédure (catégorie ${j.vdpCat||"1"})\n${L(F.map(f=>f.n))}\n\nJugé par : ${j.juge||""}\nRaison du VDP : ${j.vdpRaison||""}\n\n${sig}`;
  return null}
 
+/* ---------- Modèles visuels (Canva) des documents officiels ---------- */
+const TPL_ASSET=f=>{try{return new URL("docs/"+f,location.href).href}catch(e){return "docs/"+f}};
+const TPL_MIN_DEF={nom:"Alexandre Rolland",titre:"Ministre de la Justice"};
+const tplSeal=()=>S.config.jusSceau||TPL_ASSET("sceau_ministre.png");
+const fddLong=v=>{if(!v)return "";const d=new Date(String(v).length==10?v+"T12:00:00":v);return isNaN(d)?"":d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"})};
+const addDaysISO=(v,n)=>{const d=new Date((v||isoDay(Date.now()))+"T12:00:00");d.setDate(d.getDate()+n);return isoDay(d.getTime())};
+/* Texte positionné dans le repère du modèle (1414 × 2000 px) : x,y = coin haut-gauche de l'encre du texte d'origine */
+function tplT(txt,o){const fs=o.fs,wt=o.wt||800,top=o.y-(wt>=700?0.09:0.09)*fs,w=o.w;
+ const left=o.c?o.x-w/2:o.x-0.03*fs;
+ return `<div class="tv${o.c?" c":""}${o.cls?" "+o.cls:""}" data-fs="${(fs/14.14).toFixed(4)}" style="left:${(left/14.14).toFixed(3)}%;top:${(top/20).toFixed(3)}%;width:${(w/14.14).toFixed(3)}%;font-size:${(fs/14.14).toFixed(4)}cqw;font-weight:${wt}">${txt}</div>`}
+const TPL={
+ perq:{bg:"mandat_perquisition.jpg",render:(x,o)=>{const e=v=>esc(v||"");
+  const deliv=x.delivre||isoDay(x.t||Date.now()),juge=x.juge||x.byNom||"",signN=x.signNom||x.byNom||"",signG=x.signGrade||x.byPoste||"";
+  const nomC=[x.nom,x.prenom].filter(Boolean).join(" "),mn=o.minNom||S.config.jusMinNom||TPL_MIN_DEF.nom,mt=o.minTitre||S.config.jusMinTitre||TPL_MIN_DEF.titre;
+  return tplT(e(x.motif),{x:312,y:490,w:382,fs:30,c:1,cls:"w2"})+tplT(e(juge),{x:707,y:490,w:382,fs:30,c:1,cls:"w2"})+tplT(e(x.jugeTel),{x:1101,y:490,w:330,fs:30,c:1})
+  +tplT(e(fddLong(deliv)),{x:322,y:626,w:700,fs:28.75})
+  +tplT(e(nomC),{x:443,y:894,w:830,fs:32.5})+tplT(e(fddLong(x.naiss)),{x:491,y:941,w:780,fs:32.5})+tplT(e(x.action||x.objet),{x:297,y:987,w:975,fs:32.5})+tplT(e(x.lieu),{x:305,y:1033,w:965,fs:32.5})
+  +tplT(e(fddLong(addDaysISO(deliv,7))),{x:145,y:1449,w:700,fs:26.25})
+  +`<img class="tseal" src="${esc(o.seal||tplSeal())}" alt="" style="left:${245/14.14}%;top:${1516/20}%;width:${303/14.14}%;height:${303/20}%">`
+  +tplT(`${e(mn)}<br>${e(mt)}`,{x:395,y:1838,w:440,fs:28.5,c:1,wt:400,cls:"tm"})
+  +(signN?`<div class="ts" data-fs="${(118/14.14).toFixed(4)}" style="left:${(860-250)/14.14}%;top:${1590/20}%;width:${500/14.14}%;font-size:${(118/14.14).toFixed(4)}cqw">${e(signN)}</div>`:"")
+  +tplT(`${e(signN)||"&nbsp;"}<br>${e(signG)||"&nbsp;"}`,{x:860,y:1838,w:520,fs:28.5,c:1,wt:400,cls:"tm"})}}
+};
+function tplPaper(x,o){const T=TPL[x.type];o=o||{};
+ return `<div class="tpl" style="background-image:url('${TPL_ASSET(T.bg)}')">${T.render(x,o)}${x.st=="annule"?`<div class="tx">ANNULÉ</div>`:""}${x.num?`<div class="tn">N° ${esc(x.num)}</div>`:""}</div>`}
+/* Ajuste la taille des textes trop longs pour qu'ils restent dans leur case */
+function tplFit(root){(root||document).querySelectorAll(".tpl [data-fs]").forEach(el=>{const b=+el.dataset.fs,wrap=el.classList.contains("w2");let k=1;const set=()=>el.style.fontSize=(b*k).toFixed(4)+"cqw",over=()=>el.scrollWidth>el.clientWidth+1;
+ el.style.whiteSpace="";set();
+ while(over()&&k>(wrap?0.78:0.5)){k-=0.03;set()}
+ if(wrap&&over()){el.style.whiteSpace="normal";const tall=()=>el.scrollHeight>parseFloat(getComputedStyle(el).fontSize)*2.25;while((tall()||over())&&k>0.45){k-=0.03;set()}}
+ else if(over()&&!el.classList.contains("ts"))el.style.whiteSpace="normal"})}
+function tplFitSoon(root){tplFit(root);try{document.fonts&&document.fonts.ready.then(()=>tplFit(root))}catch(e){}}
+/* Valeurs par défaut dynamiques des champs (@today, @me, @grade, @juge, @jugeTel) */
+function jdDef(v){if(typeof v!="string"||v[0]!="@")return v;const me=ME()||{},isJ=/juge|chief/i.test(gname(me)||"");
+ return {"@today":isoDay(Date.now()),"@me":me.nom||"","@grade":posteOf(me)||gname(me)||"","@juge":isJ?me.nom||"":"","@jugeTel":isJ?me.tel||"":""}[v]??""}
+function jdJuge(v){modal.d.juge=v;const u=justiceStaff().find(u=>NRM(u.nom)==NRM(v));if(u){modal.d.jugeTel=u.tel||"";const t=document.getElementById("jd_jugeTel");if(t)t.value=modal.d.jugeTel}jdPrev()}
+function jdPrev(){const el=document.getElementById("jdprev");if(!el||!modal||modal.type!="jdocEdit")return;const x=modal.id?S.jdocs[modal.id]:null,ty=x?x.type:modal.ty;if(!TPL[ty])return;
+ el.innerHTML=tplPaper(Object.assign({type:ty},x||{},modal.d,{num:x?x.num:""}));tplFitSoon(el)}
+/* Sceau du ministre de la Justice */
+const canSeal=()=>isDir()||can("jus.seal");
+function MSceau(){if(!canSeal())return null;const c=S.config,img=modal.img!==undefined?modal.img:(c.jusSceau||null);
+ const sample={type:"perq",motif:"Exemple",juge:"Jean Dupont",delivre:isoDay(Date.now()),nom:"Doe",prenom:"John",action:"Perquisition",lieu:"Adresse",signNom:(ME()||{}).nom||"",signGrade:gname(ME()||{})};
+ return {title:"Sceau du ministre de la Justice",wide:1,body:`<div class="grid g2"><div><p class="mu sm" style="margin-top:0">Le sceau apparaît en bas à gauche de chaque document officiel généré avec un modèle, au-dessus du nom et du titre du ministre. Utilisez de préférence une image carrée au fond transparent (PNG).</p>
+ <div class="seal-prev"><img src="${esc(img||TPL_ASSET("sceau_ministre.png"))}" alt="Sceau actuel"></div>
+ <div class="inl" style="margin:10px 0"><button class="btn sec" onclick="document.getElementById('sceauf').click()">${ic("file")}Choisir une image</button>${img?`<button class="btn gh" onclick="modal.img=null;render()">Rétablir le sceau d'origine</button>`:""}</div>
+ <input type="file" id="sceauf" accept="image/*" style="display:none" onchange="sceauFile(this.files[0]);this.value=''">
+ <div class="form"><label class="f full">Nom affiché sous le sceau<input id="smn" value="${esc(c.jusMinNom||TPL_MIN_DEF.nom)}" oninput="sceauPrev()"></label><label class="f full">Titre<input id="smt" value="${esc(c.jusMinTitre||TPL_MIN_DEF.titre)}" oninput="sceauPrev()"></label></div></div>
+ <div><h4 style="margin-top:0">Aperçu</h4><div id="sceauprev">${tplPaper(sample,{seal:img||TPL_ASSET("sceau_ministre.png"),minNom:keep.smn,minTitre:keep.smt})}</div></div></div>`,
+ foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="saveSceau()">Enregistrer</button>`}}
+function sceauPrev(){const el=document.getElementById("sceauprev");if(!el)return;const img=modal.img!==undefined?modal.img:(S.config.jusSceau||null);
+ el.innerHTML=tplPaper({type:"perq",motif:"Exemple",juge:"Jean Dupont",delivre:isoDay(Date.now()),nom:"Doe",prenom:"John",action:"Perquisition",lieu:"Adresse",signNom:(ME()||{}).nom||"",signGrade:gname(ME()||{})},{seal:img||TPL_ASSET("sceau_ministre.png"),minNom:val("smn"),minTitre:val("smt")});tplFitSoon(el)}
+function sceauFile(f){if(!f)return;if(!/^image\//.test(f.type))return toast("Choisissez une image.",1);const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const M=420,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+ let d=c.toDataURL("image/webp",0.9);if(!d.startsWith("data:image/webp"))d=c.toDataURL("image/png");modal.img=d;render()};im.src=r.result};r.readAsDataURL(f)}
+function saveSceau(){if(!canSeal())return;const up={jusMinNom:tval("smn")||TPL_MIN_DEF.nom,jusMinTitre:tval("smt")||TPL_MIN_DEF.titre};if(modal.img!==undefined)up.jusSceau=modal.img||null;
+ DBX.update("config",up);log("Sceau du ministre de la Justice modifié","Justice","Justice");toast("Sceau enregistré.");closeM()}
 /* ---------- Documents officiels ---------- */
 const DOC_T=[
- ["perq","Mandat de perquisition","MP","\u{1F50E}",[["nom","Nom de la personne visée"],["prenom","Prénom"],["lieu","Lieu / adresse à perquisitionner",1],["objet","Éléments recherchés",1,"area"],["motif","Motif",1,"area"],["agence","Agence chargée de l'exécution",0,"agence"],["validite","Valable jusqu'au",0,"date"]]],
+ ["perq","Mandat de perquisition","MP","\u{1F50E}",[["motif","Raison",1,"text","","Ex. : Suspicion de trafic de stupéfiants"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeTel","N° de tél. du juge",0,"text","@jugeTel"],["delivre","Délivré le",1,"date","@today"],["nom","Nom de la personne visée",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["action","Action",1,"text","","Ex. : Perquisition du domicile et du véhicule"],["lieu","Adresse",1],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
  ["arret","Mandat d'arrêt","MA","\u{1F6A8}",[["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["signalement","Signalement / informations utiles",0,"area"],["faits","Faits reprochés",1,"area"],["agence","Agence chargée de l'exécution",0,"agence"],["validite","Valable jusqu'au",0,"date"]]],
  ["info","Mandat d'information","MI","\u{1F4C2}",[["cible","Personne ou entité visée",1],["detenteur","Organisme sollicité (banque, entreprise, opérateur…)",1],["infos","Informations demandées",1,"area"],["motif","Motif",1,"area"],["validite","Valable jusqu'au",0,"date"]]],
  ["conv","Convocation en justice","CJ","\u{1F4E8}",[["nom","Nom",1],["prenom","Prénom",1],["tel","Téléphone"],["qualite","Convoqué(e) en qualité de",1,"select",["Prévenu(e)","Témoin","Victime","Partie civile","Expert"]],["dateConv","Date et heure de la convocation",1,"datetime-local"],["lieu","Lieu",1,"text","Palais de justice de Los Santos"],["motif","Motif",1,"area"]]],
@@ -1894,7 +1959,8 @@ const docPerson=x=>[x.prenom,x.nom].filter(Boolean).join(" ")||x.cible||x.destin
 const fdt=v=>v?(String(v).includes("T")?new Date(v).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):fdd(v)):"";
 function docBody(x){const t=x.type,v=k=>esc(x[k]||""),p=`${v("prenom")} ${v("nom")}`.trim(),L=[];const P=s=>L.push(s);
  switch(t){
- case "perq":P(`Vu les éléments portés à notre connaissance, autorisons ${x.agence?"les agents de <b>"+v("agence")+"</b>":"les agents habilités"} à procéder à la perquisition du lieu suivant : <b>${v("lieu")}</b>${p?`, occupé ou détenu par <b>${p}</b>`:""}.`);P(`<b>Éléments recherchés :</b> ${v("objet")}`);P(`<b>Motif :</b> ${v("motif")}`);if(x.validite)P(`Le présent mandat est valable jusqu'au <b>${fdd(x.validite)}</b>.`);break;
+ case "perq":if(x.juge||x.delivre){P(`<b>Raison :</b> ${v("motif")} — <b>Juge :</b> ${v("juge")}${x.jugeTel?` (tél. ${v("jugeTel")})`:""}`);P(`Délivré le <b>${fddLong(x.delivre||isoDay(x.t))}</b>. En vertu de l'autorité conférée par la loi à tout juge et officier de l'ordre public de Los Santos dûment assermenté, permettez à l'intéressé(e) de pénétrer et de fouiller le lieu suivant :`);P(`<b>Nom et prénom :</b> ${p}<br><b>Date de naissance :</b> ${fddLong(x.naiss)||"—"}<br><b>Action :</b> ${v("action")}<br><b>Adresse :</b> ${v("lieu")}`);P(`Ce mandat sera actif jusqu'à une semaine après son émission, soit le <b>${fddLong(addDaysISO(x.delivre||isoDay(x.t),7))}</b>.`);break}
+  P(`Vu les éléments portés à notre connaissance, autorisons ${x.agence?"les agents de <b>"+v("agence")+"</b>":"les agents habilités"} à procéder à la perquisition du lieu suivant : <b>${v("lieu")}</b>${p?`, occupé ou détenu par <b>${p}</b>`:""}.`);P(`<b>Éléments recherchés :</b> ${v("objet")}`);P(`<b>Motif :</b> ${v("motif")}`);if(x.validite)P(`Le présent mandat est valable jusqu'au <b>${fdd(x.validite)}</b>.`);break;
  case "arret":P(`Ordonnons à ${x.agence?"<b>"+v("agence")+"</b>":"toutes les forces de l'ordre"} de rechercher, d'appréhender et de conduire devant l'autorité judiciaire la personne de <b>${p}</b>${x.naiss?`, née le ${fdd(x.naiss)}`:""}.`);P(`<b>Faits reprochés :</b> ${v("faits")}`);if(x.signalement)P(`<b>Signalement :</b> ${v("signalement")}`);if(x.validite)P(`Le présent mandat est valable jusqu'au <b>${fdd(x.validite)}</b>.`);break;
  case "info":P(`Requérons de <b>${v("detenteur")}</b> la communication, dans les meilleurs délais, des informations suivantes concernant <b>${v("cible")}</b> :`);P(v("infos"));P(`<b>Motif :</b> ${v("motif")}`);if(x.validite)P(`Le présent mandat est valable jusqu'au <b>${fdd(x.validite)}</b>.`);break;
  case "conv":P(`<b>${p}</b>${x.tel?` (tél. ${v("tel")})`:""} est convoqué(e) en qualité de <b>${v("qualite").toLowerCase()}</b> le <b>${fdt(x.dateConv)}</b> à l'adresse suivante : <b>${v("lieu")}</b>.`);P(`<b>Motif :</b> ${v("motif")}`);P(`La non-présentation à une convocation de justice constitue une infraction et peut donner lieu à des poursuites.`);break;
@@ -1910,35 +1976,37 @@ function docBody(x){const t=x.type,v=k=>esc(x[k]||""),p=`${v("prenom")} ${v("nom
  case "expul":P(`Il est notifié à <b>${v("destinataire")}</b> l'obligation de quitter les lieux suivants : <b>${v("lieu")}</b>, au plus tard le <b>${fdd(x.delai)}</b>.`);P(`<b>Motif :</b> ${v("motif")}`);P(`À défaut, l'expulsion pourra être exécutée avec le concours des forces de l'ordre.`);break;
  case "demeure":P(`<b>${v("destinataire")}</b> est mis(e) en demeure, au sujet de : <b>${v("objet")}</b>${x.montant?`, de régler la somme de <b>${money(x.montant)}</b>`:", de régulariser sa situation"} au plus tard le <b>${fdd(x.delai)}</b>.`);P(`<b>Exposé des faits :</b> ${v("motif")}`);P(`À défaut, des poursuites pourront être engagées sans autre avis.`);break}
  return L.map(s=>`<p>${String(s).replace(/\n/g,"<br>")}</p>`).join("")}
-function docPaper(x){const T=DOCL[x.type]||["","Document","","\u{1F4C4}"];
+function docPaper(x){if(TPL[x.type])return tplPaper(x);const T=DOCL[x.type]||["","Document","","\u{1F4C4}"];
  return `<div class="paper"><div class="pp-h"><div class="pp-seal">${seal()}</div><div><div class="pp-g">${esc(S.config.siteName||"Gouvernement de Los Santos")}</div><div class="pp-d">Département de la Justice — Comté de Los Santos</div></div><div class="pp-n">N° ${esc(x.num)}<br>${fdd(isoDay(x.t))}</div></div>
  <h2 class="pp-t">${esc(T[1])}${x.type=="dedo"&&x.nature?" — "+esc(x.nature):""}</h2>${x.st=="annule"?`<div class="pp-x">ANNULÉ</div>`:""}
  <div class="pp-b"><p>Nous, <b>${esc(x.byNom)}</b>, ${esc(x.byPoste||"")} de la Justice du comté de Los Santos,</p>${docBody(x)}</div>
  <div class="pp-s"><div>Fait à Los Santos, le ${fdd(isoDay(x.t))}</div><div class="pp-sig">${esc(x.byNom)}</div><div class="mu sm">${esc(x.byPoste||"")} de la Justice du comté de Los Santos</div></div></div>`}
 function docText(x){const d=document.createElement("div");d.innerHTML=docBody(x);const T=DOCL[x.type];
- return `**${T[1]}${x.type=="dedo"&&x.nature?" — "+x.nature:""}** — N° ${x.num}\n\nNous, ${x.byNom}, ${x.byPoste||""} de la Justice du comté de Los Santos,\n\n${[...d.querySelectorAll("p")].map(p=>p.innerText).join("\n\n")}\n\nFait à Los Santos, le ${fdd(isoDay(x.t))}\n${x.byNom}`}
+ return `**${T[1]}${x.type=="dedo"&&x.nature?" — "+x.nature:""}** — N° ${x.num}\n\nNous, ${x.signNom||x.byNom}, ${x.signGrade||x.byPoste||""} de la Justice du comté de Los Santos,\n\n${[...d.querySelectorAll("p")].map(p=>p.innerText).join("\n\n")}\n\nFait à Los Santos, le ${fdd(isoDay(x.t))}\n${x.signNom||x.byNom}`}
 const jdocCache={};
 function loadJdocFiles(id){if(jdocCache[id]!==undefined||loadJdocFiles.p[id])return;loadJdocFiles.p[id]=1;const done=v=>{jdocCache[id]=v||{};delete loadJdocFiles.p[id];render()};
  if(db)db.ref(ROOT+"/"+rp("jdocfiles/"+id)).once("value").then(s=>done(s.val()),e=>{fbErr(e);done({})});else done(S.jdocfiles&&S.jdocfiles[id])}
 loadJdocFiles.p={};
 V.jdocs=()=>{if(!canDocs())return empty("Accès réservé.");const ty=filt.jdt||"",q=filt.jdq||"",A=vals(S.jdocs);
  const L=A.filter(x=>!ty||x.type==ty).filter(x=>match(q,x.num,docPerson(x),x.byNom,(DOCL[x.type]||[])[1],...(DOCL[x.type]||[0,0,0,0,[]])[4].map(f=>x[f[0]]))).sort((a,b)=>b.t-a.t);
- return `<div class="ph"><h2>Documents officiels</h2></div><div class="ec"><aside class="ec-side card"><button class="ec-c ${!ty?"on":""}" onclick="filt.jdt='';render()"><span class="ec-e">\u{1F4CB}</span><span class="ec-n">Tous les documents</span><span class="ec-k">${A.length}</span></button>
+ return `<div class="ph"><h2>Documents officiels</h2>${canSeal()?`<button class="btn sec" onclick="openM('sceau')">${ic("shield")}Changer le sceau du ministre</button>`:""}</div><div class="ec"><aside class="ec-side card"><button class="ec-c ${!ty?"on":""}" onclick="filt.jdt='';render()"><span class="ec-e">\u{1F4CB}</span><span class="ec-n">Tous les documents</span><span class="ec-k">${A.length}</span></button>
  ${DOC_T.map(([k,l,,e])=>`<button class="ec-c ${ty==k?"on":""}" onclick="filt.jdt='${k}';render()"><span class="ec-e">${e}</span><span class="ec-n">${esc(l)}</span><span class="ec-k">${A.filter(x=>x.type==k).length}</span></button>`).join("")}</aside>
  <div><div class="card"><div class="inl"><input id="q_jdq" placeholder="Rechercher : n°, personne, entreprise, rédacteur…" value="${esc(q)}" oninput="filt.jdq=this.value;render()" style="flex:1;min-width:200px">${can("jus.docs")?`<button class="btn" onclick="openJdoc(null,'${ty||""}')">${ic("plus")}Nouveau document</button>`:""}</div></div>
  <div class="card tw"><table><tr><th>N°<th>Type<th>Concerne<th>Rédigé le<th>Par<th>Statut</tr>${L.map(x=>{const T=DOCL[x.type]||["","?","","\u{1F4C4}"];return `<tr class="click" onclick="openM('jdoc','${x.id}')"><td class="nw b">${esc(x.num)}<td class="nw">${T[3]} ${esc(T[1])}${x.type=="dedo"&&x.nature?` <span class="mu sm">(${esc(x.nature)})</span>`:""}<td>${esc(docPerson(x))}<td class="nw">${fd(x.t)}<td>${esc(x.byNom)}<td>${bdg(DST2,x.st||"valide")}</tr>`}).join("")||`<tr><td colspan="6" class="empty">Aucun document.</td></tr>`}</table></div></div></div>`};
 function MJdocEdit(){if(!can("jus.docs"))return null;const x=modal.id?S.jdocs[modal.id]:null;if(modal.id&&!x)return null;const ty=x?x.type:(modal.ty||keep.jdty||"perq"),T=DOCL[ty],d=modal.d,nf=modal.files||[],rm=modal.rm||{},F=x?jdocCache[x.id]:null;if(x&&F===undefined)loadJdocFiles(x.id);
- if(!x&&modal.dty!==ty){T[4].forEach(f=>{if(modal.d[f[0]]==null||modal.d[f[0]]===""){if(f[3]=="select")modal.d[f[0]]=f[4][0];else if(f[4])modal.d[f[0]]=f[4]}});modal.dty=ty}
+ if(!x&&modal.dty!==ty){T[4].forEach(f=>{if(modal.d[f[0]]==null||modal.d[f[0]]===""){if(f[3]=="select")modal.d[f[0]]=f[4][0];else if(f[4])modal.d[f[0]]=jdDef(f[4])}});modal.dty=ty}
  const fld=([k,l,req,type,def,ph])=>{const v=d[k]??"";const lab=`${esc(l)}${req?" *":""}`;
   if(type=="area")return `<label class="f full">${lab}<textarea data-nokeep rows="3" placeholder="${esc(ph||"")}" oninput="modal.d['${k}']=this.value">${esc(v)}</textarea></label>`;
   if(type=="select")return `<label class="f">${lab}<select data-nokeep onchange="modal.d['${k}']=this.value">${opts(def,v)}</select></label>`;
   if(type=="agence")return `<label class="f">${lab}<select data-nokeep onchange="modal.d['${k}']=this.value">${opts([""].concat(AGENCES),v)}</select></label>`;
   if(type=="ent")return `<label class="f">${lab}<input data-nokeep list="jdents" value="${esc(v)}" oninput="modal.d['${k}']=this.value"></label>`;
-  return `<label class="f">${lab}<input data-nokeep type="${type||"text"}" value="${esc(v)}" placeholder="${esc(ph||"")}" oninput="modal.d['${k}']=this.value"></label>`};
+  if(type=="juge")return `<label class="f">${lab}<input data-nokeep id="jd_juge" list="jdjuges" autocomplete="off" value="${esc(v)}" placeholder="Choisir ou saisir un nom" oninput="jdJuge(this.value)"></label>`;
+  return `<label class="f">${lab}<input data-nokeep id="jd_${k}" type="${type||"text"}" value="${esc(v)}" placeholder="${esc(ph||"")}" oninput="modal.d['${k}']=this.value;jdPrev()"></label>`};
  return {title:x?"Modifier "+esc(x.num):"Nouveau document officiel",wide:1,body:`${x?"":`<label class="f">Type de document<select data-nokeep onchange="modal.ty=this.value;render()">${opts(DOC_T.map(t=>[t[0],t[3]+" "+t[1]]),ty)}</select></label>`}
- <datalist id="jdents">${vals(S.entreprises).map(e=>`<option value="${esc(e.nom)}">`).join("")}${vals(S.users).filter(u=>u.role=="entreprise").map(u=>`<option value="${esc(u.nom)}">`).join("")}</datalist>
+ <datalist id="jdjuges">${justiceStaff().map(u=>`<option value="${esc(u.nom)}">${esc(gname(u))}</option>`).join("")}</datalist><datalist id="jdents">${vals(S.entreprises).map(e=>`<option value="${esc(e.nom)}">`).join("")}${vals(S.users).filter(u=>u.role=="entreprise").map(u=>`<option value="${esc(u.nom)}">`).join("")}</datalist>
  <div class="pe-card"><h4 style="margin-top:0">${T[3]} ${esc(T[1])}</h4><div class="form">${T[4].map(fld).join("")}</div>
  ${ty=="casier"?`<button class="btn sec sm" onclick="casierFill()">Remplir depuis l'Outil de justice</button>`:""}</div>
+ ${TPL[ty]?`<details class="pe-pay" open><summary>Aperçu du document</summary><div id="jdprev" style="margin-top:10px">${tplPaper(Object.assign({type:ty},x||{},d,{num:x?x.num:""}))}</div></details>`:""}
  <h4>Pièces jointes <span class="mu sm">(facultatif : photos, preuves, documents…)</span></h4>
  ${x&&Object.keys(x.files||{}).length?`<div class="fgrid" style="margin-bottom:8px">${Object.entries(x.files).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data,!!rm[fk])).join("")}</div>`:""}
  ${nf.length?`<div class="fgrid" style="margin-bottom:8px">${nf.map((f,i)=>`<div class="ftile new">${f.type.startsWith("image/")?`<img src="${f.data}" alt="">`:`<div class="fdoc">${ic("file")}<span>PDF</span></div>`}<div class="fname">${esc(f.name)}</div><button class="lnk" onclick="modal.files.splice(${i},1);render()">Retirer</button></div>`).join("")}</div>`:""}
@@ -2091,7 +2159,7 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="jug")m=MJug();
  else if(modal.type=="jugv")m=MJugV(S.jugements[modal.id]);
  else if(modal.type=="mdt")m=MMdt();
- else if(modal.type=="jdocEdit")m=MJdocEdit();
+ else if(modal.type=="jdocEdit")m=MJdocEdit();if(modal.type=="sceau")m=MSceau();
  else if(modal.type=="jdoc")m=MJdoc(S.jdocs[modal.id]);
  else if(modal.type=="dossier")m=MDossier(S.dossiers[modal.id]);
  else if(modal.type=="affaire")m=MAffaire(S.affaires[modal.id]);
@@ -2464,7 +2532,8 @@ function jdocDel(id){if(!(can("jus.docs")||isDir()))return;const x=S.jdocs[id];a
 function jdocCopy(id){copyText(docText(S.jdocs[id])).then(()=>toast("Document copié : collez-le dans Discord."))}
 function jdocPrint(id){const x=S.jdocs[id],w=window.open("","_blank");if(!w)return toast("Autorisez les fenêtres pop-up pour imprimer.",1);
  const css=[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n");
- w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(x.num)}</title><style>${css}\nbody{background:#fff!important;padding:20px}.paper{box-shadow:none;margin:0 auto}@media print{body{padding:0}}</style></head><body data-theme="light">${docPaper(x)}<script>setTimeout(()=>print(),400)<\/script></body></html>`);w.document.close()}
+ const live=document.querySelector(".modal .tpl"),fonts=[...document.querySelectorAll('link[href*="fonts.googleapis"]')].map(l=>l.outerHTML).join("");
+ w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(x.num)}</title>${fonts}<style>${css}\nbody{background:#fff!important;padding:20px}.paper{box-shadow:none;margin:0 auto}.tpl{box-shadow:none;max-width:800px}@page{size:A4;margin:0}@media print{body{padding:0}.tpl{max-width:none;width:100vw;margin:0}}</style></head><body data-theme="light">${live&&TPL[x.type]?live.outerHTML:docPaper(x)}<script>setTimeout(()=>print(),400)<\/script></body></html>`);w.document.close()}
 
 /* Messagerie : suppression d'une conversation (pour soi uniquement) */
 function convDel(w){const me=ME();if(!me||!w)return;ask(`Supprimer la conversation avec ${uname(w)} ? Elle disparaît de votre messagerie uniquement : votre correspondant conserve sa copie.`,()=>{
