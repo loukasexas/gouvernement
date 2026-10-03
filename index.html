@@ -215,7 +215,7 @@ const ROOT = "lsgov";
 /* ---------- Constantes ---------- */
 const DEF_DEPTS=["Finances","État-Civil","Justice","Intérieur","Communication","Sécurité"];
 const ROLES={entreprise:"Entreprise",fonctionnaire:"Fonctionnaire",encadrement:"Corps d'encadrement",direction:"Direction"};
-const COLS=["users","grades","dossiers","affaires","entreprises","identites","actes","transactions","factures","declarations","archives","paie","paiearch","patrouilles","patarch","recrutements","blacklist","annonces","messages","logs"];
+const COLS=["users","grades","dossiers","affaires","entreprises","identites","actes","transactions","factures","declarations","archives","paie","paiearch","patrouilles","patarch","recrutements","blacklist","sanctions","annonces","messages","logs"];
 const DOS_TYPES={
  "Finances":["Déclaration fiscale","Demande de subvention","Contestation d'amende","Échéancier de paiement"],
  "État-Civil":["Enregistrement d'identité","Changement d'adresse","Acte de mariage","Acte de décès"],
@@ -234,7 +234,7 @@ const PERMS=[
  ["État civil",[["reg.civ.view","Peut consulter les actes et fiches d'état civil"],["reg.civ.edit","Peut enregistrer, modifier et supprimer des actes d'état civil"]],"user"],
  ["Finances",[["fin.view","Peut consulter la trésorerie"],["fin.edit","Peut saisir des recettes et des dépenses"],["fin.bill","Peut émettre des factures et des amendes"],["fin.decl","Peut valider les déclarations fiscales"],["fin.budget","Peut gérer les taux d'imposition"],["fin.archive","Peut clôturer une période fiscale et gérer les archives"]],"coins"],
  ["Communication",[["com.post","Peut publier des annonces"],["com.banner","Peut gérer le bandeau d'information"]],"megaphone"],
- ["Comptes du personnel",[["rh.view","Peut voir la liste des comptes"],["rh.create","Peut créer des comptes"],["rh.edit","Peut modifier et suspendre des comptes"],["rh.delete","Peut supprimer des comptes"],["rh.grades","Peut créer et modifier des grades"]],"users"],
+ ["Comptes du personnel",[["rh.view","Peut voir la liste des comptes"],["rh.create","Peut créer des comptes"],["rh.edit","Peut modifier et suspendre des comptes"],["rh.delete","Peut supprimer des comptes"],["rh.grades","Peut créer et modifier des grades"],["rh.sanction","Peut sanctionner les agents (1er avertissement, ultimatum)"]],"users"],
  ["Salaires",[["pay.dept","Peut faire les salaires de son département"],["pay.all","Gestion globale des salaires (tous les départements, validation et versement)"]],"wallet"],
  ["Sécurité",[["sec.archive","Peut archiver et supprimer les rapports de patrouille (département Sécurité)"]],"eye"],
  ["Recrutements",[["rec.view","Voir les recrutements (candidatures et blacklist)"],["rec.treat","Traiter les recrutements (accepter, refuser, supprimer)"],["rec.cv","Créer un CV (dossier de recrutement)"],["rec.bl","Gérer la blacklist du Gouvernement (ajouter, modifier, retirer)"]],"briefcase"],
@@ -438,7 +438,7 @@ function navItems(){const u=ME(),n=unread(),I=[];
  if(["fin.view","fin.bill","fin.decl","fin.budget"].some(can))I.push(["finances","Finances","coins",canBill()?vals(S.factures).filter(f=>f.st=="verif").length:0]);
  I.push(["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n]);
  if(can("annuaire"))I.push(["annuaire","Annuaire","users"]);
- if(["rh.view","rh.grades"].some(can))I.push(["personnel","Personnel","shield",0,"g"]);
+ if(["rh.view","rh.grades","rh.sanction"].some(can))I.push(["personnel","Personnel","shield",0,"g"]);
  I.push(["salaire","Salaire","wallet",(can("pay.all")||isDir())?vals(S.paie).filter(p=>p&&p.st=="soumise").length:0,"g"]);
  if(can("log.dept")||can("log.all"))I.push(["journal","Logs","list",0,"g"]);
  if(can("adm.site")||can("com.banner"))I.push(["admin","Administration","settings",0,"g"]);
@@ -812,7 +812,7 @@ V.annuaire=()=>{let L=vals(S.users).filter(u=>isAgent(u)&&u.active!==false);if(f
 
 /* =================== PERSONNEL =================== */
 function scopeUsers(){return vals(S.users).filter(u=>u.id==meId||isDir()||manageable(u)||(can("rh.view")&&u.dept==ME().dept&&ME().dept))}
-V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(can("rh.grades")||isDir())T.push(["grades","Grades & permissions"]);
+V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(can("rh.sanction")||isDir())T.push(["sanc","Sanctions"]);if(can("rh.grades")||isDir())T.push(["grades","Grades & permissions"]);
  const s=T.some(t=>t[0]==sub)?sub:T[0][0];let h=`<div class="ph"><h2>Gestion du personnel</h2></div>${tabsH(T,s)}`;
  if(s=="comptes"){const dir=isDir(),rs=dir?Object.keys(ROLES):["entreprise","fonctionnaire"],cr=keep.cr||rs[0],cd=dir?(keep.cd||""):ME().dept;
   const gl=vals(S.grades).filter(g=>g.role==cr&&(!g.dept||!cd||g.dept==cd)&&(dir||g.role=="fonctionnaire")).sort((a,b)=>(a.rank||0)-(b.rank||0));
@@ -825,6 +825,7 @@ V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(c
   <label class="f">Téléphone<input id="ct"></label></div><button class="btn" onclick="addUser()">Créer le compte</button><p class="err" id="msg"></p><p class="mu sm">L'utilisateur devra changer son mot de passe à la première connexion.</p></div>`:"")+
   `<div class="card inl">${search("pq","Nom, identifiant, grade…")}${fsel("pr",Object.entries(ROLES),"Tous rôles")}${fsel("pd",DEPTS(),"Tous départements")}</div>
   <div class="card tw"><table><tr><th>Nom<th>Identifiant<th>Rôle<th>Grade<th>Département<th>État<th></tr>${L.map(u=>`<tr><td class="b">${esc(u.nom)}<td>${esc(u.login)}<td>${esc(ROLES[u.role])}<td>${esc(G(u)?G(u).name:"—")}<td>${esc(u.dept||"—")}<td>${u.active===false?'<span class="bdg no">Suspendu</span>':'<span class="bdg ok">Actif</span>'}<td class="nw">${manageable(u)&&can("rh.edit")?`<button class="btn sec sm" onclick="openM('user','${u.id}')">Modifier</button>`:""} ${manageable(u)&&can("rh.delete")?`<button class="btn gh sm" onclick="delUser('${u.id}')">Supprimer</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucun compte.</td></tr>`}</table></div>`}
+ if(s=="sanc")return h+sancView();
  if(s=="grades"){const L=vals(S.grades).filter(g=>isDir()||g.role=="fonctionnaire"&&(g.dept==ME().dept)||g.dept==ME().dept).filter(g=>!filt.gfd||(filt.gfd=="_dir"?!g.dept:g.dept==filt.gfd)).filter(g=>!filt.gfr||g.role==filt.gfr).filter(g=>match(filt.gfq,g.name)).sort((a,b)=>gdo(a)-gdo(b)||Object.keys(ROLES).indexOf(b.role)-Object.keys(ROLES).indexOf(a.role)||(a.rank||0)-(b.rank||0));
   return h+`<div class="card inl" style="justify-content:space-between"><span class="mu">Un grade précise un rôle : il fixe l'intitulé, la rémunération (grille salariale) et les permissions exactes de l'agent.</span><span class="inl">${isDir()?`<button class="btn sec" onclick="openM('gridrep')">Remplacer par la grille officielle</button>`:""}<button class="btn" onclick="openM('grade')">${ic("plus")}Nouveau grade</button></span></div>
   <div class="card inl">${search("gfq","Rechercher un grade…")}${isDir()?fsel("gfd",[["_dir","Direction / tous départements"]].concat(DEPTS().map(d=>[d,d])),"Tous les départements"):""}${fsel("gfr",Object.entries(ROLES).filter(r=>r[0]!="entreprise"),"Tous les rôles")}<span class="mu sm">${L.length} grade(s)</span></div>
@@ -901,7 +902,7 @@ const PSTAT=[["","—"],["abs","Absent(e)"],["new","Nv. arrivé(e)"]];
 function jugQuota(n){return n.includes("ministre")?0:/resp(onsable)? judiciaire/.test(n)?5:7}
 function payCalc(u,l){l=l||{};const g=G(u),c=payCfg(g,u),dc=deptCode(u),F=DSPEC[dc]||[],n=NRM(g&&g.name),x=l.x||{};
  const q=l.q!=null&&l.q!==""?Math.min(100,Math.max(0,num(l.q)))/100:1,h=num(l.h),qh=QUOTA_H*q,ctx={charge:/^charge de (com|prod)/.test(n)};
- const r={h,q,qh,cfg:c,base:0,ot:0,primes:0,hors:0,cap:0,ecrete:0,pen:0,sal:0,total:0,why:[]};
+ const r={sanc:[],h,q,qh,cfg:c,base:0,ot:0,primes:0,hors:0,cap:0,ecrete:0,pen:0,sal:0,total:0,why:[]};
  if(!c){r.why.push("Grade hors grille salariale");return r}
  if(l.st=="abs"){r.why.push("Absent(e)");return r}
  if(h<qh)r.why.push(`Quota d'heures non atteint (${fh(h)} / ${fh(qh)} h)`);
@@ -914,7 +915,7 @@ function payCalc(u,l){l=l||{};const g=G(u),c=payCfg(g,u),dc=deptCode(u),F=DSPEC[
   if(dc=="jus"&&f.k=="jug")a=Math.max(0,v-(jugQuota(n)||7))*50000;else a=v*(typeof f.a=="function"?f.a(ctx):num(f.a));
   if(f.hp)r.hors+=a;else r.primes+=a});
  const brut=r.base+r.ot+r.primes,plaf=Math.min(brut,r.cap);r.ecrete=brut-plaf;
- const av=num(l.av);r.pen=av>=2?1:av>=1?.5:0;
+ const av=num(l.av),sp=sancPen(u);r.sanc=sp.list;r.pen=Math.max(av>=2?1:av>=1?.5:0,sp.pen);
  r.total=Math.round((plaf+r.hors)*(1-r.pen));r.sal=Math.round(Math.min(r.base+r.ot,r.cap)*(1-r.pen));return r}
 function payDet(u,l){const F=DSPEC[deptCode(u)]||[],x=(l&&l.x)||{};return F.filter(f=>f.t=="c"?x[f.k]:num(x[f.k])>0).map(f=>f.t=="c"?f.l:`${f.l} ${num(x[f.k])}`).join(" · ")}
 function payInfo(u){const d=S.paie[deptKey(u.dept)],l=d&&d.lines&&d.lines[u.id];return {total:l?payCalc(u,l).total:0}}
@@ -936,8 +937,9 @@ function myPayView(){const u=ME(),key=deptKey(u.dept),dr=S.paie[key],my=dr&&dr.l
  return `<div class="kpis">${kpi("Paie en préparation",r?money(r.total):"—","gold")}${kpi("Heures déclarées",r?fh(r.h)+" h":"—")}${kpi("Total perçu",money(tot))}</div>
  <div class="card"><h3>Ma paie en cours</h3><p class="mu sm" style="margin-top:0">Grade : ${esc(gname(u))} · ${cfgTxt(c)}</p>${my?`<div class="kv"><div class="k">Période</div><div>${esc(dr.periode||"—")}</div><div class="k">Statut</div><div>${bdg(PST,dr.st||"brouillon")}</div>
   <div class="k">Heures de service</div><div>${fh(r.h)} h (quota ${fh(r.qh)} h${r.q<1?" · quotité "+Math.round(r.q*100)+" %":""})</div>${payDet(u,my)?`<div class="k">Activité</div><div>${esc(payDet(u,my))}</div>`:""}
-  ${r.why.length?`<div class="k">Pas de quota</div><div style="color:var(--no)">${esc(r.why.join(" · "))}</div>`:`<div class="k">Salaire de base</div><div>${money(r.base)}</div><div class="k">Heures sup.</div><div>${money(r.ot)}</div><div class="k">Primes</div><div>${money(r.primes+r.hors)}</div>${r.ecrete?`<div class="k">Écrêtement (plafond)</div><div>−${money(r.ecrete)}</div>`:""}${r.pen?`<div class="k">Avertissement</div><div style="color:var(--no)">−${r.pen*100} %</div>`:""}`}
+  ${r.why.length?`<div class="k">Pas de quota</div><div style="color:var(--no)">${esc(r.why.join(" · "))}</div>`:`<div class="k">Salaire de base</div><div>${money(r.base)}</div><div class="k">Heures sup.</div><div>${money(r.ot)}</div><div class="k">Primes</div><div>${money(r.primes+r.hors)}</div>${r.ecrete?`<div class="k">Écrêtement (plafond)</div><div>−${money(r.ecrete)}</div>`:""}${r.pen?`<div class="k">${r.sanc.some(s=>s.pay)?"Sanction / avertissement":"Avertissement"}</div><div style="color:var(--no)">−${r.pen*100} %</div>`:""}`}
   ${my.note?`<div class="k">Commentaire</div><div>${esc(my.note)}</div>`:""}<div class="k">Total</div><div class="b" style="font-size:18px;color:var(--gold2)">${money(r.total)}</div></div>`:`<p class="mu">Votre ministre n'a pas encore saisi votre paie pour la période en cours.</p>`}</div>
+ ${(()=>{const L=userSanc(u.id);return L.length?`<div class="card" style="border-color:var(--no)"><h3>Sanctions en cours</h3>${L.map(s=>`<div style="padding:6px 0;border-bottom:1px solid var(--bd)">${bdg(SANC_T,s.type)} <b>${esc(s.motif)}</b><div class="mu sm">Donnée le ${fd(s.t)} par ${esc(s.byNom)} · ${s.exp?"expire le "+fdd(s.exp):"sans expiration"}${s.pay?' · <span style="color:var(--no)">salaire divisé par 2</span>':""}</div></div>`).join("")}</div>`:""})()}
  <div class="card tw"><h3>Mes fiches de paie</h3><table><tr><th>Date<th>Période<th>Département<th class="r">Heures<th class="r">Salaire<th class="r">Primes<th class="r">Total<th>Validé par</tr>${A.map(a=>{const l=a.lines[u.id];return `<tr><td class="nw">${fd(a.t)}<td>${esc(a.periode)}<td>${esc(a.deptNom)}<td class="r">${l.h!=null?fh(l.h):"—"}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td class="r b">${money(lineTotal(l))}<td>${esc(a.byNom)}</tr>`}).join("")}${H.map(t=>`<tr><td class="nw">${fd(t.t)}<td class="mu" colspan="6">${esc(t.label)} — <b>${money(t.montant)}</b><td>${esc(t.byNom||"")}</tr>`).join("")}${!A.length&&!H.length?`<tr><td colspan="8" class="empty">Aucun versement reçu.</td></tr>`:""}</table></div>`}
 function payMgmtView(F){const cur=F.some(f=>f[0]==filt.pdk)?filt.pdk:F[0][0],nm=(F.find(f=>f[0]==cur)||[])[1],st=filt.pst||"cours";
  const side=`<div class="card pfold">${F.map(([k,n])=>{const d=S.paie[k];return `<button class="ec-c ${k==cur?"on":""}" onclick="filt.pdk='${k}';filt.pst='cours';keep={};render()"><span class="ec-h">${ic("folder")}</span><span class="ec-n">${esc(n)}</span>${d&&d.st=="soumise"?`<span class="bdg bl" style="font-size:10px">À valider</span>`:""}</button>`}).join("")}</div>`;
@@ -950,10 +952,10 @@ function payDraftView(key,nm){const d=S.paie[key]||{st:"brouillon",lines:{}},L=d
   return `<tr><td class="pag"><b>${esc(u.nom)}</b><div class="mu sm">${esc(gname(u))}</div><div class="mu" style="font-size:11px">${cfgTxt(c)}</div>
   <td>${ed?inp(u,"h",l.h):fh(l.h)}<td>${ed?`<select data-nokeep class="pn" onchange="paySetLine('${key}','${u.id}','q',this.value)">${opts([["100","100 %"],["75","75 %"],["50","50 %"]],String(l.q??100))}</select>`:(l.q??100)+" %"}
   <td>${ed?`<select data-nokeep class="pst" onchange="paySetLine('${key}','${u.id}','st',this.value)">${opts(PSTAT,l.st||"")}</select>`:esc((PSTAT.find(p=>p[0]==(l.st||""))||[,""])[1])}
-  <td>${ed?`<select data-nokeep class="pn" onchange="paySetLine('${key}','${u.id}','av',this.value)">${opts([["0","0"],["1","1"],["2","2"]],String(num(l.av)))}</select>`:num(l.av)}
+  <td>${ed?`<select data-nokeep class="pn" onchange="paySetLine('${key}','${u.id}','av',this.value)">${opts([["0","0"],["1","1"],["2","2"]],String(num(l.av)))}</select>`:num(l.av)}${userSanc(u.id).length?`<div style="margin-top:4px">${sancBadges(u.id,1)}</div>`:""}
   ${F.map(f=>`<td class="c">${f.t=="c"?`<input type="checkbox" data-nokeep ${x[f.k]?"checked":""} ${ed?"":"disabled"} onchange="paySetLine('${key}','${u.id}','x.${f.k}',this.checked)">`:ed?inp(u,f.k,x[f.k],"x."+f.k):num(x[f.k])}`).join("")}
   <td>${ed?`<input data-nokeep value="${esc(l.note||"")}" onchange="paySetLine('${key}','${u.id}','note',this.value)" class="pnote">`:esc(l.note||"")}
-  <td class="r nw"><b>${money(r.total)}</b>${r.why.length?`<div><span class="bdg no" style="font-size:10px" title="${esc(r.why.join(" · "))}">Pas de quota</span></div><div class="sm" style="color:var(--no);max-width:180px;white-space:normal">${esc(r.why.join(" · "))}</div>`:`<div class="mu" style="font-size:11px">${money(r.base)} + ${money(r.ot)} sup. + ${money(r.primes+r.hors)} primes${r.ecrete?` · plafonné`:""}${r.pen?` · averto −${r.pen*100} %`:""}</div>`}</tr>`}).join("");
+  <td class="r nw"><b>${money(r.total)}</b>${r.why.length?`<div><span class="bdg no" style="font-size:10px" title="${esc(r.why.join(" · "))}">Pas de quota</span></div><div class="sm" style="color:var(--no);max-width:180px;white-space:normal">${esc(r.why.join(" · "))}</div>`:`<div class="mu" style="font-size:11px">${money(r.base)} + ${money(r.ot)} sup. + ${money(r.primes+r.hors)} primes${r.ecrete?` · plafonné`:""}${r.pen?` · ${r.sanc.some(s=>s.pay)&&r.pen==.5?"sanction":"averto"} −${r.pen*100} %`:""}</div>`}</tr>`}).join("");
  const nc=7+F.length;
  return `<div class="form" style="margin-top:12px"><label class="f">Période<input id="pper_${key}" data-nokeep value="${esc(d.periode||"")}" placeholder="Ex. : Semaine 41 — 2026" ${ed?"":"disabled"} onchange="paySetPeriod('${key}',this.value)"></label>
  <div class="f"><span class="mu sm">Statut</span><div style="margin-top:10px">${bdg(PST,d.st||"brouillon")}${d.updNom?` <span class="mu sm">· modifiée par ${esc(d.updNom)} le ${fd(d.updT)}</span>`:""}</div></div></div>
@@ -969,13 +971,13 @@ function payArchView(key,nm){const A=vals(S.paiearch).filter(a=>a.dept==key).sor
  return `<div class="tw" style="margin-top:12px"><table><tr><th>Période<th>Versée le<th>Agents<th class="r">Total versé<th>Préparée par<th>Validée par</tr>${A.map(a=>`<tr class="click" onclick="openM('paiearch','${a.id}')"><td class="b">${esc(a.periode)}<td class="nw">${fd(a.t)}<td>${Object.keys(a.lines||{}).length}<td class="r b">${money(a.total)}<td>${esc(a.subNom||"—")}<td>${esc(a.byNom)}</tr>`).join("")||`<tr><td colspan="6" class="empty">Aucune paie archivée pour ce département.</td></tr>`}</table></div>`}
 function MPaieArch(a){if(!a)return null;const F=payFolders();if(!F.some(f=>f[0]==a.dept))return null;const L=Object.entries(a.lines||{}).map(([id,l])=>Object.assign({id},l)).sort((x,y)=>String(x.nom).localeCompare(y.nom));
  return {title:"Paie archivée — "+esc(a.deptNom)+" — "+esc(a.periode),wide:1,body:`<div class="kpis">${kpi("Agents payés",L.length)}${kpi("Total versé",money(a.total),"gold")}</div><p class="mu">Versée le ${fd(a.t)} · préparée par ${esc(a.subNom||"—")} · validée par ${esc(a.byNom)}</p>
- <div class="tw"><table><tr><th>Agent<th>Grade<th class="r">Heures<th>Activité<th class="r">Salaire<th class="r">Primes<th>Commentaire<th class="r">Total</tr>${L.map(l=>`<tr><td class="b">${esc(l.nom)}<td>${esc(l.grade||"")}<td class="r">${l.h!=null?fh(l.h):"—"}<td class="sm">${esc(l.det||"")}${l.why?`<div style="color:var(--no)">${esc(l.why)}</div>`:""}${num(l.av)?`<div style="color:var(--no)">Averto ${num(l.av)}</div>`:""}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td>${esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`).join("")}</table></div>`,
+ <div class="tw"><table><tr><th>Agent<th>Grade<th class="r">Heures<th>Activité<th class="r">Salaire<th class="r">Primes<th>Commentaire<th class="r">Total</tr>${L.map(l=>`<tr><td class="b">${esc(l.nom)}<td>${esc(l.grade||"")}<td class="r">${l.h!=null?fh(l.h):"—"}<td class="sm">${esc(l.det||"")}${l.why?`<div style="color:var(--no)">${esc(l.why)}</div>`:""}${num(l.av)?`<div style="color:var(--no)">Averto ${num(l.av)}</div>`:""}${l.sanc?`<div style="color:var(--no)">${esc(l.sanc)}</div>`:""}<td class="r">${money(l.montant)}<td class="r">${money(l.prime)}<td>${esc(l.note||"")}<td class="r b">${money(lineTotal(l))}</tr>`).join("")}</table></div>`,
  foot:`${isDir()?`<button class="btn gh" style="margin-right:auto" onclick="openM('paiedel','${a.id}')">Supprimer l'archive</button>`:""}<button class="btn sec" onclick="payArchCSV('${a.id}')">Exporter (CSV)</button><button class="btn" onclick="closeM()">Fermer</button>`}}
 
 /* Grades officiels générés depuis la grille salariale */
 const GCOL={_dir:"#c9a24a",fin:"#22c55e",ec:"#a78bfa",jus:"#94a3b8",int:"#3b82f6",com:"#ec4899",sec:"#f97316"};
 function gridPerms(dc,name,i){const n=NRM(name),S0=["annuaire","dos.view","dos.treat"],L=[...S0];const add=(...a)=>L.push(...a);
- if(dc!="_dir"&&i<2){add("dash","dos.assign","rh.view","rh.create","rh.edit","rh.grades","pay.dept","log.dept","rec.view","rec.treat","rec.cv");
+ if(dc!="_dir"&&i<2){add("dash","dos.assign","rh.view","rh.create","rh.edit","rh.grades","rh.sanction","pay.dept","log.dept","rec.view","rec.treat","rec.cv");
   ({fin:()=>add("fin.view","fin.edit","fin.bill","fin.decl","fin.budget","fin.archive","reg.ent.view","reg.ent.edit"),ec:()=>add("reg.civ.view","reg.civ.edit","rec.bl"),jus:()=>add("jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view"),int:()=>add("reg.ent.view","reg.civ.view"),com:()=>add("com.post","com.banner"),sec:()=>add("sec.archive")}[dc]||(()=>0))()}
  else if(dc=="fin"){add("fin.view","fin.bill","reg.ent.view");if(i<6)add("fin.edit","fin.decl","fin.budget","fin.archive","reg.ent.edit");if(/controle|referent/.test(n))add("fin.decl")}
  else if(dc=="ec"){add("reg.civ.view","reg.civ.edit");if(n.includes("ressources humaines"))add("rec.cv");if(n.includes("directeur rh"))add("rec.view","rec.treat","rec.cv","rec.bl","rh.view");if(n.includes("formateur"))add("rec.view")}
@@ -1032,6 +1034,34 @@ function MIdEdit(){if(!can("reg.civ.edit"))return null;const r=modal.id?S.identi
  <input type="file" id="idf" accept="image/*,application/pdf" multiple style="display:none" onchange="addIdFiles(this.files);this.value=''">
  ${modal.busy?`<p class="mu">Traitement des fichiers…</p>`:""}<p class="err" id="msg"></p>`,
  foot:`<button class="btn sec" onclick="${r?`openM('idoc','${r.id}')`:"closeM()"}">Annuler</button><button class="btn" ${modal.busy?"disabled":""} onclick="idSave('${r?r.id:""}')">${r?"Enregistrer":"Enregistrer le document"}</button>`}}
+
+/* =================== SANCTIONS =================== */
+const SANC_T={avert1:["1er avertissement","wa"],ultimatum:["Ultimatum","no"]};
+const today=()=>isoDay(Date.now());
+const sancActive=s=>s&&!s.rev&&(!s.exp||s.exp>=today());
+const userSanc=uid=>vals(S.sanctions).filter(s=>s.uid==uid&&sancActive(s));
+function sancPen(u){const L=userSanc(u.id);return {list:L,pen:L.some(s=>s.pay)?.5:0}}
+function canSanction(u){const m=ME();if(!m||!u||u.id==m.id||!isAgent(u))return false;if(isDir())return true;if(!can("rh.sanction")||u.role=="direction"||!m.dept||u.dept!=m.dept)return false;
+ const rm=(G(m)||{}).rank??99,ru=(G(u)||{}).rank??99;return ru>rm}
+const sancBadges=(uid,sm)=>userSanc(uid).map(s=>`<span class="bdg ${SANC_T[s.type][1]}" ${sm?'style="font-size:10px"':""} title="${esc(s.motif||"")}${s.exp?" — jusqu'au "+fdd(s.exp):" — sans expiration"}${s.pay?" — salaire ÷ 2":""}">${esc(SANC_T[s.type][0])}${s.pay?" · ÷2":""}</span>`).join(" ");
+function sancView(){const st=filt.sst2||"act",q=filt.saq||"",me=ME();
+ let A=vals(S.sanctions).filter(s=>isDir()||can("rh.sanction")&&s.dept==me.dept);
+ const stOf=s=>s.rev?"lev":sancActive(s)?"act":"exp";const cnt=k=>A.filter(s=>k=="all"||stOf(s)==k).length;
+ const L=A.filter(s=>st=="all"||stOf(s)==st).filter(s=>match(q,s.uNom,s.motif,s.byNom,SANC_T[s.type][0])).sort((a,b)=>b.t-a.t);
+ const SB={act:["Active","no"],exp:["Expirée","mu"],lev:["Levée","mu"]};
+ return `<div class="card inl" style="justify-content:space-between"><span class="mu">Un <b>1er avertissement</b> ou un <b>ultimatum</b> peut avoir une date d'expiration ou rester actif jusqu'à sa levée. S'il divise le salaire, la paie de l'agent est automatiquement réduite de moitié tant que la sanction est active.</span><button class="btn" onclick="openM('sanc')">${ic("plus")}Nouvelle sanction</button></div>
+ <div class="card inl">${search("saq","Agent, motif…")}</div>
+ <div class="tabs">${[["act","Actives"],["exp","Expirées"],["lev","Levées"],["all","Toutes"]].map(([k,l])=>`<button class="${st==k?"on":""}" onclick="filt.sst2='${k}';render()">${l} (${cnt(k)})</button>`).join("")}</div>
+ <div class="card tw"><table><tr><th>Agent<th>Sanction<th>Motif<th>Salaire<th>Expiration<th>Donnée le<th>Par<th>État<th></tr>${L.map(s=>`<tr><td><b>${esc(s.uNom)}</b><div class="mu sm">${esc(s.grade||"")}${s.dept?" · "+esc(s.dept):""}</div><td>${bdg(SANC_T,s.type)}<td style="white-space:normal;max-width:260px">${esc(s.motif)}<td class="nw">${s.pay?'<span style="color:var(--no)">÷ 2</span>':"Inchangé"}<td class="nw">${s.exp?fdd(s.exp):"Sans expiration"}<td class="nw">${fd(s.t)}<td>${esc(s.byNom)}<td>${bdg(SB,stOf(s))}${s.rev?`<div class="mu sm">par ${esc(s.revNom||"")} le ${fd(s.revT)}</div>`:""}<td class="nw">${stOf(s)=="act"&&(isDir()||canSanction(S.users[s.uid]))?`<button class="btn sec sm" onclick="sancLift('${s.id}')">Lever</button>`:""} ${isDir()?`<button class="btn gh sm" onclick="sancDel('${s.id}')">Supprimer</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucune sanction.</td></tr>`}</table></div>`}
+function MSanc(){const T=vals(S.users).filter(canSanction).sort((a,b)=>(a.dept||"").localeCompare(b.dept||"")||a.nom.localeCompare(b.nom));if(!T.length&&!isDir()&&!can("rh.sanction"))return null;
+ const noexp=keep.sne!=null?keep.sne=="1":false;
+ return {title:"Nouvelle sanction",body:`${T.length?`<div class="form"><label class="f full">Agent sanctionné *<select id="sau"><option value="">— Choisir —</option>${T.map(u=>`<option value="${u.id}">${esc(u.nom)} — ${esc(gname(u))}${u.dept?" ("+esc(u.dept)+")":""}</option>`).join("")}</select></label>
+ <label class="f">Type de sanction *<select id="sat">${opts(Object.entries(SANC_T).map(([k,v])=>[k,v[0]]),"avert1")}</select></label>
+ <label class="f">Expiration<select id="sae" data-nokeep onchange="keep.sne=this.value=='none'?'1':'0';render()">${opts([["date","À une date"],["none","Sans expiration"]],noexp?"none":"date")}</select></label>
+ ${noexp?"":`<label class="f">Expire le *<input id="sad" type="date" value="${esc(keep.sad||addDays(today(),7))}" min="${today()}"></label>`}
+ <label class="f full">Motif *<textarea id="sam" rows="3" placeholder="Raison de la sanction"></textarea></label></div>
+ <label class="ck"><input type="checkbox" id="sap"><span>Diviser le salaire par 2 tant que la sanction est active</span></label>`:`<p class="mu">Aucun agent que vous pouvez sanctionner (agents de votre département de rang inférieur au vôtre).</p>`}<p class="err" id="msg"></p>`,
+ foot:`<button class="btn sec" onclick="closeM()">Annuler</button>${T.length?`<button class="btn no" onclick="sancSave()">Appliquer la sanction</button>`:""}`}}
 
 /* =================== RECRUTEMENTS =================== */
 const RST={attente:["En attente","wa"],acceptee:["Acceptée","ok"],refusee:["Refusée","no"]};
@@ -1146,6 +1176,7 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="rec")m=MRec(S.recrutements[modal.id]);
  else if(modal.type=="bl")m=MBl();
  else if(modal.type=="gridrep")m=MGridReplace();
+ else if(modal.type=="sanc")m=MSanc();
  else if(modal.type=="pat")m=MPat(S.patrouilles[modal.id]);
  else if(modal.type=="patarch")m=MPatArch(S.patarch[modal.id]);
  else if(modal.type=="paiearch")m=MPaieArch(S.paiearch[modal.id]);
@@ -1311,7 +1342,7 @@ function payValidate(key,nm){if(!payGlobal())return;const d=S.paie[key]||{};if(!
  const tot=L.reduce((s,u)=>s+payCalc(u,d.lines[u.id]).total,0);
  ask(`Valider et verser la paie « ${d.periode} » du département ${nm} : ${money(tot)} à ${L.length} agent(s) ? Les montants seront débités du Trésor et la paie archivée.`,()=>{
   const me=ME(),now=Date.now(),aid=nid(),lines={};
-  L.forEach(u=>{const l=d.lines[u.id],r=payCalc(u,l),t=r.total;lines[u.id]={nom:u.nom,grade:gname(u),h:r.h,q:Math.round(r.q*100),av:num(l.av),det:payDet(u,l),x:l.x||{},montant:r.sal,prime:t-r.sal,total:t,note:l.note||""};
+  L.forEach(u=>{const l=d.lines[u.id],r=payCalc(u,l),t=r.total;lines[u.id]={nom:u.nom,grade:gname(u),h:r.h,q:Math.round(r.q*100),av:num(l.av),sanc:r.sanc.filter(s=>s.pay).map(s=>SANC_T[s.type][0]+" (÷2)").join(", "),det:payDet(u,l),x:l.x||{},montant:r.sal,prime:t-r.sal,total:t,note:l.note||""};
    DBX.update("users/"+u.id,{paidAt:now,bonus:0});const tid=nid();
    DBX.set("transactions/"+tid,{id:tid,t:now,type:"out",cat:"Salaires",dept:key=="_dir"?"":(u.dept||""),user:u.id,paie:aid,montant:t,label:`Salaire ${d.periode} — ${u.nom}`,by:me.id,byNom:me.nom})});
   DBX.set("paiearch/"+aid,{id:aid,dept:key,deptNom:nm,periode:d.periode,t:now,by:me.id,byNom:me.nom,subNom:d.subNom||d.updNom||"",total:tot,lines});
@@ -1428,6 +1459,17 @@ function idSave(id){if(!can("reg.civ.edit"))return;const r=id?S.identites[id]:nu
   DBX.update("identites/"+did,up);log(`Document d'identité modifié : ${L} — ${pre} ${nom}`,"État-Civil","Registres");toast("Document mis à jour.")}
  modal={type:"idoc",id:did};keep={};render()}
 function idDel(id){if(!can("reg.civ.edit"))return;const r=S.identites[id];ask(`Supprimer définitivement le document ${r.num||""} (${r.prenom||""} ${r.nom}) et son image ?`,()=>{DBX.remove("idfiles/"+id);DBX.remove("identites/"+id);delete idCache[id];log(`Document d'identité supprimé : ${idType(r)[1]} — ${r.prenom||""} ${r.nom}`,"État-Civil","Registres");modal=null},"Supprimer")}
+
+/* Sanctions */
+function sancSave(){const u=S.users[val("sau")];if(!u)return say("Choisissez l'agent sanctionné.");if(!canSanction(u))return say("Vous ne pouvez pas sanctionner cet agent.");
+ const ty=val("sat"),mo=tval("sam"),noexp=val("sae")=="none",exp=noexp?null:val("sad");if(!mo)return say("Indiquez le motif de la sanction.");if(!noexp&&(!exp||exp<today()))return say("Indiquez une date d'expiration valide.");
+ const m=ME(),id=nid(),pay=!!document.getElementById("sap")?.checked;
+ DBX.set("sanctions/"+id,{id,uid:u.id,uNom:u.nom,grade:gname(u),dept:u.dept||"",type:ty,motif:mo,exp,pay,t:Date.now(),by:m.id,byNom:m.nom});
+ log(`Sanction « ${SANC_T[ty][0]} » pour ${u.nom}${exp?" jusqu'au "+fdd(exp):" (sans expiration)"}${pay?" — salaire ÷ 2":""} : ${mo}`,u.dept,"Sanctions");
+ const mid=nid();DBX.set("messages/"+mid,{id:mid,from:m.id,to:u.id,t:Date.now(),txt:`Sanction : ${SANC_T[ty][0]}${exp?" (jusqu'au "+fdd(exp)+")":" (sans expiration)"}${pay?" — votre salaire est divisé par 2 pendant la durée de la sanction":""}. Motif : ${mo}`,read:false});
+ toast("Sanction appliquée.");closeM()}
+function sancLift(id){const s=S.sanctions[id];if(!s||!(isDir()||canSanction(S.users[s.uid])))return;ask(`Lever la sanction « ${SANC_T[s.type][0]} » de ${s.uNom} ?`,()=>{const m=ME();DBX.update("sanctions/"+id,{rev:true,revT:Date.now(),revNom:m.nom});log(`Sanction levée : ${SANC_T[s.type][0]} de ${s.uNom}`,s.dept,"Sanctions")},"Lever")}
+function sancDel(id){if(!isDir())return;const s=S.sanctions[id];ask(`Supprimer définitivement la sanction de ${s.uNom} de l'historique ?`,()=>{DBX.remove("sanctions/"+id);log(`Sanction supprimée de l'historique : ${SANC_T[s.type][0]} de ${s.uNom}`,s.dept,"Sanctions")},"Supprimer")}
 
 /* Recrutements */
 function openRecNew(){modal={type:"recNew",files:[]};keep={};render()}
