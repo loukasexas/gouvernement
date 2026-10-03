@@ -29,6 +29,9 @@ h2{font-size:20px}h3{font-size:16px}h4{font-size:14px;color:var(--mu);text-trans
 .nav button:hover{background:var(--cd);color:var(--tx)}
 .nav button.on{background:var(--cd2);color:var(--gold2);box-shadow:inset 3px 0 0 var(--gold)}
 .nav svg{width:18px;height:18px;flex:none}
+tr.ggrp td{background:var(--cd2);color:var(--gold2);font-weight:700;font-size:12px;letter-spacing:.04em;text-transform:uppercase;padding-top:8px;padding-bottom:8px}
+.ngrp{margin:2px 0}.nav .nghead.act{color:var(--gold2)}.ngchev{margin-left:auto;display:flex;transition:transform .15s}.ngchev svg{width:15px;height:15px}.ngrp:not(.open) .ngchev{transform:rotate(-90deg)}.ngrp .cnt+.ngchev{margin-left:6px}
+.ngbody{margin:2px 0 4px 17px;padding-left:8px;border-left:1px solid var(--bd)}.nav button.nsub{padding:7px 10px;font-size:13.5px}.nav button.nsub svg{width:16px;height:16px}
 .nav .cnt{margin-left:auto;background:var(--no);color:#fff;border-radius:99px;font-size:11px;padding:0 7px;line-height:18px}
 .side-foot{padding:12px 16px;border-top:1px solid var(--bd);font-size:12px;color:var(--mu)}
 .wrap{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -383,7 +386,7 @@ function closeSide(){$(".side")&&$(".side").classList.remove("open");$(".scrim")
 document.addEventListener("keydown",e=>{if(e.key=="Escape"&&modal){modal.type=="confirm"?askNo():closeM()}});
 
 /* ---------- Icônes ---------- */
-const IC={briefcase:"M3 7h18v13H3z|M8 7V4h8v3|M3 13h18",home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
+const IC={grid:"M3 3h7v7H3z|M14 3h7v7h-7z|M3 14h7v7H3z|M14 14h7v7h-7z",briefcase:"M3 7h18v13H3z|M8 7V4h8v3|M3 13h18",home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
 function ic(n){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(IC[n]||"").split("|").map(p=>p[0]=="c"?(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`)(p.slice(1).split(",")):`<path d="${p}"/>`).join("")}</svg>`}
 function seal(){const src=(S.config&&S.config.logo)||"logo.png";return `<img class="logo" src="${esc(src)}" alt="Sceau du gouvernement" onerror="this.outerHTML=sealSvg()">`}
 function setFavicon(){let l=document.querySelector("link[rel=icon]");if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l)}l.href=(S.config&&S.config.logo)||"logo.png"}
@@ -406,7 +409,7 @@ function page(){
  const N=navItems();if(!N.some(n=>n[0]==view))view=N[0][0];
  const bn=S.config.banner||{};
  return `<div class="app"><div class="scrim" onclick="closeSide()"></div><aside class="side"><div class="brand">${seal()}<div><div class="t1">${esc(S.config.siteName||"Gouvernement de Los Santos")}</div><div class="t2">${esc(S.config.subtitle||"Intranet officiel")}</div></div></div>
- <nav class="nav">${N.map(([k,l,i,c])=>`<button class="${k==view?"on":""}" onclick="go('${k}')">${ic(i)}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`).join("")}
+ <nav class="nav">${navH(N)}
  <button onclick="logout()">${ic("logout")}<span>Déconnexion</span></button></nav>
  <div class="side-foot">${DB_URL?(connected?'<span class="dot ok"></span>Synchronisé':'<span class="dot no"></span>Hors ligne — reconnexion…'):'<span class="dot"></span>Mode local (non partagé)'}</div></aside>
  <div class="wrap"><div class="top"><button class="burger" onclick="openSide()" aria-label="Menu">${ic("menu").replace("<svg",'<svg width="20" height="20"')}</button>
@@ -415,6 +418,12 @@ function page(){
  ${bn.on&&bn.txt?`<div class="ticker ${esc(bn.lvl||"info")}">${tickerSpan(bn.txt)}</div>`:""}
  <main>${(V[view]||V.accueil)()}</main></div></div>${modalH()}`;
 }
+const navBtn=([k,l,i,c],sub)=>`<button class="${k==view?"on":""}${sub?" nsub":""}" onclick="go('${k}')">${ic(i)}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`;
+let navGOpen=(()=>{try{return localStorage.getItem("lsgov_navg")!=="0"}catch(e){return true}})();
+function navGToggle(){navGOpen=!navGOpen;try{localStorage.setItem("lsgov_navg",navGOpen?"1":"0")}catch(e){}render()}
+function navH(N){let h="",done=false;const Gi=N.filter(n=>n[4]=="g");
+ N.forEach(n=>{if(n[4]!="g"){h+=navBtn(n);return}if(done)return;done=true;const act=Gi.some(x=>x[0]==view),open=navGOpen||act,c=Gi.reduce((s,x)=>s+num(x[3]),0);
+  h+=`<div class="ngrp ${open?"open":""}"><button class="nghead ${act?"act":""}" onclick="navGToggle()" aria-expanded="${open}">${ic("grid")}<span>Gestion</span>${!open&&c?`<span class="cnt">${c}</span>`:""}<span class="ngchev">${ic("chev")}</span></button>${open?`<div class="ngbody">${Gi.map(x=>navBtn(x,1)).join("")}</div>`:""}</div>`});return h}
 /* Le bandeau suit l'horloge : il reprend là où il en était après chaque changement de page */
 function tickerSpan(t){const d=Math.max(20,Math.round(14+String(t).length*.2)),ph=(Date.now()/1000)%d;return `<span style="animation-duration:${d}s;animation-delay:-${ph.toFixed(2)}s">${esc(t)}</span>`}
 function navItems(){const u=ME(),n=unread(),I=[];
@@ -429,10 +438,10 @@ function navItems(){const u=ME(),n=unread(),I=[];
  if(["fin.view","fin.bill","fin.decl","fin.budget"].some(can))I.push(["finances","Finances","coins",canBill()?vals(S.factures).filter(f=>f.st=="verif").length:0]);
  I.push(["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n]);
  if(can("annuaire"))I.push(["annuaire","Annuaire","users"]);
- if(["rh.view","rh.grades"].some(can))I.push(["personnel","Personnel","shield"]);
- I.push(["salaire","Salaire","wallet",(can("pay.all")||isDir())?vals(S.paie).filter(p=>p&&p.st=="soumise").length:0]);
- if(can("log.dept")||can("log.all"))I.push(["journal","Logs","list"]);
- if(can("adm.site")||can("com.banner"))I.push(["admin","Administration","settings"]);
+ if(["rh.view","rh.grades"].some(can))I.push(["personnel","Personnel","shield",0,"g"]);
+ I.push(["salaire","Salaire","wallet",(can("pay.all")||isDir())?vals(S.paie).filter(p=>p&&p.st=="soumise").length:0,"g"]);
+ if(can("log.dept")||can("log.all"))I.push(["journal","Logs","list",0,"g"]);
+ if(can("adm.site")||can("com.banner"))I.push(["admin","Administration","settings",0,"g"]);
  I.push(["profil","Mon profil","user"]);
  return I}
 function loginPage(){const mt=S.config.maintenance||{};
@@ -819,9 +828,10 @@ V.personnel=()=>{const T=[];if(can("rh.view"))T.push(["comptes","Comptes"]);if(c
   <label class="f">Téléphone<input id="ct"></label></div><button class="btn" onclick="addUser()">Créer le compte</button><p class="err" id="msg"></p><p class="mu sm">L'utilisateur devra changer son mot de passe à la première connexion.</p></div>`:"")+
   `<div class="card inl">${search("pq","Nom, identifiant, grade…")}${fsel("pr",Object.entries(ROLES),"Tous rôles")}${fsel("pd",DEPTS(),"Tous départements")}</div>
   <div class="card tw"><table><tr><th>Nom<th>Identifiant<th>Rôle<th>Grade<th>Département<th>État<th></tr>${L.map(u=>`<tr><td class="b">${esc(u.nom)}<td>${esc(u.login)}<td>${esc(ROLES[u.role])}<td>${esc(G(u)?G(u).name:"—")}<td>${esc(u.dept||"—")}<td>${u.active===false?'<span class="bdg no">Suspendu</span>':'<span class="bdg ok">Actif</span>'}<td class="nw">${manageable(u)&&can("rh.edit")?`<button class="btn sec sm" onclick="openM('user','${u.id}')">Modifier</button>`:""} ${manageable(u)&&can("rh.delete")?`<button class="btn gh sm" onclick="delUser('${u.id}')">Supprimer</button>`:""}</tr>`).join("")||`<tr><td colspan="7" class="empty">Aucun compte.</td></tr>`}</table></div>`}
- if(s=="grades"){const L=vals(S.grades).filter(g=>isDir()||g.role=="fonctionnaire"&&(g.dept==ME().dept)||g.dept==ME().dept).sort((a,b)=>Object.keys(ROLES).indexOf(b.role)-Object.keys(ROLES).indexOf(a.role)||(a.rank||0)-(b.rank||0));
+ if(s=="grades"){const L=vals(S.grades).filter(g=>isDir()||g.role=="fonctionnaire"&&(g.dept==ME().dept)||g.dept==ME().dept).filter(g=>!filt.gfd||(filt.gfd=="_dir"?!g.dept:g.dept==filt.gfd)).filter(g=>!filt.gfr||g.role==filt.gfr).filter(g=>match(filt.gfq,g.name)).sort((a,b)=>gdo(a)-gdo(b)||Object.keys(ROLES).indexOf(b.role)-Object.keys(ROLES).indexOf(a.role)||(a.rank||0)-(b.rank||0));
   return h+`<div class="card inl" style="justify-content:space-between"><span class="mu">Un grade précise un rôle : il fixe l'intitulé, la rémunération (grille salariale) et les permissions exactes de l'agent.</span><span class="inl">${isDir()?`<button class="btn sec" onclick="openM('gridrep')">Remplacer par la grille officielle</button>`:""}<button class="btn" onclick="openM('grade')">${ic("plus")}Nouveau grade</button></span></div>
-  <div class="card tw"><table><tr><th>Grade<th>Rôle<th>Département<th>Permissions<th class="r">Salaire de base<th class="r">Maximal<th class="r">Taux h. sup.<th>Agents<th></tr>${L.map(g=>`<tr><td><span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span><td>${esc(ROLES[g.role])}<td>${esc(g.dept||"Tous")}<td>${g.role=="direction"?"Toutes":Object.keys(g.perms||{}).filter(k=>g.perms[k]).length}${(c=>c?`<td class="r nw">${money(c.base)}<td class="r nw">${c.max>c.base?money(c.max):"—"}<td class="r nw">${c.max>c.base?money(c.rate):"—"}${c.src=="grille"?"":` <span class="mu sm" title="Valeurs propres au grade">*</span>`}`:`<td colspan="3" class="mu sm">Hors grille salariale</td>`)(payCfg(g))}<td>${vals(S.users).filter(u=>u.gradeId==g.id).length}<td class="nw">${gradeEditable(g)?`<button class="btn sec sm" onclick="openM('grade','${g.id}')">Modifier</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun grade.</td></tr>`}</table></div>`}
+  <div class="card inl">${search("gfq","Rechercher un grade…")}${isDir()?fsel("gfd",[["_dir","Direction / tous départements"]].concat(DEPTS().map(d=>[d,d])),"Tous les départements"):""}${fsel("gfr",Object.entries(ROLES).filter(r=>r[0]!="entreprise"),"Tous les rôles")}<span class="mu sm">${L.length} grade(s)</span></div>
+  <div class="card tw"><table><tr><th>Grade<th>Rôle<th>Département<th>Permissions<th class="r">Salaire de base<th class="r">Maximal<th class="r">Taux h. sup.<th>Agents<th></tr>${L.map((g,i)=>`${i==0||(L[i-1].dept||"")!=(g.dept||"")?`<tr class="ggrp"><td colspan="9">${esc(g.dept||(g.role=="direction"?"Direction":"Tous départements"))} <span class="mu">· ${L.filter(x=>(x.dept||"")==(g.dept||"")).length}</span></td></tr>`:""}<tr><td><span class="bdg" style="color:${esc(g.color||"var(--gold2)")}">${esc(g.name)}</span><td>${esc(ROLES[g.role])}<td>${esc(g.dept||(g.role=="direction"?"Direction":"Tous"))}<td>${g.role=="direction"?"Toutes":Object.keys(g.perms||{}).filter(k=>g.perms[k]).length}${(c=>c?`<td class="r nw">${money(c.base)}<td class="r nw">${c.max>c.base?money(c.max):"—"}<td class="r nw">${c.max>c.base?money(c.rate):"—"}${c.src=="grille"?"":` <span class="mu sm" title="Valeurs propres au grade">*</span>`}`:`<td colspan="3" class="mu sm">Hors grille salariale</td>`)(payCfg(g))}<td>${vals(S.users).filter(u=>u.gradeId==g.id).length}<td class="nw">${gradeEditable(g)?`<button class="btn sec sm" onclick="openM('grade','${g.id}')">Modifier</button>`:""}</tr>`).join("")||`<tr><td colspan="9" class="empty">Aucun grade.</td></tr>`}</table></div>`}
  return h};
 let openGrp=new Set([0]);
 function permEditor(lockOwn){const d=modal.draft||{},q=(keep.peq||"").trim().toLowerCase(),tot=ALLP.filter(k=>d[pk(k)]).length;
@@ -856,6 +866,7 @@ function MUser(u){if(!u||!manageable(u))return null;if(!modal.draft)modal.draft=
  <label class="f">Nouveau mot de passe provisoire<input id="ep" placeholder="Laisser vide pour ne pas changer" autocomplete="off"></label></div>
  ${dir&&(role=="fonctionnaire"||role=="encadrement")?`<h4 style="margin-top:6px">Permissions individuelles (en plus de celles du grade)</h4>${permEditor(false)}`:""}<p class="err" id="msg"></p>`,
  foot:`<button class="btn sec" onclick="closeM()">Annuler</button><button class="btn" onclick="saveUser('${u.id}')">Enregistrer</button>`}}
+const gdo=g=>g.dept?(DEPTS().indexOf(g.dept)+1||90):0;
 /* =================== SALAIRE =================== */
 const payGlobal=()=>isDir()||can("pay.all");
 const deptKey=d=>d?String(d).replace(/[.#$\/\[\]]/g,"_"):"_dir";
