@@ -264,11 +264,11 @@ const DOS_TYPES={
  "Sécurité":["Licence de port d'arme","Agrément sécurité privée","Demande d'escorte"]
 };
 const DST={attente:["En attente","wa"],cours:["En cours","bl"],ok:["Acceptée","ok"],no:["Refusée","no"]};
-const AST={ouverte:["Ouverte","bl"],instruction:["En instruction","wa"],audience:["Audience fixée","gd"],jugee:["Jugée","ok"],classee:["Classée sans suite","mu"]};
+const AST={attente:["En attente","wa"],cours:["En cours","bl"],instruction:["En instruction","gd"],classee:["Classée sans suite","mu"],jugee:["Jugée (ancienne affaire)","ok"]};
 const PERMS=[
  ["Général",[["dash","Peut voir le tableau de bord global"],["annuaire","Peut consulter l'annuaire des agents"]],"home"],
  ["Dossiers administratifs",[["dos.view","Peut voir les dossiers de son département"],["dos.treat","Peut accepter ou refuser un dossier"],["dos.assign","Peut assigner un dossier à un agent"],["dos.all","Peut voir les dossiers de tous les départements"],["dos.delete","Peut supprimer un dossier"]],"folder"],
- ["Affaires judiciaires",[["jus.view","Peut voir la liste des affaires"],["jus.open","Peut ouvrir une affaire"],["jus.instruct","Peut instruire une affaire (pièces, auditions, notes)"],["jus.status","Peut changer le statut, le juge et l'audience (clore / rouvrir)"],["jus.verdict","Peut rendre un jugement"],["jus.secret","Peut voir les affaires confidentielles"],["jus.delete","Peut supprimer une affaire"]],"scale"],
+ ["Traitement des plaintes",[["jus.view","Peut voir les plaintes"],["jus.open","Peut enregistrer et modifier des plaintes"],["jus.instruct","Peut ajouter des notes de suivi"],["jus.status","Peut changer le statut et fixer les audiences"],["jus.delete","Peut supprimer des plaintes"]],"scale"],
  ["Outils de justice",[["jus.tool","Outil de justice : consulter les jugements"],["jus.judge","Outil de justice : créer et modifier les jugements, générer la note MDT"],["jus.grid","Modifier la grille des infractions"],["jus.docs.view","Consulter les documents officiels"],["jus.docs","Rédiger des documents officiels"]],"scale"],
  ["Registre des entreprises",[["reg.ent.view","Peut consulter le registre des entreprises"],["reg.ent.edit","Peut créer, modifier et supprimer des fiches entreprise (département Finances uniquement)"]],"book"],
  ["État civil",[["reg.civ.view","Peut consulter les actes et fiches d'état civil"],["reg.civ.edit","Peut enregistrer, modifier et supprimer des actes d'état civil"]],"user"],
@@ -357,7 +357,7 @@ const LAYOUT={
  paie:["salaires/en_cours",1,(x,id)=>[id]],
  paiearch:["salaires/archives",2,(x,id)=>[fk(x.deptNom)+"/"+id]],
  dossiers:["dossiers",2,(x,id)=>[fk(x.dept)+"/"+id]],
- affaires:["justice/affaires",1,(x,id)=>[id]],
+ affaires:["justice/plaintes",2,(x,id)=>[fk((AST[plSt(x)]||["Autres"])[0])+"/"+id]],
  entreprises:["registres/entreprises",1,(x,id)=>[id]],
  identites:["registres/documents_identite",2,(x,id)=>[fk(IDL[x.type]?IDL[x.type][1]:"Anciennes fiches")+"/"+id]],
  actes:["registres/etat_civil",2,(x,id)=>[fk((ECL[x.cat]||["","Autres"])[1])+"/"+id]],
@@ -533,7 +533,7 @@ function page(){
  if(u.mustChange)return pwChangePage();
  const mt=S.config.maintenance||{};
  if(mt.on&&!isDir()&&!can("adm.site"))return `<div class="login"><div class="box"><div class="seal">${seal()}</div><div class="card"><h3>Maintenance en cours</h3><p class="pre">${esc(mt.msg||"L'intranet est temporairement indisponible.")}</p><button class="btn sec" onclick="logout()">Se déconnecter</button></div></div></div>`;
- const N=navItems();if(!N.some(n=>n[0]==view))view=N[0][0];
+ const N=navItems();if(!N.some(n=>n[0].split("/")[0]==view))view=N[0][0].split("/")[0];
  const bn=S.config.banner||{};
  return `<div class="app"><div class="scrim" onclick="closeSide()"></div><aside class="side"><div class="brand">${seal()}<div><div class="t1">${esc(S.config.siteName||"Gouvernement de Los Santos")}</div><div class="t2">${esc(S.config.subtitle||"Intranet officiel")}</div></div></div>
  <nav class="nav">${navH(N)}
@@ -545,12 +545,13 @@ function page(){
  ${bn.on&&bn.txt?`<div class="ticker ${esc(bn.lvl||"info")}">${tickerSpan(bn.txt)}</div>`:""}
  <main>${(V[view]||V.accueil)()}</main></div></div>${modalH()}`;
 }
-const navBtn=([k,l,i,c],sub)=>`<button class="${k==view?"on":""}${sub?" nsub":""}" onclick="go('${k}')">${ic(i)}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`;
-const NAVG={j:["Justice","scale"],g:["Gestion","grid"]};
+const navOn=k=>{const [b,s]=k.split("/");if(b!=view)return false;if(!s)return true;if(sub)return sub==s;const N=navItems().filter(n=>n[0].split("/")[0]==b);return N[0]&&N[0][0]==k};
+const navBtn=([k,l,i,c],nsub)=>`<button class="${navOn(k)?"on":""}${nsub?" nsub":""}" onclick="go('${k.split("/")[0]}','${k.split("/")[1]||""}')">${ic(i)}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`;
+const NAVG={j:["Justice","scale"],e:["État Civil","user"],f:["Finances","coins"],c:["Communication","megaphone"],g:["Gestion","grid"]};
 const navGOpen={};Object.keys(NAVG).forEach(k=>{try{navGOpen[k]=localStorage.getItem(k=="g"?"lsgov_navg":"lsgov_navg_"+k)!=="0"}catch(e){navGOpen[k]=true}});
 function navGToggle(k){navGOpen[k]=!navGOpen[k];try{localStorage.setItem(k=="g"?"lsgov_navg":"lsgov_navg_"+k,navGOpen[k]?"1":"0")}catch(e){}render()}
 function navH(N){let h="";const done=new Set();
- N.forEach(n=>{const g=n[4];if(!g||!NAVG[g]){h+=navBtn(n);return}if(done.has(g))return;done.add(g);const Gi=N.filter(x=>x[4]==g),act=Gi.some(x=>x[0]==view),open=navGOpen[g]||act,c=Gi.reduce((s,x)=>s+num(x[3]),0);
+ N.forEach(n=>{const g=n[4];if(!g||!NAVG[g]){h+=navBtn(n);return}if(done.has(g))return;done.add(g);const Gi=N.filter(x=>x[4]==g),act=Gi.some(x=>navOn(x[0])),open=navGOpen[g]||act,c=Gi.reduce((s,x)=>s+num(x[3]),0);
   h+=`<div class="ngrp ${open?"open":""}"><button class="nghead ${act?"act":""}" onclick="navGToggle('${g}')" aria-expanded="${open}">${ic(NAVG[g][1])}<span>${NAVG[g][0]}</span>${!open&&c?`<span class="cnt">${c}</span>`:""}<span class="ngchev">${ic("chev")}</span></button>${open?`<div class="ngbody">${Gi.map(x=>navBtn(x,1)).join("")}</div>`:""}</div>`});return h}
 /* Le bandeau suit l'horloge : il reprend là où il en était après chaque changement de page */
 function tickerSpan(t){const d=Math.max(20,Math.round(14+String(t).length*.2)),ph=(Date.now()/1000)%d;return `<span style="animation-duration:${d}s;animation-delay:-${ph.toFixed(2)}s">${esc(t)}</span>`}
@@ -560,14 +561,20 @@ function navItems(){const u=ME(),n=unread(),I=[];
  I.push(["accueil","Accueil","home"]);
  if(can("dos.view")){const p=vals(S.dossiers).filter(d=>myDepts().includes(d.dept)&&d.st=="attente").length;I.push(["dossiers","Dossiers","folder",p])}
  if(canTool())I.push(["jtool","Outil de justice","scale",0,"j"]);
- if(can("jus.view"))I.push(["justice","Affaires judiciaires","folder",0,"j"]);
+ if(can("jus.view"))I.push(["justice","Traitement des plaintes","folder",vals(S.affaires).filter(a=>plSt(a)=="attente").length,"j"]);
  I.push(["infractions","Grille des infractions","list",0,"j"]);
  if(canDocs())I.push(["jdocs","Documents officiels","file",0,"j"]);
+ if(recOk())I.push(["recrutements","Recrutements","briefcase",can("rec.treat")?vals(S.recrutements).filter(r=>r.st=="attente").length:0,"e"]);
+ if(can("reg.civ.view"))I.push(["registres/etatcivil","Registres d'état civil","book",0,"e"],["registres/identites","Documents d'identité","user",0,"e"]);
+ if(can("fin.view"))I.push(["finances/tresor","Trésorerie","coins",0,"f"]);
+ if(can("fin.bill")||can("fin.view"))I.push(["finances/fact","Comptabilité","wallet",canBill()?vals(S.factures).filter(f=>f.st=="verif").length:0,"f"]);
+ if(can("fin.decl")||can("fin.view"))I.push(["finances/decl","Déclarations fiscales","file",0,"f"]);
+ if(can("fin.budget")||can("fin.view"))I.push(["finances/fisc","Taxes par entreprise","list",0,"f"]);
+ if(can("fin.view")||can("fin.archive"))I.push(["finances/arch","Archives fiscales","folder",0,"f"]);
+ if(can("fin.view")||can("fin.budget"))I.push(["finances/stats","Statistiques","grid",0,"f"]);
+ if(can("reg.ent.view"))I.push(["registres/entreprises","Registre des entreprises","book",0,"f"]);
  if(secOk())I.push(["securite","Sécurité","eye"]);
- if(recOk())I.push(["recrutements","Recrutements","briefcase",can("rec.treat")?vals(S.recrutements).filter(r=>r.st=="attente").length:0]);
- if(["reg.ent.view","reg.civ.view"].some(can))I.push(["registres","Registres","book"]);
- if(["fin.view","fin.bill","fin.decl","fin.budget"].some(can))I.push(["finances","Finances","coins",canBill()?vals(S.factures).filter(f=>f.st=="verif").length:0]);
- I.push(["annonces","Annonces","megaphone"],["messages","Messagerie","mail",n]);
+ I.push(["messages","Messagerie","mail",n,"c"],["annonces","Annonces","megaphone",0,"c"]);
  if(can("annuaire"))I.push(["annuaire","Annuaire","users"]);
  if(["rh.view","rh.grades","rh.sanction"].some(can))I.push(["personnel","Personnel","shield",0,"g"]);
  I.push(["salaire","Salaire","wallet",(can("pay.all")||isDir())?vals(S.paie).filter(p=>p&&p.st=="soumise").length:0,"g"]);
@@ -644,7 +651,7 @@ function MDossier(d){if(!d)return null;const u=ME(),ent=u.role=="entreprise",ope
  ${tr&&open?`<hr style="border:0;border-top:1px solid var(--bd);margin:16px 0"><h4>Traitement</h4>
  ${can("dos.assign")?`<div class="inl"><select id="das" data-nokeep>${`<option value="">— Non assigné —</option>`+agentsD.map(x=>`<option value="${x.id}" ${x.id==d.assign?"selected":""}>${esc(x.nom)} (${esc(gname(x))})</option>`).join("")}</select><button class="btn sec sm" onclick="dosAssign('${d.id}')">Assigner</button></div>`:""}
  <label class="f">Motif de la décision (visible par le demandeur)<textarea id="dmo" rows="2"></textarea></label>`:""}`,
- foot:`${!ent&&can("dos.delete")?`<button class="btn gh" onclick="dosDel('${d.id}')">Supprimer</button>`:""}${!ent&&d.dept=="Justice"&&can("jus.open")?`<button class="btn sec" onclick="openM('affaireNew',null,{from:'${d.id}'})">Ouvrir une affaire</button>`:""}
+ foot:`${!ent&&can("dos.delete")?`<button class="btn gh" onclick="dosDel('${d.id}')">Supprimer</button>`:""}${!ent&&d.dept=="Justice"&&can("jus.open")?`<button class="btn sec" onclick="openPlainte(null,'${d.id}')">Enregistrer une plainte</button>`:""}
  ${tr&&open&&d.st=="attente"?`<button class="btn bl" onclick="dosTake('${d.id}')">Prendre en charge</button>`:""}${tr&&open?`<button class="btn no" onclick="dosTreat('${d.id}','no')">Refuser</button><button class="btn ok" onclick="dosTreat('${d.id}','ok')">Accepter</button>`:""}${tr&&!open?`<button class="btn sec" onclick="dosReopen('${d.id}')">Rouvrir</button>`:""}`}}
 
 /* =================== ESPACE ENTREPRISE =================== */
@@ -668,41 +675,39 @@ function entArchH(u){const A=vals(S.archives).filter(a=>a.perEnt&&a.perEnt[u.id]
 const kindL=k=>({facture:"Facture",amende:"Amende",taxe:"Impôt"}[k]||k);
 const licB=s=>`<span class="bdg ${({Active:"ok",Suspendue:"wa",Expirée:"mu",Révoquée:"no","En demande":"bl"}[s]||"mu")}">${esc(s||"—")}</span>`;
 
-/* =================== JUSTICE =================== */
-function affVisible(a){return !a.secret||can("jus.secret")||a.juge==meId||a.by==meId||isDir()}
-V.justice=()=>{const s=sub||"affaires";let h=`<div class="ph"><h2>Justice</h2>${can("jus.open")?`<button class="btn" onclick="openM('affaireNew')">${ic("plus")}Ouvrir une affaire</button>`:""}</div>${tabsH([["affaires","Affaires"],["audiences","Audiences à venir"],["mes","Mes affaires"]],s)}`;
- let L=vals(S.affaires).filter(affVisible);
- if(s=="audiences"){L=L.filter(a=>a.audience&&a.st=="audience").sort((a,b)=>a.audience.localeCompare(b.audience));
-  return h+`<div class="card tw"><table><tr><th>Date<th>Affaire<th>Parties<th>Juge</tr>${L.map(a=>`<tr class="click" onclick="openM('affaire','${a.id}')"><td class="nw b">${fd(a.audience)}<td>${esc(a.num)} — ${esc(a.titre)}<td>${esc(a.plaignant||"—")} c/ ${esc(a.accuse||"—")}<td>${esc(uname(a.juge))}</tr>`).join("")||`<tr><td colspan="4" class="empty">Aucune audience programmée.</td></tr>`}</table></div>`}
- if(s=="mes")L=L.filter(a=>a.juge==meId||a.by==meId);
- if(filt.as)L=L.filter(a=>a.st==filt.as);if(filt.at)L=L.filter(a=>a.type==filt.at);
- L=L.filter(a=>match(filt.aq,a.num,a.titre,a.plaignant,a.accuse)).sort((a,b)=>b.t-a.t);
- const all=vals(S.affaires).filter(affVisible);
- return h+`<div class="kpis">${kpi("Ouvertes",all.filter(a=>a.st=="ouverte").length)}${kpi("En instruction",all.filter(a=>a.st=="instruction").length)}${kpi("Audiences fixées",all.filter(a=>a.st=="audience").length)}${kpi("Jugées",all.filter(a=>a.st=="jugee").length)}</div>
- <div class="card inl">${search("aq","N°, titre, partie…")}${fsel("as",Object.entries(AST).map(([k,v])=>[k,v[0]]),"Tous les statuts")}${fsel("at",["Pénale","Civile","Commerciale","Administrative"],"Tous les types")}</div>
- <div class="card tw"><table><tr><th>N°<th>Intitulé<th>Type<th>Plaignant<th>Mis en cause<th>Juge<th>Statut<th>Ouverte</tr>${L.map(a=>`<tr class="click" onclick="openM('affaire','${a.id}')"><td class="nw">${esc(a.num)}${a.secret?' <span class="bdg no">Confidentiel</span>':""}<td>${esc(a.titre)}<td>${esc(a.type)}<td>${esc(a.plaignant||"—")}<td>${esc(a.accuse||"—")}<td>${a.juge?esc(uname(a.juge)):'<span class="mu">—</span>'}<td>${bdg(AST,a.st)}<td class="nw">${fd(a.t)}</tr>`).join("")||`<tr><td colspan="8" class="empty">Aucune affaire.</td></tr>`}</table></div>`};
-function judges(){return vals(S.users).filter(x=>isAgent(x)&&x.active!==false&&(x.role=="direction"||(G(x)&&G(x).perms&&G(x).perms[pk("jus.verdict")])||(x.xperms&&x.xperms[pk("jus.verdict")])))}
-function MAffaireNew(){const f=modal.from?S.dossiers[modal.from]:null;
- return {title:"Ouvrir une affaire judiciaire",body:`<div class="form"><label class="f full">Intitulé<input id="an" value="${f?esc(f.objet):""}"></label>
- <label class="f">Type<select id="aty">${opts(["Pénale","Civile","Commerciale","Administrative"])}</select></label><label class="f">Juge assigné<select id="aj"><option value="">— À désigner —</option>${judges().map(x=>`<option value="${x.id}">${esc(x.nom)}</option>`).join("")}</select></label>
- <label class="f">Plaignant / partie civile<input id="apl" value="${f?esc(f.entNom):""}"></label><label class="f">Mis en cause / défendeur<input id="aac"></label>
- <label class="f full">Exposé des faits<textarea id="ade" rows="5">${f?esc(f.det):""}</textarea></label><label class="ck full"><input type="checkbox" id="ase"><span>Affaire confidentielle (visible uniquement par le juge, l'auteur et les habilités)</span></label></div><p class="err" id="msg"></p>`,
- foot:`<button class="btn gh" onclick="closeM()">Annuler</button><button class="btn" onclick="affCreate()">Ouvrir l'affaire</button>`}}
-const PK={note:"Note d'instruction",piece:"Pièce à conviction",audition:"Audition / témoignage",decision:"Décision / ordonnance"};
-function MAffaire(a){if(!a||!affVisible(a))return null;const closed=a.st=="jugee"||a.st=="classee";
- const P=vals(a.pieces).sort((x,y)=>x.t-y.t);
- return {title:`${esc(a.num)} — ${esc(a.titre)}`,body:`<div class="inl" style="margin-bottom:12px">${bdg(AST,a.st)} <span class="bdg mu">${esc(a.type)}</span>${a.secret?' <span class="bdg no">Confidentiel</span>':""}</div>
- <div class="kv"><div class="k">Plaignant</div><div>${esc(a.plaignant||"—")}</div><div class="k">Mis en cause</div><div>${esc(a.accuse||"—")}</div><div class="k">Juge</div><div>${a.juge?esc(uname(a.juge)):"À désigner"}</div><div class="k">Audience</div><div>${a.audience?fd(a.audience):"—"}</div><div class="k">Ouverte par</div><div>${esc(uname(a.by))} le ${fd(a.t)}</div></div>
- <div class="card" style="margin:14px 0;background:var(--bg)"><h4>Exposé des faits</h4><div class="pre">${esc(a.desc||"—")}</div></div>
- ${a.verdict?`<div class="card" style="border-color:var(--ok)"><h4>Jugement — ${fd(a.verdict.t)}</h4><div class="pre">${esc(a.verdict.txt)}</div><div class="kv" style="margin-top:8px"><div class="k">Peine</div><div>${esc(a.verdict.peine||"—")}</div><div class="k">Amende</div><div>${money(a.verdict.amende)}</div><div class="k">Prononcé par</div><div>${esc(a.verdict.nom)}</div></div></div>`:""}
- <h4>Instruction (${P.length})</h4><div class="tl">${P.map(p=>`<div class="it ${p.kind}"><b>${PK[p.kind]||p.kind}</b> · ${esc(p.nom)} <span class="mu">${fd(p.t)}</span><div class="pre">${esc(p.txt)}</div>${p.link?`<a href="${esc(p.link)}" target="_blank" rel="noopener">Voir la pièce jointe</a>`:""}</div>`).join("")||`<p class="mu">Aucune pièce versée au dossier.</p>`}</div>
- ${can("jus.instruct")&&!closed?`<div class="card" style="background:var(--bg)"><h4>Verser au dossier</h4><div class="form"><label class="f">Nature<select id="pk">${opts(Object.entries(PK))}</select></label><label class="f">Lien (image, document)<input id="pli" placeholder="https://…"></label><label class="f full">Contenu<textarea id="ptx" rows="3"></textarea></label></div><button class="btn sec sm" onclick="affPiece('${a.id}')">Ajouter</button></div>`:""}
- ${can("jus.status")?`<div class="card" style="background:var(--bg)"><h4>Gestion de l'affaire</h4><div class="form"><label class="f">Statut<select id="ast2" data-nokeep>${opts(Object.entries(AST).map(([k,v])=>[k,v[0]]),a.st)}</select></label>
- <label class="f">Juge<select id="aj2" data-nokeep><option value="">— À désigner —</option>${judges().map(x=>`<option value="${x.id}" ${x.id==a.juge?"selected":""}>${esc(x.nom)}</option>`).join("")}</select></label>
- <label class="f">Date d'audience<input id="aau2" type="datetime-local" data-nokeep value="${esc(a.audience||"")}"></label></div><button class="btn sec sm" onclick="affManage('${a.id}')">Enregistrer</button></div>`:""}
- ${can("jus.verdict")&&!closed?`<div class="card" style="background:var(--bg)"><h4>Rendre le jugement</h4><label class="f">Dispositif du jugement<textarea id="vtx" rows="3"></textarea></label><div class="form"><label class="f">Peine prononcée<input id="vpe" placeholder="Ex. : 30 jours de prison, relaxe…"></label><label class="f">Amende ($)<input id="vam" type="number" min="0"></label></div>
- <label class="ck"><input type="checkbox" id="vfa" checked><span>Émettre l'amende au Trésor</span></label><p><button class="btn ok" onclick="affVerdict('${a.id}')">Prononcer le jugement</button></p></div>`:""}<p class="err" id="msg"></p>`,
- foot:`${can("jus.delete")?`<button class="btn gh" onclick="affDel('${a.id}')">Supprimer</button>`:""}${can("jus.status")&&closed?`<button class="btn sec" onclick="affReopen('${a.id}')">Rouvrir l'affaire</button>`:""}<button class="btn sec" onclick="closeM()">Fermer</button>`}}
+/* =================== JUSTICE : TRAITEMENT DES PLAINTES =================== */
+const plSt=a=>({ouverte:"attente",audience:"cours"})[a.st]||a.st;
+const plNoms=(a,w)=>w=="pl"?(((a.plPrenom||"")+" "+(a.plNom||"")).trim()||a.plaignant||"—"):(((a.acPrenom||"")+" "+(a.acNom||"")).trim()||a.accuse||"—");
+const plAud=a=>vals(a.audiences).filter(x=>x.date).sort((x,y)=>x.date.localeCompare(y.date));
+const plNext=a=>{const now=new Date().toISOString().slice(0,16);return plAud(a).find(x=>x.date>=now)};
+V.justice=()=>{if(!can("jus.view"))return empty("Accès réservé.");const s=sub=="audiences"?"audiences":"plaintes",all=vals(S.affaires);
+ let h=`<div class="ph"><h2>Traitement des plaintes</h2>${can("jus.open")?`<button class="btn" onclick="openPlainte()">${ic("plus")}Enregistrer une plainte</button>`:""}</div>
+ <div class="kpis">${Object.entries(AST).filter(([k])=>k!="jugee").map(([k,v])=>kpi(v[0],all.filter(a=>plSt(a)==k).length)).join("")}${kpi("Audiences à venir",all.filter(a=>plNext(a)).length,"gold")}</div>
+ ${tabsH([["plaintes","Plaintes"],["audiences","Audiences à venir"]],s)}`;
+ if(s=="audiences"){const now=new Date().toISOString().slice(0,16),L=all.flatMap(a=>plAud(a).filter(x=>x.date>=now).map(x=>({a,x}))).sort((p,q)=>p.x.date.localeCompare(q.x.date));
+  return h+`<div class="card tw"><table><tr><th>Date de l'audience<th>Plainte<th>Plaignant<th>Accusé<th>Note<th>Statut</tr>${L.map(({a,x})=>`<tr class="click" onclick="openM('affaire','${a.id}')"><td class="nw b">${fdt(x.date)}<td class="nw">${esc(a.num)}<td>${esc(plNoms(a,"pl"))}<td>${esc(plNoms(a,"ac"))}<td>${esc(x.note||"")}<td>${bdg(AST,plSt(a))}</tr>`).join("")||`<tr><td colspan="6" class="empty">Aucune audience programmée.</td></tr>`}</table></div>`}
+ const L=all.filter(a=>!filt.as||plSt(a)==filt.as).filter(a=>match(filt.aq,a.num,plNoms(a,"pl"),plNoms(a,"ac"),a.objet,a.titre,a.lien)).sort((a,b)=>b.t-a.t);
+ return h+`<div class="card inl">${search("aq","N°, plaignant, accusé, objet…")}${fsel("as",Object.entries(AST).filter(([k])=>k!="jugee").map(([k,v])=>[k,v[0]]),"Tous les statuts")}<span class="mu sm">${L.length} plainte(s)</span></div>
+ <div class="card tw"><table><tr><th>N°<th>Plaignant<th>Accusé<th>Objet<th>Prochaine audience<th>Statut<th>Déposée le</tr>${L.map(a=>{const n=plNext(a);return `<tr class="click" onclick="openM('affaire','${a.id}')"><td class="nw b">${esc(a.num)}<td>${esc(plNoms(a,"pl"))}<td>${esc(plNoms(a,"ac"))}<td>${esc(a.objet||a.titre||"—")}<td class="nw">${n?fdt(n.date):"—"}<td>${bdg(AST,plSt(a))}<td class="nw">${fd(a.t)}</tr>`}).join("")||`<tr><td colspan="7" class="empty">Aucune plainte.</td></tr>`}</table></div>`};
+function MPlainteEdit(){if(!can("jus.open"))return null;const a=modal.id?S.affaires[modal.id]:null;if(modal.id&&!a)return null;const d=modal.d;
+ const inp=(k,l,o)=>{o=o||{};return `<label class="f ${o.full?"full":""}">${l}${o.req?" *":""}${o.area?`<textarea data-nokeep rows="3" oninput="modal.d['${k}']=this.value">${esc(d[k]||"")}</textarea>`:`<input data-nokeep type="${o.type||"text"}" value="${esc(d[k]||"")}" placeholder="${esc(o.ph||"")}" oninput="modal.d['${k}']=this.value">`}</label>`};
+ return {title:a?"Modifier la plainte "+esc(a.num):"Enregistrer une plainte",wide:1,body:`<div class="grid g2"><div class="pe-card"><h4 style="margin-top:0">Personne ayant porté plainte</h4><div class="form">${inp("plNom","Nom",{req:1})}${inp("plPrenom","Prénom",{req:1})}</div></div>
+ <div class="pe-card"><h4 style="margin-top:0">Accusé</h4><div class="form">${inp("acNom","Nom",{req:1})}${inp("acPrenom","Prénom",{req:1})}</div></div></div>
+ <div class="pe-card"><div class="form">${inp("objet","Objet de la plainte",{full:1,ph:"Ex. : Vol de véhicule, agression…"})}${inp("lien","Lien MDT",{type:"url",ph:"https://…"})}<label class="f">Statut de la plainte *<select data-nokeep onchange="modal.d.st=this.value">${opts(Object.entries(AST).filter(([k])=>k!="jugee").map(([k,v])=>[k,v[0]]),d.st||"attente")}</select></label>
+ ${inp("desc","Exposé des faits (facultatif)",{area:1,full:1})}</div></div>
+ <div class="pe-card"><h4 style="margin-top:0">Dates d'audience <span class="mu sm">(facultatif)</span></h4>${(d.aud||[]).map((x,i)=>`<div class="inl" style="margin-bottom:8px"><input data-nokeep type="datetime-local" value="${esc(x.date||"")}" style="max-width:240px" onchange="modal.d.aud[${i}].date=this.value"><input data-nokeep placeholder="Note (ex. : audience préliminaire)" value="${esc(x.note||"")}" style="flex:1" oninput="modal.d.aud[${i}].note=this.value"><button class="lnk" onclick="modal.d.aud.splice(${i},1);render()">Retirer</button></div>`).join("")}
+ <button class="btn sec sm" onclick="modal.d.aud=modal.d.aud||[];modal.d.aud.push({date:'',note:''});render()">${ic("plus")}Ajouter une date d'audience</button></div><p class="err" id="msg"></p>`,
+ foot:`<button class="btn sec" onclick="${a?`openM('affaire','${a.id}')`:"closeM()"}">Annuler</button><button class="btn" onclick="plSave()">${a?"Enregistrer":"Enregistrer la plainte"}</button>`}}
+function MAffaire(a){if(!a||!can("jus.view"))return null;const st=plSt(a),N=vals(a.notes).concat(vals(a.pieces).map(p=>({t:p.t,nom:p.nom,txt:p.txt}))).sort((x,y)=>x.t-y.t),A=plAud(a),now=new Date().toISOString().slice(0,16);
+ return {title:`Plainte ${esc(a.num)}`,wide:1,body:`<div class="inl" style="justify-content:space-between;margin-bottom:10px">${bdg(AST,st)}<span class="mu sm">Enregistrée le ${fd(a.t)}${a.byNom?" par "+esc(a.byNom):""}${a.mt?` · modifiée le ${fd(a.mt)}`:""}</span></div>
+ <div class="grid g2"><div class="pe-card"><div class="mu sm">Personne ayant porté plainte</div><div class="b" style="font-size:17px;margin-top:4px">${esc(plNoms(a,"pl"))}</div></div><div class="pe-card"><div class="mu sm">Accusé</div><div class="b" style="font-size:17px;margin-top:4px">${esc(plNoms(a,"ac"))}</div></div></div>
+ <div class="pe-card"><div class="kv"><div class="k">Objet</div><div>${esc(a.objet||a.titre||"—")}</div><div class="k">Lien MDT</div><div>${a.lien?`<a class="lnk" href="${esc(a.lien)}" target="_blank" rel="noopener">${esc(a.lien)}</a>`:"—"}</div>${a.desc?`<div class="k">Exposé des faits</div><div class="pre">${esc(a.desc)}</div>`:""}</div></div>
+ ${can("jus.status")?`<div class="pe-card inl"><span class="b">Statut de la plainte</span><select data-nokeep id="plst" style="max-width:240px">${opts(Object.entries(AST).filter(([k])=>k!="jugee").map(([k,v])=>[k,v[0]]),st)}</select><button class="btn sec sm" onclick="plSetSt('${a.id}')">Mettre à jour</button></div>`:""}
+ <h4>Audiences (${A.length})</h4>${A.map(x=>`<div class="inl sz"><span class="b nw">${fdt(x.date)}</span><span style="flex:1">${esc(x.note||"")}</span>${x.date<now?'<span class="bdg mu">Passée</span>':'<span class="bdg gd">À venir</span>'}${can("jus.status")?`<button class="lnk" onclick="plAudDel('${a.id}','${x.id}')">Retirer</button>`:""}</div>`).join("")||`<p class="mu sm">Aucune audience fixée.</p>`}
+ ${can("jus.status")?`<div class="inl" style="margin-top:8px"><input type="datetime-local" id="plad" data-nokeep style="max-width:240px"><input id="plan" data-nokeep placeholder="Note (facultatif)" style="flex:1"><button class="btn sec sm" onclick="plAudAdd('${a.id}')">Fixer l'audience</button></div>`:""}
+ <h4>Suivi (${N.length})</h4><div class="tl">${N.map(n=>`<div class="it note"><b>${esc(n.nom||"")}</b> <span class="mu">${fd(n.t)}</span><div class="pre">${esc(n.txt||"")}</div></div>`).join("")||`<p class="mu sm">Aucune note.</p>`}</div>
+ ${can("jus.instruct")?`<div class="inl" style="margin-top:8px"><textarea id="plnt" data-nokeep rows="2" placeholder="Ajouter une note de suivi…" style="flex:1"></textarea><button class="btn sec" onclick="plNote('${a.id}')">Ajouter</button></div>`:""}<p class="err" id="msg"></p>`,
+ foot:`${can("jus.delete")?`<button class="btn gh" style="margin-right:auto" onclick="affDel('${a.id}')">Supprimer</button>`:""}${can("jus.open")?`<button class="btn sec" onclick="openPlainte('${a.id}')">Modifier</button>`:""}<button class="btn" onclick="closeM()">Fermer</button>`}}
 </script>
 <script>
 /* =================== REGISTRES =================== */
@@ -718,10 +723,10 @@ const regLabel=(R,k)=>(R.f.find(x=>x.k==k)||{}).l||k;
 function regCell(k,v){if(k=="licSt")return licB(v);if(k=="exp"||k=="naiss"||k=="date"||k=="dateEnr")return fdd(v);if(k=="amende"||k=="prime")return v?money(v):"—";
  if(k=="danger")return `<span class="bdg ${({Faible:"mu",Modérée:"bl",Élevée:"wa",Extrême:"no"}[v]||"mu")}">${esc(v||"—")}</span>`;if(k=="st")return `<span class="bdg ${v=="Levé"?"mu":"no"}">${esc(v||"Actif")}</span>`;return esc(v||"—")}
 V.registres=()=>{const avail=(can("reg.civ.view")?[["etatcivil",{t:"État civil"}],["identites",{t:"Documents Identité"}]]:[]).concat(Object.entries(REG).filter(([k,R])=>can(R.p+".view")));if(!avail.length)return empty("Aucun registre accessible.");
- const s=avail.some(a=>a[0]==sub)?sub:avail[0][0];if(s=="etatcivil")return `<div class="ph"><h2>Registres officiels</h2></div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}${ecView()}`;if(s=="identites")return `<div class="ph"><h2>Registres officiels</h2></div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}${idView()}`;
+ const s=avail.some(a=>a[0]==sub)?sub:avail[0][0];if(s=="etatcivil")return `<div class="ph"><h2>Registres d'état civil</h2><span class="mu">État Civil</span></div>${ecView()}`;if(s=="identites")return `<div class="ph"><h2>Documents d'identité</h2><span class="mu">État Civil</span></div>${idView()}`;
  const R=REG[s];
  let L=vals(S[s]).filter(r=>match(filt["r_"+s],...R.f.map(f=>r[f.k]))).sort((a,b)=>(a.nom||"").localeCompare(b.nom||""));
- return `<div class="ph"><h2>Registres officiels</h2>${regCanEdit(s)?`<button class="btn" onclick="openM('reg',null,{reg:'${s}'})">${ic("plus")}Nouvelle fiche</button>`:""}</div>${tabsH(avail.map(([k,R])=>[k,R.t]),s)}
+ return `<div class="ph"><h2>${s=="entreprises"?"Registre des entreprises":esc(R.t)}</h2>${regCanEdit(s)?`<button class="btn" onclick="openM('reg',null,{reg:'${s}'})">${ic("plus")}Nouvelle fiche</button>`:""}</div>
  <div class="card inl">${search("r_"+s)}<span class="mu">${L.length} fiche(s)</span></div>
  <div class="card tw"><table><tr>${R.cols.map(c=>`<th>${esc(regLabel(R,c))}`).join("")}</tr>${L.map(r=>`<tr class="click" onclick="openM('reg','${r.id}',{reg:'${s}'})">${R.cols.map(c=>`<td>${regCell(c,r[c])}`).join("")}</tr>`).join("")||`<tr><td colspan="${R.cols.length}" class="empty">Registre vide.</td></tr>`}</table></div>`};
 function fieldH(f,v,ro){const id="rf_"+f.k;if((v==null||v==="")&&!ro&&f.def)v=f.def();v=v==null?"":v;
@@ -815,7 +820,7 @@ function MPatArch(a){if(!a||!secOk())return null;const P=vals(S.patrouilles).fil
 /* =================== FINANCES =================== */
 function treasury(){return num(S.config.treasuryStart)+vals(S.transactions).reduce((s,t)=>s+(t.type=="in"?1:-1)*num(t.montant),0)}
 V.finances=()=>{const T=[];if(can("fin.view"))T.push(["tresor","Trésorerie"]);if(can("fin.bill")||can("fin.view"))T.push(["fact","Comptabilité"]);if(can("fin.decl")||can("fin.view"))T.push(["decl","Déclarations fiscales"]);if(can("fin.budget")||can("fin.view"))T.push(["fisc","Taxes par entreprise"]);if(can("fin.view")||can("fin.archive"))T.push(["arch","Archives fiscales"]);if(can("fin.view")||can("fin.budget"))T.push(["stats","Statistiques"]);
- const s=T.some(t=>t[0]==sub)?sub:T[0][0];let h=`<div class="ph"><h2>Finances publiques</h2></div>${tabsH(T,s)}`;
+ const s=T.some(t=>t[0]==sub)?sub:T[0][0];let h=`<div class="ph"><h2>${esc((T.find(t=>t[0]==s)||["","Finances"])[1])}</h2><span class="mu">Finances publiques</span></div>`;
  const X=vals(S.transactions),inS=X.filter(t=>t.type=="in").reduce((a,t)=>a+num(t.montant),0),outS=X.filter(t=>t.type=="out").reduce((a,t)=>a+num(t.montant),0),due=vals(S.factures).filter(f=>f.st=="due");
  if(s=="tresor"){let L=X;if(filt.tt)L=L.filter(t=>t.type==filt.tt);if(filt.tc)L=L.filter(t=>t.cat==filt.tc);if(filt.td)L=L.filter(t=>t.dept==filt.td);L=L.filter(t=>match(filt.tq,t.label,t.cat,t.dept)).sort((a,b)=>b.t-a.t);
   return h+`<div class="kpis">${kpi("Solde du Trésor",money(treasury()),"gold")}${kpi("Recettes",money(inS))}${kpi("Dépenses",money(outS))}${kpi("Créances impayées",money(due.reduce((a,f)=>a+num(f.montant),0)))}</div>
@@ -1110,7 +1115,7 @@ function MPaieArch(a){if(!a)return null;const F=payFolders();if(!F.some(f=>f[0]=
 const GCOL={_dir:"#c9a24a",fin:"#22c55e",ec:"#a78bfa",jus:"#94a3b8",int:"#3b82f6",com:"#ec4899",sec:"#f97316"};
 /* Permissions par défaut de chaque grade officiel (cohérentes avec le poste) */
 const DEFP_DEPT={fin:["fin.view","fin.edit","fin.bill","fin.decl","fin.budget","fin.archive","reg.ent.view","reg.ent.edit"],ec:["reg.civ.view","reg.civ.edit","rec.view","rec.treat","rec.cv","rec.bl"],
- jus:["jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view","jus.tool","jus.judge","jus.grid","jus.docs.view","jus.docs"],int:["reg.ent.view","reg.civ.view","dos.all"],com:["com.post","com.banner"],sec:["sec.archive","reg.civ.view"]};
+ jus:["jus.view","jus.open","jus.instruct","jus.status","fin.bill","reg.civ.view","reg.ent.view","jus.tool","jus.judge","jus.grid","jus.docs.view","jus.docs"],int:["reg.ent.view","reg.civ.view","dos.all"],com:["com.post","com.banner"],sec:["sec.archive","reg.civ.view"]};
 const DEFP={
  fin:{"Directeur Financier":["dash","dos.assign","fin.view","fin.edit","fin.bill","fin.decl","fin.budget","fin.archive","reg.ent.view","reg.ent.edit","rh.view","rh.sanction"],
   "Secrétaire des Finances":["fin.view","fin.edit","fin.bill","fin.decl","reg.ent.view","reg.ent.edit"],
@@ -1120,11 +1125,11 @@ const DEFP={
   "Contrôleur Fiscal":["fin.view","fin.bill","fin.decl","reg.ent.view"],"Comptable":["fin.view","fin.edit","fin.bill","reg.ent.view"],"Assistant Comptable":["fin.view","fin.bill","reg.ent.view"]},
  ec:{"Directeur RH":["dash","dos.assign","reg.civ.view","reg.civ.edit","rec.view","rec.treat","rec.cv","rec.bl","rh.view","rh.create","rh.edit","rh.sanction"],
   "Formateur E.C":["reg.civ.view","reg.civ.edit","rec.view","rec.cv"],"Ressources Humaines":["reg.civ.view","reg.civ.edit","rec.view","rec.cv","rh.view"],"Secrétaire":["reg.civ.view","reg.civ.edit"]},
- jus:{"Responsable Judiciaire":["dash","dos.assign","jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view","rh.view","rh.sanction","jus.tool","jus.judge","jus.grid","jus.docs.view","jus.docs"],
+ jus:{"Responsable Judiciaire":["dash","dos.assign","jus.view","jus.open","jus.instruct","jus.status","jus.delete","fin.bill","reg.civ.view","reg.ent.view","rh.view","rh.sanction","jus.tool","jus.judge","jus.grid","jus.docs.view","jus.docs"],
   "Secrétaire Justice":["jus.view","jus.open","jus.instruct","jus.status","reg.civ.view","jus.tool","jus.docs.view","jus.docs"],
-  "Chief Justice":["jus.view","jus.open","jus.instruct","jus.status","jus.verdict","jus.secret","fin.bill","reg.civ.view","reg.ent.view","jus.tool","jus.judge","jus.grid","jus.docs.view","jus.docs"],
-  "Procureur Général":["jus.view","jus.open","jus.instruct","jus.status","jus.secret","reg.civ.view","reg.ent.view","jus.tool","jus.docs.view","jus.docs"],
-  "Juge":["jus.view","jus.instruct","jus.status","jus.verdict","fin.bill","reg.civ.view","jus.tool","jus.judge","jus.docs.view","jus.docs"],"Procureur":["jus.view","jus.open","jus.instruct","reg.civ.view","jus.tool","jus.docs.view","jus.docs"],
+  "Chief Justice":["jus.view","jus.open","jus.instruct","jus.status","fin.bill","reg.civ.view","reg.ent.view","jus.tool","jus.judge","jus.grid","jus.docs.view","jus.docs"],
+  "Procureur Général":["jus.view","jus.open","jus.instruct","jus.status","reg.civ.view","reg.ent.view","jus.tool","jus.docs.view","jus.docs"],
+  "Juge":["jus.view","jus.instruct","jus.status","fin.bill","reg.civ.view","jus.tool","jus.judge","jus.docs.view","jus.docs"],"Procureur":["jus.view","jus.open","jus.instruct","reg.civ.view","jus.tool","jus.docs.view","jus.docs"],
   "Juge Assesseur":["jus.view","jus.instruct","jus.status","jus.tool","jus.docs.view"],"Substitut du Procureur":["jus.view","jus.open","jus.instruct","jus.tool","jus.docs.view","jus.docs"],
   "Commissaire de Justice":["jus.view","jus.instruct","fin.bill","reg.ent.view","jus.tool","jus.docs.view"],"Secrétaire Juridique":["jus.view","jus.open","jus.tool","jus.docs.view","jus.docs"]},
  int:{"Secrétaire de l'Intérieur":["dos.assign","dos.all","reg.ent.view","reg.civ.view"],"Superviseur":["dos.all","reg.ent.view","reg.civ.view"]},
@@ -1224,7 +1229,7 @@ function gsIndex(){const u=ME(),ent=u.role=="entreprise",R=[];const add=(cat,ic0
  else{
   if(can("annuaire")||isDir())vals(S.users).filter(x=>isAgent(x)&&x.active!==false).forEach(x=>add("Agents","users",x.nom,[gname(x),x.dept,x.matricule].filter(Boolean).join(" · "),`filt.uq='${q1(x.nom)}';go('annuaire')`,[x.login,x.tel,x.matricule]));
   if(can("dos.view"))vals(S.dossiers).filter(d=>myDepts().includes(d.dept)).forEach(d=>add("Dossiers","folder",d.num+" — "+d.objet,d.entNom+" · "+d.dept+" · "+((DST[d.st]||[d.st])[0]),`openM('dossier','${d.id}')`,[d.det,d.type]));
-  if(can("jus.view"))vals(S.affaires).filter(affVisible).forEach(a=>add("Affaires judiciaires","scale",a.num+" — "+a.titre,[a.plaignant,a.accuse].filter(Boolean).join(" c/ ")||a.type||"",`go('justice');openM('affaire','${a.id}')`,[a.desc]));
+  if(can("jus.view"))vals(S.affaires).forEach(a=>add("Plaintes","folder",plNoms(a,"pl")+" c/ "+plNoms(a,"ac"),a.num+" · "+(AST[plSt(a)]||[""])[0]+(a.objet?" · "+a.objet:""),`go('justice');openM('affaire','${a.id}')`,[a.desc,a.lien]));
   if(can("reg.ent.view"))vals(S.entreprises).forEach(e=>add("Registre des entreprises","book",e.nom,[e.type,((e.gerantPrenom||"")+" "+(e.gerantNom||"")).trim(),e.tel].filter(Boolean).join(" · "),`go('registres','entreprises');openM('reg','${e.id}',{reg:'entreprises'})`,[e.mail,e.notes]));
   if(can("fin.view")||can("fin.bill")||isDir())vals(S.users).filter(x=>x.role=="entreprise").forEach(x=>add("Comptes entreprise","coins",x.nom,"Type : "+taxCatName(x)+" · taxe "+taxRate(x)+" %",`go('finances','fisc')`,[x.login]));
   if(can("reg.civ.view")){vals(S.actes).filter(a=>!a.del||isDir()).forEach(a=>add("Actes d'état civil","file",(a.prenom||"")+" "+a.nom,a.num+" · "+((ECL[a.cat]||["","Acte"])[1])+(a.dateActe?" · "+fdd(a.dateActe):""),`go('registres','etatcivil');openActe('${a.id}')`,[a.tel,a.num]));
@@ -1504,8 +1509,9 @@ function MJugV(j){if(!j||!canTool())return null;const c=jugCalc(j),F=jugCache[j.
  ${Object.keys(j.files||{}).length?`<h4>Pièces jointes</h4><div class="fgrid">${Object.entries(j.files).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data)).join("")}</div>`:""}`,
  foot:`${ed||isDir()?`<button class="btn gh" style="margin-right:auto" onclick="jugDel('${j.id}')">Supprimer</button>`:""}${ed?`<button class="btn sec" onclick="openJug('${j.id}')">Modifier</button><button class="btn bl" onclick="mdtCopy(S.jugements['${j.id}'])">Générer la note MDT</button>`:""}<button class="btn" onclick="closeM()">Fermer</button>`}}
 /* Note MDT */
-function mdtText(j){const L=a=>a.length?a.map(x=>"- "+x).join("\n"):"- Aucun";const F=j.faits||[],S0=j.saisies||[],me=ME();
- const sig=`${gname(me)} de la Justice du comté de Los Santos,\n${me.nom}`;const rend=L(S0.filter(s=>s.r).map(s=>s.t)),nonr=L(S0.filter(s=>!s.r).map(s=>s.t));const c=jugCalc(j);
+const posteOf=u=>{const g=G(u);return g?g.name:(u&&u.role=="direction"?"Direction":"")};
+function mdtText(j,poste){const L=a=>a.length?a.map(x=>"- "+x).join("\n"):"- Aucun";const F=j.faits||[],S0=j.saisies||[],me=ME();
+ const sig=`${poste||posteOf(me)||"[POSTE]"} de la Justice du comté de Los Santos,\n${me.nom}`;const rend=L(S0.filter(s=>s.r).map(s=>s.t)),nonr=L(S0.filter(s=>!s.r).map(s=>s.t));const c=jugCalc(j);
  if(j.st=="coupable"||j.st=="bracelet"){const ret=[j.retPPA?"P.P.A":"",j.retPermis?"Permis de conduire":""].filter(Boolean).join(", ")||"Non";
   return `Reconnu coupable de :\n${L(F.filter(f=>!f.aj&&f.v!=="non").map(f=>f.n))}\nNon-coupable de :\n${L(F.filter(f=>!f.aj&&f.v==="non").map(f=>f.n))}\nFaits ajoutés :\n${L(F.filter(f=>f.aj&&f.v!=="non").map(f=>f.n))}\n\nSaisies restituées :\n${rend}\nSaisies non rendues :\n${nonr}\n\nJugé par : ${j.juge||""}\nPeine fédérale : ${c.fed?"Oui":"Non"}\nRetrait : ${ret}\nSuivi psychologique : ${j.psy?"Oui":"Non"}${j.st=="bracelet"?"\nBracelet électronique : Oui":""}\n\n${sig}`}
  if(j.st=="acquitte")return `Relaxé de tous les faits reprochés\n${L(F.map(f=>f.n))}\n\nSaisies restituées :\n${rend}\n\nSaisies non rendues :\n${nonr}\n\nJugé par : ${j.juge||""}\nRaison de l'acquittement : ${j.acqRaison||""}\n\n${sig}`;
@@ -1697,7 +1703,7 @@ function modalH(){if(!modal)return "";let m=null;
  else if(modal.type=="jdoc")m=MJdoc(S.jdocs[modal.id]);
  else if(modal.type=="dossier")m=MDossier(S.dossiers[modal.id]);
  else if(modal.type=="affaire")m=MAffaire(S.affaires[modal.id]);
- else if(modal.type=="affaireNew")m=MAffaireNew();
+ else if(modal.type=="plainteEdit")m=MPlainteEdit();
  else if(modal.type=="reg")m=MReg();
  else if(modal.type=="idoc")m=MIdoc(S.identites[modal.id]);
  else if(modal.type=="idEdit")m=MIdEdit();
@@ -1754,21 +1760,23 @@ function dosReopen(id){const d=S.dossiers[id];DBX.update("dossiers/"+id,{st:"cou
 function dosDel(id){const d=S.dossiers[id];ask("Supprimer définitivement le dossier "+d.num+" ?",()=>{DBX.remove("dossiers/"+id);log("Dossier supprimé : "+d.num,d.dept,"Dossiers");modal=null},"Supprimer")}
 
 /* Justice */
-function affCreate(){const t=tval("an");if(!t)return say("Indiquez l'intitulé de l'affaire.");const id=nid(),u=ME(),j=val("aj");
- DBX.set("affaires/"+id,{id,num:nextNum("affaires","AFF"),titre:t,type:val("aty"),juge:j||"",plaignant:tval("apl"),accuse:tval("aac"),desc:tval("ade"),secret:!!val("ase"),st:"ouverte",t:Date.now(),by:u.id,from:modal.from||""});
- if(modal.from){const d=S.dossiers[modal.from];if(d&&(d.st=="attente"||d.st=="cours"))DBX.set(`dossiers/${d.id}/comments/${nid()}`,{t:Date.now(),u:u.id,nom:u.nom,txt:"Une affaire judiciaire a été ouverte suite à ce dossier.",internal:false})}
- log("Ouverture de l'affaire : "+t,"Justice","Justice");toast("Affaire ouverte.");modal={type:"affaire",id};keep={};render()}
-function affPiece(id){const t=tval("ptx");if(!t)return say("Rédigez le contenu de la pièce.");const u=ME(),a=S.affaires[id],k=val("pk"),li=tval("pli");if(li&&!/^https?:\/\//.test(li))return say("Le lien doit commencer par http:// ou https://");
- DBX.set(`affaires/${id}/pieces/${nid()}`,{t:Date.now(),u:u.id,nom:u.nom,kind:k,txt:t,link:li});if(a.st=="ouverte")DBX.update("affaires/"+id,{st:"instruction"});
- log(`${PK[k]} versée à l'affaire ${a.num}`,"Justice","Justice");clr("ptx","pli");toast("Pièce versée au dossier.")}
-function affManage(id){const a=S.affaires[id],st=val("ast2"),j=val("aj2"),au=val("aau2");const up={st,juge:j,audience:au};if(au&&st=="ouverte"||au&&st=="instruction")up.st="audience";
- DBX.update("affaires/"+id,up);log(`Affaire ${a.num} : statut « ${AST[up.st][0]} »${j?", juge "+uname(j):""}${au?", audience le "+fd(au):""}`,"Justice","Justice");toast("Affaire mise à jour.")}
-function affVerdict(id){const a=S.affaires[id],u=ME(),tx=tval("vtx");if(!tx)return say("Rédigez le dispositif du jugement.");const pe=tval("vpe"),am=num(val("vam"));
- DBX.update("affaires/"+id,{st:"jugee",verdict:{txt:tx,peine:pe,amende:am,t:Date.now(),by:u.id,nom:u.nom}});
- if(val("vfa")&&am>0){const fid=nid(),acc=vals(S.users).find(x=>x.role=="entreprise"&&x.nom.toLowerCase()==(a.accuse||"").toLowerCase());DBX.set("factures/"+fid,{id:fid,num:nextNum("factures","FAC"),kind:"amende",ent:acc?acc.id:"",entNom:a.accuse||"—",motif:"Jugement "+a.num+" — "+a.titre,montant:am,ech:"",dept:"Justice",st:"due",t:Date.now(),by:u.id,byNom:u.nom})}
- log(`Jugement rendu dans l'affaire ${a.num}${pe?" : "+pe:""}`,"Justice","Justice");toast("Jugement prononcé.")}
-function affReopen(id){const a=S.affaires[id];DBX.update("affaires/"+id,{st:"instruction"});log("Réouverture de l'affaire "+a.num,"Justice","Justice")}
-function affDel(id){const a=S.affaires[id];ask("Supprimer définitivement l'affaire "+a.num+" et toutes ses pièces ?",()=>{DBX.remove("affaires/"+id);log("Affaire supprimée : "+a.num,"Justice","Justice");modal=null},"Supprimer")}
+/* Justice : traitement des plaintes */
+function openPlainte(id,from){if(!can("jus.open"))return;const a=id?S.affaires[id]:null,f=from?S.dossiers[from]:null;
+ const d=a?{plNom:a.plNom||a.plaignant||"",plPrenom:a.plPrenom||"",acNom:a.acNom||a.accuse||"",acPrenom:a.acPrenom||"",objet:a.objet||a.titre||"",lien:a.lien||"",st:plSt(a),desc:a.desc||"",aud:plAud(a).map(x=>({id:x.id,date:x.date,note:x.note||""}))}:{st:"attente",plNom:f?f.entNom:"",objet:f?f.objet:"",desc:f?f.det:"",aud:[]};
+ modal={type:"plainteEdit",id:id||null,d,from:from||null};keep={};render()}
+function plSave(){const d=modal.d,a=modal.id?S.affaires[modal.id]:null;for(const [k,l] of [["plNom","Nom du plaignant"],["plPrenom","Prénom du plaignant"],["acNom","Nom de l'accusé"],["acPrenom","Prénom de l'accusé"]])if(!String(d[k]||"").trim())return say("Champ requis : "+l);
+ if(d.lien&&!/^https?:\/\//.test(d.lien.trim()))return say("Le lien MDT doit commencer par http(s)://");
+ const u=ME(),now=Date.now(),id=modal.id||nid(),aud={};(d.aud||[]).filter(x=>x.date).forEach(x=>aud[x.id||nid()]={date:x.date,note:String(x.note||"").trim()});
+ const rec={plNom:d.plNom.trim(),plPrenom:d.plPrenom.trim(),acNom:d.acNom.trim(),acPrenom:d.acPrenom.trim(),objet:String(d.objet||"").trim(),lien:String(d.lien||"").trim(),st:d.st||"attente",desc:String(d.desc||"").trim(),audiences:aud};
+ if(a){DBX.update("affaires/"+id,Object.assign(rec,{mt:now,mNom:u.nom,plaignant:null,accuse:null,titre:null}))}
+ else{DBX.set("affaires/"+id,Object.assign(rec,{id,num:numFor("affaires","PL"),t:now,by:u.id,byNom:u.nom,from:modal.from||""}));
+  if(modal.from){const f=S.dossiers[modal.from];if(f&&(f.st=="attente"||f.st=="cours"))DBX.set(`dossiers/${f.id}/comments/${nid()}`,{t:now,u:u.id,nom:u.nom,txt:"Votre demande a été enregistrée comme plainte auprès du département de la Justice.",internal:false})}}
+ log(`Plainte ${a?"modifiée":"enregistrée"} : ${rec.plPrenom} ${rec.plNom} c/ ${rec.acPrenom} ${rec.acNom}`,"Justice","Justice");toast(a?"Plainte mise à jour.":"Plainte enregistrée.");modal={type:"affaire",id};keep={};render()}
+function plSetSt(id){if(!can("jus.status"))return;const a=S.affaires[id],st=val("plst");DBX.update("affaires/"+id,{st});log(`Plainte ${a.num} : statut « ${AST[st][0]} »`,"Justice","Justice");toast("Statut mis à jour.")}
+function plAudAdd(id){if(!can("jus.status"))return;const dt=val("plad");if(!dt)return say("Choisissez la date et l'heure de l'audience.");const a=S.affaires[id];DBX.set(`affaires/${id}/audiences/${nid()}`,{date:dt,note:tval("plan")});log(`Plainte ${a.num} : audience fixée le ${fdt(dt)}`,"Justice","Justice");clr("plad","plan");toast("Audience fixée.")}
+function plAudDel(id,aid){if(!can("jus.status"))return;DBX.remove(`affaires/${id}/audiences/${aid}`)}
+function plNote(id){if(!can("jus.instruct"))return;const t=tval("plnt");if(!t)return;const u=ME();DBX.set(`affaires/${id}/notes/${nid()}`,{t:Date.now(),nom:u.nom,txt:t});clr("plnt")}
+function affDel(id){const a=S.affaires[id];ask("Supprimer définitivement la plainte "+a.num+" ?",()=>{DBX.remove("affaires/"+id);log("Plainte supprimée : "+a.num,"Justice","Justice");modal=null},"Supprimer")}
 
 /* Registres */
 const REGD={entreprises:"Intérieur"};
@@ -2040,8 +2048,9 @@ function jugSave(){if(!can("jus.judge"))return;const d=modal.d,old=modal.id?S.ju
 function jugDel(id){if(!(can("jus.judge")||isDir()))return;const j=S.jugements[id];ask(`Supprimer définitivement le jugement ${j.num} (${j.prenom||""} ${j.nom}) ?`,()=>{DBX.remove("jugfiles/"+id);DBX.remove("jugements/"+id);log(`Jugement supprimé : ${j.num} (${j.prenom||""} ${j.nom})`,"Justice","Justice");modal=null},"Supprimer")}
 async function copyText(t){try{if(navigator.permissions&&navigator.permissions.query){try{await navigator.permissions.query({name:"clipboard-write"})}catch(e){}}await navigator.clipboard.writeText(t);return true}catch(e){return new Promise(r=>fallbackCopy(t,()=>r(true)))}}
 async function mdtCopy(j){if(!j)return;const t=mdtText(j);if(!t)return toast("La note MDT est disponible pour les statuts Coupable, Bracelet électronique, Acquitté et Vice de procédure.",1);
- if(!(j.faits||[]).length)return toast("Ajoutez au moins un fait reproché.",1);const ok=await copyText(t);modal={type:"mdt",text:t,prev:modal,ok};render();if(ok)toast("Note MDT copiée dans le presse-papiers.")}
-function MMdt(){return {title:"Note MDT",wide:1,body:`<p class="mu sm" style="margin-top:0">${modal.ok?"La note a été copiée dans votre presse-papiers : collez-la dans le MDT (Ctrl+V).":"Copie automatique refusée par le navigateur : copiez le texte ci-dessous."}</p><textarea id="mdtt" data-nokeep rows="18" style="width:100%;font-family:ui-monospace,Consolas,monospace;font-size:13px" readonly>${esc(modal.text)}</textarea>`,
+ if(!(j.faits||[]).length)return toast("Ajoutez au moins un fait reproché.",1);const ok=await copyText(t);modal={type:"mdt",text:t,j:JSON.parse(JSON.stringify(j)),poste:posteOf(ME()),prev:modal,ok};render();if(ok)toast("Note MDT copiée dans le presse-papiers.")}
+function MMdt(){return {title:"Note MDT",wide:1,body:`<p class="mu sm" style="margin-top:0">${modal.ok?"La note a été copiée dans votre presse-papiers : collez-la dans le MDT (Ctrl+V).":"Copie automatique refusée par le navigateur : copiez le texte ci-dessous."}</p>
+ <label class="f" style="max-width:360px">Poste indiqué dans la signature<input data-nokeep value="${esc(modal.poste||"")}" placeholder="Ex. : Juge" oninput="modal.poste=this.value;modal.text=mdtText(modal.j,this.value);document.getElementById('mdtt').value=modal.text"></label>${posteOf(ME())?"":`<p class="sm" style="color:var(--wa)">Aucun grade n'est attribué à votre compte : indiquez votre poste ci-dessus, puis cliquez sur « Copier à nouveau ».</p>`}<textarea id="mdtt" data-nokeep rows="18" style="width:100%;font-family:ui-monospace,Consolas,monospace;font-size:13px" readonly>${esc(modal.text)}</textarea>`,
  foot:`<button class="btn sec" onclick="copyText(modal.text).then(()=>toast('Note copiée.'))">Copier à nouveau</button><button class="btn" onclick="modal=modal.prev;render()">Retour</button>`}}
 
 /* Documents officiels */
@@ -2054,7 +2063,7 @@ function jdocSave(){if(!can("jus.docs"))return;const x=modal.id?S.jdocs[modal.id
  const u=ME(),now=Date.now(),id=modal.id||nid(),rec={};T[4].forEach(f=>rec[f[0]]=f[3]=="number"?(String(d[f[0]]??"").trim()===""?"":num(d[f[0]])):String(d[f[0]]??"").trim());
  const up={};saveFiles("jdocs","jdocfiles",id,modal.files||[],modal.rm,up);
  if(x){Object.assign(up,rec,{mt:now,mNom:u.nom});DBX.update("jdocs/"+id,up)}
- else{const files={};Object.keys(up).forEach(k=>{if(k.startsWith("files/")&&up[k])files[k.slice(6)]=up[k]});DBX.set("jdocs/"+id,Object.assign(rec,{id,type:ty,num:numFor("jdocs",T[2]),st:"valide",files,t:now,by:u.id,byNom:u.nom,byPoste:gname(u)}))}
+ else{const files={};Object.keys(up).forEach(k=>{if(k.startsWith("files/")&&up[k])files[k.slice(6)]=up[k]});DBX.set("jdocs/"+id,Object.assign(rec,{id,type:ty,num:numFor("jdocs",T[2]),st:"valide",files,t:now,by:u.id,byNom:u.nom,byPoste:posteOf(u)||gname(u)}))}
  log(`Document officiel ${x?"modifié":"rédigé"} : ${T[1]} — ${docPerson(Object.assign({},rec))}`,"Justice","Justice");toast(x?"Document mis à jour.":"Document généré.");delete jdocCache[id];modal={type:"jdoc",id};keep={};render()}
 function jdocCancel(id){const x=S.jdocs[id];ask(`Annuler le document ${x.num} ? Il restera consultable avec la mention « Annulé ».`,()=>{const u=ME();DBX.update("jdocs/"+id,{st:"annule",annT:Date.now(),annNom:u.nom});log(`Document officiel annulé : ${x.num}`,"Justice","Justice");modal={type:"jdoc",id}},"Annuler le document")}
 function jdocDel(id){if(!(can("jus.docs")||isDir()))return;const x=S.jdocs[id];ask(`Supprimer définitivement le document ${x.num} et ses pièces jointes ?`,()=>{DBX.remove("jdocfiles/"+id);DBX.remove("jdocs/"+id);log(`Document officiel supprimé : ${x.num}`,"Justice","Justice");modal=null},"Supprimer")}
