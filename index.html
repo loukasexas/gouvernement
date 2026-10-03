@@ -59,6 +59,15 @@ tr.ggrp td{background:var(--cd2);color:var(--gold2);font-weight:700;font-size:12
 .wrap{flex:1;min-width:0;display:flex;flex-direction:column}
 .top{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--cd);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:20}
 .top .who{margin-left:auto;text-align:right;line-height:1.25}
+.nbell{position:relative}.nb-btn{position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:36px;border-radius:9px;border:1px solid var(--bd);background:var(--bg);color:var(--mu);cursor:pointer}
+.nb-btn:hover,.nb-btn.on{color:var(--tx);border-color:var(--gold)}.nb-btn svg{width:18px;height:18px}.nb-c{position:absolute;top:-6px;right:-6px;background:var(--no);color:#fff;border-radius:99px;font-size:10.5px;font-weight:700;min-width:18px;height:18px;line-height:18px;padding:0 5px;text-align:center;border:2px solid var(--cd)}
+.nb-panel{position:absolute;right:0;top:44px;width:380px;max-width:calc(100vw - 24px);background:var(--cd);border:1px solid var(--bd);border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.45);z-index:60;overflow:hidden}
+.nb-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--bd)}.nb-l{max-height:min(60vh,460px);overflow:auto}
+.nb-it{display:flex;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--bd);padding:10px 14px;color:var(--tx);font:inherit;cursor:pointer}.nb-it:hover{background:var(--cd2)}
+.nb-it.un{background:color-mix(in srgb,var(--gold) 9%,transparent)}.nb-it.un .nb-tx b:after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-left:6px;vertical-align:middle}
+.nb-ic{display:flex;width:30px;height:30px;border-radius:8px;background:var(--cd2);align-items:center;justify-content:center;flex:none;color:var(--gold2)}.nb-ic svg{width:15px;height:15px}
+.nb-tx{display:flex;flex-direction:column;gap:2px;min-width:0}.nb-tx span{font-size:12.5px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.nb-f{padding:9px 14px;border-top:1px solid var(--bd);text-align:center}
 .gsbtn{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--bd);color:var(--mu);border-radius:9px;padding:6px 8px 6px 10px;font:inherit;font-size:13px;cursor:pointer;min-width:200px}
 .gsbtn:hover{border-color:var(--gold);color:var(--tx)}.gsbtn svg{width:16px;height:16px;flex:none}.gsbtn span{flex:1;text-align:left}
 kbd{font:600 11px/1 ui-monospace,Consolas,monospace;background:var(--cd2);border:1px solid var(--bd);border-radius:5px;padding:3px 6px;color:var(--tx);white-space:nowrap}
@@ -497,7 +506,7 @@ function askNo(){pendingCb=null;modal=modal&&modal.prev||null;render()}
 function tickClocks(){document.querySelectorAll("[data-since]").forEach(e=>{e.textContent=clock(Date.now()-(+e.dataset.since)+(+e.dataset.base||0))})}
 setInterval(tickClocks,1000);
 function unread(){const m=ME();return m?vals(S.messages).filter(x=>x.to==m.id&&!x.read).length:0}
-function notify(){const n=unread();if(lastUnread>=0&&n>lastUnread&&!(view=="messages"))toast("Nouveau message reçu");lastUnread=n}
+function notify(){try{notifCheck()}catch(e){console.error(e)}}
 function applyTheme(){setFavicon();const t=lsGet("lsgov_theme")||"dark";document.documentElement.setAttribute("data-theme",t);
  const a=S.config&&S.config.accent;if(a&&/^#[0-9a-f]{6}$/i.test(a)){document.documentElement.style.setProperty("--gold",a);document.documentElement.style.setProperty("--gold2",a)}else{document.documentElement.style.removeProperty("--gold");document.documentElement.style.removeProperty("--gold2")}}
 function toggleTheme(){lsSet("lsgov_theme",(lsGet("lsgov_theme")||"dark")=="dark"?"light":"dark");applyTheme();render()}
@@ -506,7 +515,7 @@ function closeSide(){$(".side")&&$(".side").classList.remove("open");$(".scrim")
 document.addEventListener("keydown",e=>{if(e.key=="Escape"&&modal){modal.type=="confirm"?askNo():closeM()}});
 
 /* ---------- Icônes ---------- */
-const IC={search:"c11,11,7|M21 21l-4.3-4.3",grid:"M3 3h7v7H3z|M14 3h7v7h-7z|M3 14h7v7H3z|M14 14h7v7h-7z",briefcase:"M3 7h18v13H3z|M8 7V4h8v3|M3 13h18",home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
+const IC={bell:"M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9|M13.7 21a2 2 0 0 1-3.4 0",search:"c11,11,7|M21 21l-4.3-4.3",grid:"M3 3h7v7H3z|M14 3h7v7h-7z|M3 14h7v7H3z|M14 14h7v7h-7z",briefcase:"M3 7h18v13H3z|M8 7V4h8v3|M3 13h18",home:"M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10",clock:"c12,12,10|M12 6v6l4 2",folder:"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",scale:"M12 3v18|M6 21h12|M5 7h14|M5 7l-3 7a3 3 0 0 0 6 0z|M19 7l-3 7a3 3 0 0 0 6 0z",book:"M4 19.5A2.5 2.5 0 0 1 6.5 17H20|M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",coins:"M12 1v22|M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",megaphone:"M3 11v2a1 1 0 0 0 1 1h3l6 5V5L7 10H4a1 1 0 0 0-1 1z|M17 8a5 5 0 0 1 0 8|M20 5a9 9 0 0 1 0 14",mail:"M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z|M22 6l-10 7L2 6",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|c9,7,4|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75",user:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|c12,7,4",list:"M8 6h13|M8 12h13|M8 18h13|M3 6h.01|M3 12h.01|M3 18h.01",settings:"c12,12,3|M12 1v3|M12 20v3|M4.2 4.2l2.1 2.1|M17.7 17.7l2.1 2.1|M1 12h3|M20 12h3|M4.2 19.8l2.1-2.1|M17.7 6.3l2.1-2.1",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",wallet:"M3 7h18v13H3z|M16 13.5h.01|M3 7l3-4h12l3 4",shield:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",plus:"M12 5v14|M5 12h14",file:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|M14 2v6h6",menu:"M3 6h18|M3 12h18|M3 18h18",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|c12,12,3",chev:"M6 9l6 6 6-6",sun:"c12,12,5|M12 1v2|M12 21v2|M4.2 4.2l1.4 1.4|M18.4 18.4l1.4 1.4|M1 12h2|M21 12h2|M4.2 19.8l1.4-1.4|M18.4 5.6l1.4-1.4"};
 function ic(n){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(IC[n]||"").split("|").map(p=>p[0]=="c"?(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`)(p.slice(1).split(",")):`<path d="${p}"/>`).join("")}</svg>`}
 function seal(){const src=(S.config&&S.config.logo)||"logo.png";return `<img class="logo" src="${esc(src)}" alt="Sceau du gouvernement" onerror="this.outerHTML=sealSvg()">`}
 function setFavicon(){let l=document.querySelector("link[rel=icon]");if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l)}l.href=(S.config&&S.config.logo)||"logo.png"}
@@ -541,7 +550,7 @@ function page(){
  <div class="side-foot">${DB_URL?(connected?'<span class="dot ok"></span>Synchronisé':'<span class="dot no"></span>Hors ligne — reconnexion…'):'<span class="dot"></span>Mode local (non partagé)'}</div></aside>
  <div class="wrap"><div class="top"><button class="burger" onclick="openSide()" aria-label="Menu">${ic("menu").replace("<svg",'<svg width="20" height="20"')}</button>
  <div class="who"><div class="b">${esc(u.nom)}</div><div class="mu">${esc(gname(u))}${u.dept?" · "+esc(u.dept):""}</div></div>
- <button class="gsbtn" onclick="openGs()" title="Recherche globale (Ctrl+K)" aria-label="Recherche globale">${ic("search")}<span>Rechercher…</span><kbd>Ctrl K</kbd></button><button class="btn gh sm" onclick="toggleTheme()" title="Thème clair / sombre" aria-label="Changer de thème">${ic("sun").replace("<svg",'<svg width="16" height="16"')}</button></div>
+ ${notifBell()}<button class="gsbtn" onclick="openGs()" title="Recherche globale (Ctrl+K)" aria-label="Recherche globale">${ic("search")}<span>Rechercher…</span><kbd>Ctrl K</kbd></button><button class="btn gh sm" onclick="toggleTheme()" title="Thème clair / sombre" aria-label="Changer de thème">${ic("sun").replace("<svg",'<svg width="16" height="16"')}</button></div>
  ${bn.on&&bn.txt?`<div class="ticker ${esc(bn.lvl||"info")}">${tickerSpan(bn.txt)}</div>`:""}
  <main>${(V[view]||V.accueil)()}</main></div></div>${modalH()}`;
 }
@@ -618,7 +627,7 @@ V.accueil=()=>{const u=ME();
  let h=`<div class="ph"><div><h2>Bonjour, ${esc(u.nom)}</h2><div class="mu">${esc(gname(u))}${u.dept?" · Département "+esc(u.dept):""} · ${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div></div>
  </div>`;
  h+=`<div class="kpis">${kpi("Dossiers en attente"+(glob?"":" (mon dép.)"),Dall.filter(d=>(glob||md.includes(d.dept))&&d.st=="attente").length)}
- ${can("jus.view")?kpi("Affaires en cours",vals(S.affaires).filter(a=>!["jugee","classee"].includes(a.st)).length):kpi("Mes dossiers traités",Dall.filter(d=>d.by==u.id).length)}
+ ${can("jus.view")?kpi("Plaintes en attente",vals(S.affaires).filter(a=>plSt(a)=="attente").length):kpi("Mes dossiers traités",Dall.filter(d=>d.by==u.id).length)}
  ${can("fin.view")?kpi("Trésorerie",money(treasury()),"gold"):kpi("Salaire en cours",money(pi.total),"gold")}
  ${kpi("Messages non lus",unread())}</div>`;
  h+=`<div class="grid g2"><div><h4>Annonces</h4>${visibleAnn().slice(0,4).map(annCard).join("")||`<div class="card">${empty("Aucune annonce.")}</div>`}</div><div>`;
@@ -1597,6 +1606,43 @@ function MJdoc(x){if(!x||!canDocs())return null;const F=jdocCache[x.id];if(F===u
  return {title:`${(DOCL[x.type]||[0,"Document"])[1]} — ${esc(x.num)}`,wide:1,body:`${docPaper(x)}${Object.keys(x.files||{}).length?`<h4>Pièces jointes</h4><div class="fgrid">${Object.entries(x.files).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data)).join("")}</div>`:""}
  ${x.st=="annule"?`<p class="mu sm">Annulé le ${fd(x.annT)} par ${esc(x.annNom||"")}${x.annMotif?` — ${esc(x.annMotif)}`:""}</p>`:""}`,
  foot:`${ed||isDir()?`<button class="btn gh" style="margin-right:auto" onclick="jdocDel('${x.id}')">Supprimer</button>`:""}${ed&&x.st!="annule"?`<button class="btn gh" onclick="jdocCancel('${x.id}')">Annuler le document</button><button class="btn sec" onclick="openJdoc('${x.id}')">Modifier</button>`:""}<button class="btn sec" onclick="jdocPrint('${x.id}')">Imprimer / PDF</button><button class="btn sec" onclick="jdocCopy('${x.id}')">Copier pour Discord</button><button class="btn" onclick="closeM()">Fermer</button>`}}
+
+/* =================== NOTIFICATIONS =================== */
+function notifList(){const u=ME();if(!u)return [];const N=[],me=u.id,ent=u.role=="entreprise",add=(k,t,ic0,ti,tx,act)=>{if(t)N.push({k,t:+t,ic:ic0,ti,tx,act})};
+ vals(S.messages).filter(m=>m.to==me&&!m.read).forEach(m=>add("m_"+m.id,m.t,"mail","Nouveau message",uname(m.from)+" : "+String(m.txt||"").slice(0,90),`convWith='${m.from}';go('messages')`));
+ visibleAnn().filter(a=>a.by!=me).forEach(a=>add("a_"+a.id,a.t,"megaphone","Nouvelle annonce",a.titre,"go('annonces')"));
+ if(ent){vals(S.dossiers).filter(d=>d.ent==me).forEach(d=>{vals(d.comments).filter(c=>!c.internal&&c.u!=me).forEach(c=>add("dc_"+d.id+"_"+c.t,c.t,"folder","Réponse à votre demande",d.num+" — "+c.nom+" : "+String(c.txt||"").slice(0,80),`openM('dossier','${d.id}')`));
+   if((d.st=="ok"||d.st=="no")&&d.tt)add("ds_"+d.id+"_"+d.st,d.tt,"folder",d.st=="ok"?"Demande acceptée":"Demande refusée",d.num+" — "+d.objet,`openM('dossier','${d.id}')`)});
+  vals(S.factures).filter(f=>f.ent==me&&f.by!=me).forEach(f=>add("f_"+f.id,f.t,"wallet","Nouvelle "+(f.kind=="amende"?"amende":f.kind=="taxe"?"facture d'impôt":"facture"),f.num+" — "+money(f.montant)+" · "+f.motif,"go('factures')"));
+  return N.sort((a,b)=>b.t-a.t)}
+ if(can("dos.view"))vals(S.dossiers).filter(d=>myDepts().includes(d.dept)&&d.st=="attente").forEach(d=>add("d_"+d.id,d.t,"folder","Nouveau dossier",`${d.num} — ${d.objet} (${d.entNom||""})`,`go('dossiers');openM('dossier','${d.id}')`));
+ vals(S.dossiers).filter(d=>d.assign==me||d.by==me).forEach(d=>vals(d.comments).filter(c=>c.u!=me&&S.users[c.u]&&S.users[c.u].role=="entreprise").forEach(c=>add("dc_"+d.id+"_"+c.t,c.t,"folder","Nouvelle réponse sur un dossier",d.num+" — "+c.nom+" : "+String(c.txt||"").slice(0,80),`go('dossiers');openM('dossier','${d.id}')`)));
+ if(can("rec.view")||can("rec.treat"))vals(S.recrutements).filter(r=>r.st=="attente"&&r.by!=me).forEach(r=>add("r_"+r.id,r.t,"briefcase","Nouveau CV",`${r.prenom} ${r.nom}${r.dept?" — "+r.dept:""}${blHits(r.nom,r.prenom,r.tel).length?" · ⛔ blacklisté":""}`,`go('recrutements');openM('rec','${r.id}')`));
+ if(can("jus.view"))vals(S.affaires).filter(a=>plSt(a)=="attente"&&a.by!=me).forEach(a=>add("p_"+a.id,a.t,"scale","Nouvelle plainte",`${a.num} — ${plNoms(a,"pl")} c/ ${plNoms(a,"ac")}`,`go('justice');openM('affaire','${a.id}')`));
+ if(can("jus.view")){const now=Date.now();vals(S.affaires).forEach(a=>plAud(a).forEach(x=>{const ts=new Date(x.date).getTime();if(ts>now&&ts-now<864e5)add("au_"+a.id+"_"+x.date,now-1,"clock","Audience dans moins de 24 h",`${fdt(x.date)} — ${a.num} (${plNoms(a,"ac")})`,`go('justice');openM('affaire','${a.id}')`)}))}
+ if(canBill())vals(S.factures).filter(f=>f.st=="verif").forEach(f=>add("v_"+f.id,f.notifT||f.t,"wallet","Paiement à vérifier",`${f.num} — ${f.entNom} · ${money(f.montant)}`,`go('finances','fact');openM('verif','${f.id}')`));
+ if(can("fin.decl"))vals(S.declarations).filter(d=>d.st!="validee"&&!d.arch).forEach(d=>add("dl_"+d.id,d.t,"file","Nouvelle déclaration fiscale",`${d.entNom} — ${d.periode} · CA ${money(d.ca)}`,`go('finances','decl')`));
+ if(payGlobal())Object.entries(S.paie).filter(([k,p])=>p&&p.st=="soumise").forEach(([k,p])=>add("ps_"+k+"_"+p.subT,p.subT,"wallet","Paie à valider",`${(payFolders().find(f=>f[0]==k)||[0,k])[1]} — ${p.periode||""} (par ${p.subNom||""})`,`filt.pdk='${k}';go('salaire','gestion')`));
+ {const k=deptKey(u.dept),p=S.paie[k];if(p&&p.retour&&can("pay.dept"))add("pr_"+k+"_"+p.updT,p.updT,"wallet","Paie renvoyée pour correction",p.retour,`filt.pdk='${k}';go('salaire','gestion')`)}
+ vals(S.paiearch).filter(a=>a.lines&&a.lines[me]).forEach(a=>add("pa_"+a.id,a.t,"wallet","Salaire versé",`${a.periode} — ${money(lineTotal(a.lines[me]))}`,"go('salaire')"));
+ vals(S.sanctions).filter(s=>s.uid==me&&!s.rev).forEach(s=>add("s_"+s.id,s.t,"shield","Sanction reçue",`${SANC_T[s.type][0]} — ${s.motif}`,"go('salaire')"));
+ return N.sort((a,b)=>b.t-a.t).slice(0,60)}
+let notifOpen=false,notifKnown=null,notifFor=null;
+function notifState(){const u=ME();return {rt:num(u&&u.notifRead),seen:(u&&u.notifSeen)||{}}}
+const notifUnread=(n,st)=>n.t>st.rt&&!st.seen[n.k.replace(/[.#$\/\[\]]/g,"_")];
+function notifBell(){const L=notifList(),st=notifState(),n=L.filter(x=>notifUnread(x,st)).length;
+ return `<div class="nbell"><button class="nb-btn ${notifOpen?"on":""}" onclick="event.stopPropagation();notifOpen=!notifOpen;render()" title="Notifications" aria-label="Notifications">${ic("bell")}${n?`<span class="nb-c">${n>99?"99+":n}</span>`:""}</button>
+ ${notifOpen?`<div class="nb-panel" onclick="event.stopPropagation()"><div class="nb-h"><b>Notifications</b>${n?`<span class="bdg no">${n} non lue(s)</span>`:""}<span style="margin-left:auto"></span>${n?`<button class="lnk" onclick="notifReadAll()">Tout marquer comme lu</button>`:""}</div>
+ <div class="nb-l">${L.map(x=>`<button class="nb-it ${notifUnread(x,st)?"un":""}" onclick="notifGo('${x.k}')"><span class="nb-ic">${ic(x.ic)}</span><span class="nb-tx"><b>${esc(x.ti)}</b><span>${esc(x.tx||"")}</span><span class="mu" style="font-size:11px">${fd(x.t)}</span></span></button>`).join("")||`<div class="empty" style="padding:26px">Aucune notification.</div>`}</div>
+ ${"Notification" in window&&Notification.permission=="default"?`<div class="nb-f"><button class="lnk" onclick="Notification.requestPermission().then(()=>render())">Activer les notifications du navigateur</button></div>`:""}</div>`:""}</div>`}
+function notifGo(k){const x=notifList().find(n=>n.k==k);if(!x)return;notifOpen=false;DBX.update("users/"+meId,{["notifSeen/"+k.replace(/[.#$\/\[\]]/g,"_")]:true});try{(new Function(x.act))()}catch(e){console.error(e)}render()}
+function notifReadAll(){DBX.update("users/"+meId,{notifRead:Date.now(),notifSeen:null});render()}
+/* Nouvelle notification : bandeau + notification du navigateur (si autorisée) */
+function notifCheck(){const u=ME();if(!ready||!u||u.mustChange){notifKnown=null;return}const L=notifList(),st=notifState(),U=L.filter(x=>notifUnread(x,st));
+ if(notifKnown===null||notifFor!==u.id){notifKnown=new Set(L.map(x=>x.k));notifFor=u.id;return}
+ const fresh=U.filter(x=>!notifKnown.has(x.k)&&Date.now()-x.t<6e5);L.forEach(x=>notifKnown.add(x.k));
+ fresh.slice(0,3).forEach(x=>{toast(`🔔 ${x.ti} — ${x.tx||""}`.slice(0,140));try{if("Notification" in window&&Notification.permission=="granted"&&document.hidden){const n=new Notification(x.ti,{body:x.tx||"",icon:S.config.logo||"logo.png",tag:x.k});n.onclick=()=>{window.focus();notifGo(x.k);n.close()}}}catch(e){}})}
+document.addEventListener("click",()=>{if(notifOpen){notifOpen=false;render()}});
 
 /* =================== RECRUTEMENTS =================== */
 const RST={attente:["En attente","wa"],acceptee:["Acceptée","ok"],refusee:["Refusée","no"]};
