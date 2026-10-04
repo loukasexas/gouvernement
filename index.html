@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Intranet — Gouvernement de Los Santos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;800&family=Inter:wght@400;500;600;700&family=Mrs+Saint+Delafield&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" crossorigin="anonymous" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;800&family=Inter:wght@400;500;600;700&family=Mrs+Saint+Delafield&family=Open+Sans:wght@400;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" crossorigin="anonymous" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <style>
@@ -444,6 +444,12 @@ td .cs-btn{height:34px}
 .ib-th{display:block;max-width:180px;max-height:240px;margin:14px auto;border-radius:8px;box-shadow:var(--sh-sm)}
 .ib-row{display:flex;gap:8px;margin:12px 0 8px;text-align:left}.ib-row input{flex:1;margin:0;font-family:ui-monospace,Consolas,monospace;font-size:13px}
 .ib-ln{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;font-size:13px}.ib-ln a{color:var(--gold2)}
+/* Modèles : blocs, cellules, listes */
+.tpl .tv.blk{white-space:normal;overflow-wrap:break-word}.tpl .tv b{font-weight:800}
+.tpl .tv.cell{display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;line-height:1.25;overflow:hidden;padding:0 1%}
+.tpl ul.tl{margin:0;padding-left:1.3em}.tpl ul.tl li{margin:0}.tpl .ttl{color:#1b2234}
+.infs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.infs .chip{display:inline-flex;align-items:center;gap:6px;background:var(--cd2);border:1px solid var(--bd);border-radius:99px;padding:4px 6px 4px 12px;font-weight:600;font-size:13px}.infs .chip button{border:0;background:none;color:var(--mu);cursor:pointer;font-size:15px;line-height:1;border-radius:50%;width:20px;height:20px}.infs .chip button:hover{color:#f87171;background:color-mix(in srgb,#ef4444 14%,transparent)}
+.sz-k{font-size:11px;font-weight:700;color:var(--mu);background:var(--cd2);border-radius:99px;padding:3px 8px;white-space:nowrap}
 </style></head>
 <body><div id="root"></div><div class="toasts" id="toasts"></div>
 <script>
@@ -826,6 +832,7 @@ function render(){watchMessages();
  const ae=document.activeElement;let fid=ae&&ae.id,ss=null,se=null;try{ss=ae.selectionStart;se=ae.selectionEnd}catch(e){}
  root.querySelectorAll("input[id],textarea[id],select[id]").forEach(e=>{if(e.type!="checkbox"&&e.type!="file"&&!e.hasAttribute("data-nokeep"))keep[e.id]=e.value});
  const sd=root.querySelector(".side"),sds=sd?sd.scrollTop:0;
+ const twS=[...root.querySelectorAll(".tw")].map(e=>e.scrollLeft);
  const mbd=root.querySelector(".modal .mb"),mbs=mbd?mbd.scrollTop:0;const mb=root.querySelector(".modal-bg"),ms=mb?mb.scrollTop:0,tb=root.querySelector(".thread .body"),ts=tb?tb.scrollTop:0,tAtEnd=tb?tb.scrollHeight-tb.scrollTop-tb.clientHeight<40:true;
  let h;try{h=page()}catch(e){console.error(e);h=`<div class="login"><div class="box card"><h3>Erreur d'affichage</h3><p class="mu">${esc(e.message)}</p><button class="btn" onclick="modal=null;go('accueil')">Revenir à l'accueil</button></div></div>`}
  root.innerHTML=h;
@@ -837,6 +844,7 @@ function render(){watchMessages();
  if(fid){const e=document.getElementById(fid);if(e){const t=e.tagName=="SELECT"&&e.parentNode.classList.contains("cs")?e.parentNode.querySelector(".cs-btn"):e;t.focus({preventScroll:true});try{if(ss!=null)e.setSelectionRange(ss,se)}catch(x){}}}
  const mb2=root.querySelector(".modal-bg");if(mb2)mb2.scrollTop=ms;const mbd2=root.querySelector(".modal .mb");if(mbd2)mbd2.scrollTop=mbs;
  {const sd2=root.querySelector(".side");if(sd2&&sds)sd2.scrollTop=sds}
+ root.querySelectorAll(".tw").forEach((e,i)=>{if(twS[i])e.scrollLeft=twS[i]});
  const tb2=root.querySelector(".thread .body");if(tb2)tb2.scrollTop=tAtEnd?tb2.scrollHeight:ts;
  tickClocks();notify();
  document.title=(unread()?"("+unread()+") ":"")+"Intranet — "+(S.config.siteName||"Gouvernement de Los Santos");
@@ -1848,9 +1856,9 @@ function MJug(){if(!can("jus.judge"))return null;const d=modal.d;if(!d)return nu
  ${(d.faits||[]).map((f,i)=>`<tr class="${f.v=="non"?"fnon":""}"><td><div class="jf-n">${infCatB(f.c)}<b>${esc(f.n)}</b></div><td class="r nw">${money(f.a)}<td class="nw">${prisonTxt(f.p)}<td><select data-nokeep onchange="modal.d.faits[${i}].v=this.value;render()">${opts(FVERD,f.v||"rep")}</select><td class="c"><input type="checkbox" data-nokeep ${f.aj?"checked":""} onchange="modal.d.faits[${i}].aj=this.checked;render()"><td class="r"><button type="button" class="ab dg" onclick="modal.d.faits.splice(${i},1);render()" title="Retirer ce fait">${ic("trash")}Retirer</button></tr>`).join("")||`<tr><td colspan="6" class="empty">Aucun fait : recherchez une infraction ci-dessus pour l'ajouter.</td></tr>`}</table></div>
  <div class="kpis" style="margin-top:10px">${kpi("Total des amendes",money(c.am),"gold")}${kpi("Prison encourue (peine la plus haute)",esc(c.prT))}${kpi("Coefficient de prison",c.coef)}${kpi("Peine fédérale",c.fed?"Oui":"Non")}</div>
  <p class="mu sm" style="margin:0">Les faits « Non coupable » ne sont pas comptés. Les peines de prison ne se cumulent pas : seule la plus haute est retenue ; le coefficient = années ÷ 2. La peine est fédérale dès 1 an de prison encourue.</p></div>
- <div class="pe-card"><h4 style="margin-top:0">Saisies</h4><div class="inl"><input id="jsq" placeholder="Ex. : Pistolet de combat, 25 000 $ d'argent sale…" style="flex:1" onkeydown="if(event.key=='Enter'){event.preventDefault();jugAddSaisie()}"><button class="btn sec" onclick="jugAddSaisie()">Ajouter</button></div>
- <div class="grid g2" style="margin-top:10px"><div><h4>Saisies rendues</h4>${(d.saisies||[]).map((s,i)=>s.r?`<div class="sz"><span class="sz-t">${esc(s.t)}</span><button type="button" class="ab" onclick="modal.d.saisies[${i}].r=false;render()" title="Marquer comme non restituée">${ic("undo")}Non restituée</button><button type="button" class="ab dg" onclick="modal.d.saisies.splice(${i},1);render()" title="Retirer cette saisie">${ic("trash")}Retirer</button></div>`:"").join("")||`<p class="mu sm">Aucune.</p>`}</div>
- <div><h4>Saisies non restituées</h4>${(d.saisies||[]).map((s,i)=>!s.r?`<div class="sz"><span class="sz-t">${esc(s.t)}</span><button type="button" class="ab ok" onclick="modal.d.saisies[${i}].r=true;render()" title="Marquer comme rendue">${ic("check")}Rendue</button><button type="button" class="ab dg" onclick="modal.d.saisies.splice(${i},1);render()" title="Retirer cette saisie">${ic("trash")}Retirer</button></div>`:"").join("")||`<p class="mu sm">Aucune.</p>`}</div></div></div>
+ <div class="pe-card"><h4 style="margin-top:0">Saisies</h4><div class="inl"><input id="jsq" placeholder="Ex. : Pistolet de combat, 25 000 $ d'argent sale…" style="flex:1" onkeydown="if(event.key=='Enter'){event.preventDefault();jugAddSaisie()}"><select id="jsk" style="width:auto">${opts(Object.entries(SZK),keep.jsk||"autre")}</select><button class="btn sec" onclick="jugAddSaisie()">Ajouter</button></div>
+ <div class="grid g2" style="margin-top:10px"><div><h4>Saisies rendues</h4>${(d.saisies||[]).map((s,i)=>s.r?`<div class="sz"><span class="sz-t">${esc(s.t)}</span><span class="sz-k">${SZK[s.k||"autre"]}</span><button type="button" class="ab" onclick="modal.d.saisies[${i}].r=false;render()" title="Marquer comme non restituée">${ic("undo")}Non restituée</button><button type="button" class="ab dg" onclick="modal.d.saisies.splice(${i},1);render()" title="Retirer cette saisie">${ic("trash")}Retirer</button></div>`:"").join("")||`<p class="mu sm">Aucune.</p>`}</div>
+ <div><h4>Saisies non restituées</h4>${(d.saisies||[]).map((s,i)=>!s.r?`<div class="sz"><span class="sz-t">${esc(s.t)}</span><span class="sz-k">${SZK[s.k||"autre"]}</span><button type="button" class="ab ok" onclick="modal.d.saisies[${i}].r=true;render()" title="Marquer comme rendue">${ic("check")}Rendue</button><button type="button" class="ab dg" onclick="modal.d.saisies.splice(${i},1);render()" title="Retirer cette saisie">${ic("trash")}Retirer</button></div>`:"").join("")||`<p class="mu sm">Aucune.</p>`}</div></div></div>
  <div class="pe-card"><h4 style="margin-top:0">Audience</h4><div class="form">${jugInput("juge","Juge de l'affaire",{list:"jstaff"})}${jugInput("procureur","Procureur de l'affaire",{list:"jstaff"})}${jugInput("avocat","Avocat de l'affaire")}
  <label class="f">Type d'avocat${sel("avocatType",AVOC_T)}</label>${jugInput("agents","Agents présents au jugement",{full:1})}${jugInput("temoins","Témoins éventuels",{full:1})}
  ${jugInput("rapport","Rapport d'intervention",{area:1,full:1,rows:4})}<label class="f">Amendes impayées${sel("impayees",[["non","Non"],["oui","Oui"]],1)}</label>${d.impayees=="oui"?jugInput("impDetail","Détail des amendes impayées",{ph:"Nombre / montant"}):""}
@@ -1877,7 +1885,7 @@ function MJugV(j){if(!j||!canTool())return null;const c=jugCalc(j),F=jugCache[j.
  <div class="grid g2"><div><h4>Saisies rendues</h4>${S0.filter(s=>s.r).map(s=>`<div>• ${esc(s.t)}</div>`).join("")||`<p class="mu sm">Aucune.</p>`}</div><div><h4>Saisies non restituées</h4>${S0.filter(s=>!s.r).map(s=>`<div>• ${esc(s.t)}</div>`).join("")||`<p class="mu sm">Aucune.</p>`}</div></div>
  ${j.rapport?`<h4>Rapport d'intervention</h4><div class="pre card" style="margin:0">${esc(j.rapport)}</div>`:""}
  ${Object.keys(j.files||{}).length?`<h4>Pièces jointes</h4><div class="fgrid">${Object.entries(j.files).map(([fk,f])=>fileTile(fk,f,F&&F[fk]&&F[fk].data)).join("")}</div>`:""}`,
- foot:`${ed||isDir()?`<button class="btn gh" style="margin-right:auto" onclick="jugDel('${j.id}')">Supprimer</button>`:""}${ed?`<button class="btn sec" onclick="openJug('${j.id}')">Modifier</button><button class="btn bl" onclick="mdtCopy(S.jugements['${j.id}'])">Générer la note MDT</button>`:""}<button class="btn" onclick="closeM()">Fermer</button>`}}
+ foot:`${ed||isDir()?`<button class="btn gh" style="margin-right:auto" onclick="jugDel('${j.id}')">Supprimer</button>`:""}${ed?`<button class="btn sec" onclick="openJug('${j.id}')">Modifier</button><button class="btn bl" onclick="mdtCopy(S.jugements['${j.id}'])">Générer la note MDT</button>`:""}${can("jus.docs")?`<button class="btn sec" onclick="jugToDoc('${j.id}','restit')">${ic("file")}Restitution de saisies</button><button class="btn sec" onclick="jugToDoc('${j.id}','fed')">${ic("file")}Mise en fédérale</button>${j.st=="vdp"?`<button class="btn sec" onclick="jugToDoc('${j.id}','vdp')">${ic("file")}Déclaration de VDP</button>`:""}`:""}<button class="btn" onclick="closeM()">Fermer</button>`}}
 /* Note MDT */
 const posteOf=u=>{const g=G(u);return g?g.name:(u&&u.role=="direction"?"Direction":"")};
 function mdtText(j,poste){const L=a=>a.length?a.map(x=>"- "+x).join("\n"):"- Aucun";const F=j.faits||[],S0=j.saisies||[],me=ME();
@@ -1895,9 +1903,9 @@ const tplSeal=()=>S.config.jusSceau||TPL_ASSET("sceau_ministre.png");
 const fddLong=v=>{if(!v)return "";const d=new Date(String(v).length==10?v+"T12:00:00":v);return isNaN(d)?"":d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"})};
 const addDaysISO=(v,n)=>{const d=new Date((v||isoDay(Date.now()))+"T12:00:00");d.setDate(d.getDate()+n);return isoDay(d.getTime())};
 /* Texte positionné dans le repère du modèle (1414 × 2000 px) : x,y = coin haut-gauche de l'encre du texte d'origine */
-function tplT(txt,o){const fs=o.fs,wt=o.wt||800,top=o.y-(wt>=700?0.09:0.09)*fs,w=o.w;
+function tplT(txt,o){const fs=o.fs,wt=o.wt||800,top=o.y-(o.ff?0.13:0.09)*fs,w=o.w;
  const left=o.c?o.x-w/2:o.x-0.03*fs;
- return `<div class="tv${o.c?" c":""}${o.cls?" "+o.cls:""}" data-fs="${(fs/14.14).toFixed(4)}" style="left:${(left/14.14).toFixed(3)}%;top:${(top/20).toFixed(3)}%;width:${(w/14.14).toFixed(3)}%;font-size:${(fs/14.14).toFixed(4)}cqw;font-weight:${wt}">${txt}</div>`}
+ return `<div class="tv${o.c?" c":""}${o.cls?" "+o.cls:""}" data-fs="${(fs/14.14).toFixed(4)}" style="left:${(left/14.14).toFixed(3)}%;top:${(top/20).toFixed(3)}%;width:${(w/14.14).toFixed(3)}%;font-size:${(fs/14.14).toFixed(4)}cqw;font-weight:${wt}${o.ff?";font-family:"+o.ff:""}">${txt}</div>`}
 const TPL={
  perq:{bg:"mandat_perquisition.jpg",render:(x,o)=>{const e=v=>esc(v||"");
   const deliv=x.delivre||isoDay(x.t||Date.now()),juge=x.juge||x.byNom||"",signN=x.signNom||x.byNom||"",signG=x.signGrade||x.byPoste||"";
@@ -1911,10 +1919,107 @@ const TPL={
   +(signN?`<div class="ts" data-fs="${(118/14.14).toFixed(4)}" style="left:${(860-250)/14.14}%;top:${1590/20}%;width:${500/14.14}%;font-size:${(118/14.14).toFixed(4)}cqw">${e(signN)}</div>`:"")
   +tplT(`${e(signN)||"&nbsp;"}<br>${e(signG)||"&nbsp;"}`,{x:860,y:1838,w:520,fs:28.5,c:1,wt:400,cls:"tm"})}}
 };
+/* ---------- Modèles Canva des autres documents de justice ---------- */
+const fdtA=v=>{if(!v)return "";const d=new Date(v);return isNaN(d)?"":d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"})+" à "+String(d.getHours()).padStart(2,"0")+"h"+String(d.getMinutes()).padStart(2,"0")};
+const VDP_T=[["miranda","Droits Miranda non lus ou non compris (art. 1.2)","1"],["avocat","Droit à un avocat non respecté (art. 1.2)","1"],["datehr","Date et heure du rapport d'intervention (art. 1.3.1)","1"],["matricules","Indication des matricules (art. 1.3.2)","2"],["saisie","Saisies non notifiées ou sans n° de série (art. 1.3.3)","2"],["amende","Amende avant jugement (art. 1.5)","1"],["fouille","Fouille d'une personne (art. 1.6)","1"],["parjure","Parjure (art. 1.7)","1"],["secret","Non-respect du secret professionnel (art. 1.8)","1"],["autre","Autre vice de procédure","1"]];
+const SZK={letale:"Arme létale",blanche:"Arme blanche",autre:"Autre"};
+const OS="'Open Sans',Arial,sans-serif";
+const tplArr=v=>Array.isArray(v)?v.filter(Boolean):(v?String(v).split("\n").map(s=>s.replace(/^[-•]\s*/,"").trim()).filter(Boolean):[]);
+/* Bloc de texte (paragraphe) : y = haut des majuscules de la 1re ligne */
+function tplB(html,o){const fs=o.fs||29,lh=o.lh||1.38,top=o.y-(lh-1)/2*fs,w=o.w,left=o.c?o.x-w/2:o.x;
+ return `<div class="tv blk${o.c?" c":""}" data-fs="${(fs/14.14).toFixed(4)}"${o.mh?` data-mh="${o.mh}"`:""} style="left:${(left/14.14).toFixed(3)}%;top:${(top/20).toFixed(3)}%;width:${(w/14.14).toFixed(3)}%;font-size:${(fs/14.14).toFixed(4)}cqw;font-weight:${o.wt||400};line-height:${lh};text-align:${o.al||"justify"};${o.ff?`font-family:${o.ff};`:""}">${html}</div>`}
+/* Cellule de tableau centrée */
+function tplCell(html,x0,y0,x1,y1,fs){return `<div class="tv cell" data-fs="${(fs/14.14).toFixed(4)}" style="left:${(x0/14.14).toFixed(3)}%;top:${(y0/20).toFixed(3)}%;width:${((x1-x0)/14.14).toFixed(3)}%;height:${((y1-y0)/20).toFixed(3)}%;font-size:${(fs/14.14).toFixed(4)}cqw;font-weight:800"><span>${html}</span></div>`}
+function tplFoot(x,o){const e=v=>esc(v||""),signN=x.signNom||x.byNom||"",signG=x.signGrade||x.byPoste||"",mn=o.minNom||S.config.jusMinNom||TPL_MIN_DEF.nom,mt=o.minTitre||S.config.jusMinTitre||TPL_MIN_DEF.titre;
+ return `<img class="tseal" src="${esc(o.seal||tplSeal())}" alt="" style="left:${245/14.14}%;top:${1516/20}%;width:${303/14.14}%;height:${303/20}%">`
+ +tplT(`${e(mn)}<br>${e(mt)}`,{x:395,y:1838,w:440,fs:28.5,c:1,wt:400,cls:"tm"})
+ +(signN?`<div class="ts" data-fs="${(118/14.14).toFixed(4)}" style="left:${(860-250)/14.14}%;top:${1590/20}%;width:${500/14.14}%;font-size:${(118/14.14).toFixed(4)}cqw">${e(signN)}</div>`:"")
+ +tplT(`${e(signN)||"&nbsp;"}<br>${e(signG)||"&nbsp;"}`,{x:860,y:1838,w:520,fs:28.5,c:1,wt:400,cls:"tm"})}
+const tplNom=x=>[x.nom,x.prenom].filter(Boolean).join(" ");
+const tplGrade=x=>{if(x.jugeGrade)return x.jugeGrade;const u=justiceStaff().find(u=>NRM(u.nom)==NRM(x.juge||""));return u?(posteOf(u)||gname(u)||"Juge"):"Juge"};
+const tplTop=x=>{const e=v=>esc(v||"");return tplT(e(x.motif),{x:312,y:490,w:382,fs:30,c:1,cls:"w2"})+tplT(e(x.juge||x.byNom),{x:707,y:490,w:382,fs:30,c:1,cls:"w2"})+tplT(e(x.jugeTel),{x:1101,y:490,w:330,fs:30,c:1})};
+const tplFait=(x,y)=>tplT(esc(fddLong(x.dateFait||x.delivre||isoDay(x.t||Date.now()))),{x:265,y,w:600,fs:27.5});
+const tplDeliv=x=>tplT(esc(fddLong(x.delivre||isoDay(x.t||Date.now()))),{x:322,y:627,w:700,fs:27.5});
+Object.assign(TPL,{
+ casier:{bg:"doc_casier.jpg",render:(x,o)=>{const e=v=>esc(v||""),F=tplArr(x.faits&&x.faits.length?x.faits:x.mentions);
+  return tplFait(x,459)+tplT(e(x.juge||x.byNom),{x:367,y:529,w:900,fs:27.5})
+  +tplB(`en ma qualité de ${e(tplGrade(x))}, régissant la loi fédérale, je soussigne que la personne correspondant aux informations suivantes :`,{x:144,y:593,w:1128,lh:1.52})
+  +tplT(e(tplNom(x)),{x:455,y:788,w:505,fs:33.75})+tplT(e(fddLong(x.naiss)),{x:498,y:841,w:465,fs:33.75})+tplT(e(x.dossier),{x:412,y:894,w:550,fs:33.75})
+  +tplB(F.length?`Fait l’objet d’une condamnation pour : <b>${F.map(e).join(", ")}</b>.`:"Ne fait l’objet d’aucune condamnation pénale inscrite à son casier judiciaire.",{x:144,y:1032,w:1128,mh:112})+tplFoot(x,o)}},
+ vdp:{bg:"doc_vdp.jpg",render:(x,o)=>{const e=v=>esc(v||""),V=VDP_T.find(v=>v[0]==x.vice);
+  return tplT(e(x.juge||x.byNom),{x:707,y:490,w:760,fs:31.25,c:1})+tplDeliv(x)+tplT(e(fdtA(x.dateJug)),{x:707,y:884,w:1100,fs:33.75,c:1})
+  +tplT(e(tplNom(x)),{x:444,y:977,w:820,fs:33.75})+tplT(e(fddLong(x.dateRapport)),{x:461,y:1023,w:800,fs:33.75})+tplT(e(x.dossier||x.affaire),{x:508,y:1070,w:760,fs:33.75})
+  +tplB(`<b>${V?e(V[1])+" — catégorie "+V[2]:e(x.categorie||"")}</b>${x.viceDetail||x.motif?" — "+e(x.viceDetail||x.motif):""}`,{x:146,y:1177,w:1126,mh:112,al:"left"})+tplFoot(x,o)}},
+ divorce:{bg:"doc_divorce.jpg",render:(x,o)=>{const e=v=>esc(v||""),civ=x.civilite||"Mme",who=x.garde=="2"?x.p2:x.p1;
+  return tplFait(x,500)+tplT(e(x.juge||x.byNom),{x:367,y:562,w:900,fs:27.5})
+  +tplB(`en ma qualité de ${e(tplGrade(x))} régissant la loi fédérale, certifie par la présente la véracité de la demande de divorce entre :`,{x:141,y:619,w:1130,lh:1.38})
+  +tplT(e(x.p1),{x:371,y:747,w:740,fs:29.7,ff:OS,wt:700})+tplT(e(fddLong(x.naiss1)),{x:437,y:803,w:670,fs:29.7,ff:OS,wt:700})
+  +tplT(e(x.p2),{x:370,y:960,w:740,fs:29.7,ff:OS,wt:700})+tplT(e(fddLong(x.naiss2)),{x:436,y:1017,w:670,fs:29.7,ff:OS,wt:700})
+  +tplB(`<b>${e(civ)} ${e(who)}</b> récupère donc son nom de ${civ=="Mr"?"jeune garçon":"jeune fille"} et se nommera <b>${e(x.nomApres)}</b>.`,{x:141,y:1098,w:1130})+tplFoot(x,o)}},
+ eloign:{bg:"doc_eloign.jpg",render:(x,o)=>{const e=v=>esc(v||"");
+  return tplFait(x,426)+tplT(e(x.juge||x.byNom),{x:351,y:495,w:900,fs:27.5})
+  +tplB(`en ma qualité de ${e(tplGrade(x))}, régissant la loi fédérale, ordonne suite à une décision de justice rendue, une mesure d’éloignement sur le comté de Los Santos à l’encontre de :`,{x:144,y:537,w:1128})
+  +tplT(e(tplNom(x)),{x:459,y:687,w:780,fs:31.25})+tplT(e(fddLong(x.naiss)),{x:521,y:734,w:720,fs:31.25})+tplT(e(x.fiche),{x:578,y:782,w:660,fs:31.25})
+  +tplT(e(x.vnom||x.protege),{x:457,y:916,w:780,fs:31.25})+tplT(e(fddLong(x.vnaiss)),{x:521,y:963,w:720,fs:31.25})+tplT(e(x.vfiche),{x:576,y:1010,w:660,fs:31.25})
+  +tplB(`L’individu visé devra se tenir éloigné à un minimum de <b>${e(x.distance||"150")} mètres</b>, il aura l’interdiction de rentrer en contact par tous moyens avec l’individu protégé jusqu’à nouvel ordre.`,{x:156,y:1073,w:1128,fs:26.5,lh:1.33})+tplFoot(x,o)}},
+ dedo:{bg:"doc_dedo.jpg",render:(x,o)=>{const e=v=>esc(v||"");
+  return tplFait(x,466)+tplT(e(x.juge||x.byNom),{x:351,y:534,w:900,fs:27.5})
+  +tplT(e(x.debiteur),{x:692,y:728,w:560,fs:31.25})+tplT(e(fddLong(x.dnaiss)),{x:521,y:775,w:720,fs:31.25})+tplT(e(x.dtel),{x:480,y:823,w:760,fs:31.25})
+  +tplT(e(x.beneficiaire),{x:700,y:956,w:560,fs:31.25})+tplT(e(fddLong(x.bnaiss)),{x:521,y:1003,w:720,fs:31.25})+tplT(e(x.btel),{x:480,y:1051,w:760,fs:31.25})
+  +tplT(`<u>${x.montant!==""&&x.montant!=null?e(Number(x.montant).toLocaleString("fr-FR").replace(/\s/g," ")):""}$</u>`,{x:823,y:1177,w:440,fs:32.5})+tplFoot(x,o)}},
+ restit:{bg:"doc_restit.jpg",render:(x,o)=>{const e=v=>esc(v||""),C=v=>{const a=tplArr(v);return a.length?a.map(e).join("<br>"):"//"};
+  return tplFait(x,459)+tplT(e(x.juge||x.byNom),{x:367,y:529,w:900,fs:27.5})
+  +tplB(`en ma qualité de ${e(tplGrade(x))}, régissant la loi fédérale, autorise par la présente la restitution des biens et objets personnels de la personne correspondant aux informations suivantes :`,{x:144,y:584,w:1128,lh:1.45})
+  +tplT(e(tplNom(x)),{x:456,y:754,w:505,fs:33.75})+tplT(e(fddLong(x.naiss)),{x:503,y:808,w:460,fs:33.75})+tplT(e(x.dossier),{x:409,y:862,w:555,fs:33.75})
+  +tplCell(C(x.letale),492,1019,1266,1152,26)+tplCell(C(x.blanche),492,1160,1266,1243,26)+tplCell(C(x.autres),492,1251,1266,1384,26)+tplFoot(x,o)}},
+ fed:{bg:"doc_fed.jpg",render:(x,o)=>{const e=v=>esc(v||""),F=tplArr(x.faits),yn=(v,d)=>e(v||"Non")+((v=="Oui"&&d)?" — "+e(d):"");
+  const R=[["Durée de la détention",`${e(x.duree)}${x.coef?` (Coef ${e(x.coef)})`:""}`],["Affiliations à des gangs ou organisations",yn(x.gang,x.gangDetail)],["Intérêts particuliers",yn(x.interets,x.interetsDetail)],["Retrait du droit de parloir",e(x.parloir||"Non")]];
+  return tplFait(x,459)+tplT(e(x.juge||x.byNom),{x:367,y:529,w:900,fs:27.5})
+  +tplB(`en ma qualité de ${e(tplGrade(x))}, régissant la loi fédérale, autorise par la présente la détention dans le pénitencier fédéral de Bolingbroke de la personne correspondant aux informations suivantes :`,{x:144,y:584,w:1128,lh:1.45})
+  +tplT(e(tplNom(x)),{x:456,y:748,w:505,fs:33.75})+tplT(e(fddLong(x.naiss)),{x:503,y:802,w:460,fs:33.75})
+  +tplB(`<ul class="tl">${F.map(f=>`<li>${e(f)}</li>`).join("")||"<li>—</li>"}</ul>`,{x:143,y:950,w:1130,fs:22.5,lh:1.32,ff:OS,wt:700,al:"left",mh:345})
+  +R.map((r,i)=>tplB(`<b>${r[0]}</b> : ${r[1]}`,{x:143,y:1318+i*38.4,w:1130,fs:28.5,lh:1.2,al:"left"})).join("")+tplFoot(x,o)}},
+ gav:{bg:"doc_gav.jpg",render:(x,o)=>{const e=v=>esc(v||""),h=+x.heures||+x.duree||0;
+  return tplTop(x)+tplDeliv(x)
+  +tplB(`autorise la prolongation de Garde à Vue d’une durée de ${h?h+" heure"+(h>1?"s":""):"—"} concernant la personne physique correspondant aux informations suivantes :`,{x:142,y:820,w:1130,wt:700,lh:1.64})
+  +tplT(e(tplNom(x)),{x:540,y:986,w:730,fs:33.75})+tplT(e(fddLong(x.naiss)),{x:498,y:1033,w:770,fs:33.75})+tplT(e(x.tel),{x:565,y:1079,w:700,fs:33.75})+tplFoot(x,o)}},
+ conv:{bg:"doc_conv.jpg",render:(x,o)=>{const e=v=>esc(v||"");
+  return tplTop(x)+tplDeliv(x)+tplT(e(tplNom(x)),{x:443,y:938,w:820,fs:33.75})+tplT(e(fddLong(x.naiss)),{x:491,y:985,w:770,fs:33.75})+tplT(e(x.tel),{x:556,y:1031,w:710,fs:33.75})
+  +tplT(e(fdtA(x.dateConv)),{x:823,y:1092,w:450,fs:33.75})+tplT(e(x.motifConv||x.motif),{x:628,y:1142,w:640,fs:33.75})+tplFoot(x,o)}},
+ info:{bg:"doc_info.jpg",render:(x,o)=>{const e=v=>esc(v||""),deliv=x.delivre||isoDay(x.t||Date.now());
+  return tplTop(x)+tplDeliv(x)+tplT(e(tplNom(x)),{x:443,y:938,w:820,fs:33.75})+tplT(e(fddLong(x.naiss)),{x:491,y:985,w:770,fs:33.75})+tplT(e(x.tel),{x:556,y:1031,w:710,fs:33.75})
+  +tplB(`<b>${e(x.motifLong||x.motif)}</b>`,{x:707,y:1209,w:1130,fs:31.25,c:1,al:"center",lh:1.2,mh:62})+tplT(e(fddLong(addDaysISO(deliv,7))),{x:348,y:1439,w:700,fs:27.5})+tplFoot(x,o)}},
+ arret:{bg:"doc_arret.jpg",render:(x,o)=>{const e=v=>esc(v||""),deliv=x.delivre||isoDay(x.t||Date.now());
+  return tplTop(x)+tplDeliv(x)+tplT(e(tplNom(x)),{x:443,y:906,w:820,fs:33.75})+tplT(e(fddLong(x.naiss)),{x:491,y:952,w:770,fs:33.75})+tplT(e(x.tel),{x:556,y:998,w:710,fs:33.75})
+  +tplT(e(fddLong(addDaysISO(deliv,7))),{x:145,y:1311,w:700,fs:27.5})+tplFoot(x,o)}},
+ ouv:{bg:"doc_ouv.jpg",render:(x,o)=>tplEnt(x,o,0)},
+ ferm:{bg:"doc_ferm.jpg",render:(x,o)=>tplEnt(x,o,1)}
+});
+/* Tant que l'image de fond d'un modèle n'est pas en ligne, on garde l'ancienne mise en page */
+setTimeout(()=>Object.keys(TPL).forEach(k=>{if(k=="perq")return;const i=new Image();i.onerror=()=>{delete TPL[k];try{render()}catch(e){}};i.src=TPL_ASSET(TPL[k].bg)}),0);
+function tplEnt(x,o,ferm){const e=v=>esc(v||"");
+ return (ferm?tplT("DÉCISION DE FERMETURE D’ENTREPRISE",{x:707,y:372,w:1180,fs:42.3,wt:700,c:1,cls:"ttl"}):"")+tplFait(x,459)+tplT(e(x.juge||x.byNom),{x:367,y:529,w:900,fs:27.5})
+ +tplB(ferm?"en ma qualité de Juge, régissant la loi fédérale, ordonne par la présente la fermeture administrative de l’entreprise correspondant aux informations suivantes :":"en ma qualité de Juge, régissant la loi fédérale, autorise par la présente la réouverture de l’entreprise correspondant aux informations suivantes :",{x:144,y:597,w:1128,lh:1.45})
+ +tplT(e(x.entreprise),{x:530,y:794,w:500,fs:33.75})+tplT(e(x.repGrade),{x:422,y:844,w:610,fs:33.75})+tplT(e(x.repNom),{x:711,y:901,w:320,fs:33.75})+tplT(e(x.repTel),{x:462,y:955,w:570,fs:33.75})+tplT(e(fddLong(x.repNaiss)),{x:503,y:1009,w:530,fs:33.75})
+ +(ferm?tplB(`La fermeture de l’entreprise prend effet dès l’envoi du présent document par un juge, pour une durée de : <b>${e(x.duree||"jusqu'à nouvel ordre")}</b>.`,{x:144,y:1143,w:1128}):"")+tplFoot(x,o)}
+/* Sélection de faits dans la grille des infractions (champ « infs ») */
+function jdInfAdd(k,auto){const i=document.getElementById("jd_"+k+"_q"),v=(i&&i.value||"").trim();if(!v)return;const I=infList(),m=I.find(f=>NRM(f.nom)==NRM(v));if(auto&&!m)return;
+ const a=tplArr(modal.d[k]);const n=m?m.nom:v;if(!a.includes(n))a.push(n);modal.d[k]=a;i.value="";render();setTimeout(()=>{const q=document.getElementById("jd_"+k+"_q");q&&q.focus()},20)}
+function jdInfDel(k,i){const a=tplArr(modal.d[k]);a.splice(i,1);modal.d[k]=a;render()}
+/* Pré-remplissage d'un document depuis un jugement (Outil de justice) */
+function jugToDoc(jid,ty){const j=S.jugements[jid];if(!j||!can("jus.docs"))return;const c=jugCalc(j),u=justiceStaff().find(u=>NRM(u.nom)==NRM(j.juge||""));
+ const m=String(j.lien||"").match(/(\d+)\/?$/),d={nom:j.nom||"",prenom:j.prenom||"",naiss:j.naiss||"",juge:j.juge||"",jugeGrade:u?(posteOf(u)||gname(u)):"",jugeTel:u?u.tel||"":"",dossier:m?"#"+m[1]:"",affaire:j.num||""};
+ const R=(j.saisies||[]).filter(s=>s.r),K=k=>R.filter(s=>(s.k||"autre")==k).map(s=>s.t).join("\n");
+ if(ty=="restit")Object.assign(d,{letale:K("letale"),blanche:K("blanche"),autres:K("autre")});
+ if(ty=="fed")Object.assign(d,{faits:(j.faits||[]).filter(f=>f.v!=="non").map(f=>f.n),duree:c.pr===Infinity?"Réclusion à perpétuité":c.pr?prisonTxt(c.pr):"",coef:c.pr===Infinity?"":c.coef});
+ if(ty=="vdp")Object.assign(d,{dateJug:j.dateJug?j.dateJug+"T"+new Date(j.t||Date.now()).toTimeString().slice(0,5):"",dateRapport:j.dateArr||"",viceDetail:j.vdpRaison||""});
+ modal={type:"jdocEdit",id:null,ty,d,files:[],rm:{},fromJug:jid};keep={};render()}
+
 function tplPaper(x,o){const T=TPL[x.type];o=o||{};
  return `<div class="tpl" style="background-image:url('${TPL_ASSET(T.bg)}')">${T.render(x,o)}${x.st=="annule"?`<div class="tx">ANNULÉ</div>`:""}${x.num?`<div class="tn">N° ${esc(x.num)}</div>`:""}</div>`}
 /* Ajuste la taille des textes trop longs pour qu'ils restent dans leur case */
-function tplFit(root){(root||document).querySelectorAll(".tpl [data-fs]").forEach(el=>{const b=+el.dataset.fs,wrap=el.classList.contains("w2");let k=1;const set=()=>el.style.fontSize=(b*k).toFixed(4)+"cqw",over=()=>el.scrollWidth>el.clientWidth+1;
+function tplFit(root){(root||document).querySelectorAll(".tpl [data-fs]").forEach(el=>{const b=+el.dataset.fs,wrap=el.classList.contains("w2");
+ if(el.classList.contains("blk")||el.classList.contains("cell")){let k=1;el.style.fontSize=b+"cqw";const W=el.parentNode.clientWidth||1414,mh=el.dataset.mh?+el.dataset.mh*W/1414:0,ov=()=>el.classList.contains("cell")?el.scrollHeight>el.clientHeight+1:(mh&&el.scrollHeight>mh+1);while(ov()&&k>0.45){k-=0.04;el.style.fontSize=(b*k).toFixed(4)+"cqw"}return}let k=1;const set=()=>el.style.fontSize=(b*k).toFixed(4)+"cqw",over=()=>el.scrollWidth>el.clientWidth+1;
  el.style.whiteSpace="";set();
  while(over()&&k>(wrap?0.78:0.5)){k-=0.03;set()}
  if(wrap&&over()){el.style.whiteSpace="normal";const tall=()=>el.scrollHeight>parseFloat(getComputedStyle(el).fontSize)*2.25;while((tall()||over())&&k>0.45){k-=0.03;set()}}
@@ -1922,8 +2027,8 @@ function tplFit(root){(root||document).querySelectorAll(".tpl [data-fs]").forEac
 function tplFitSoon(root){tplFit(root);try{document.fonts&&document.fonts.ready.then(()=>tplFit(root))}catch(e){}}
 /* Valeurs par défaut dynamiques des champs (@today, @me, @grade, @juge, @jugeTel) */
 function jdDef(v){if(typeof v!="string"||v[0]!="@")return v;const me=ME()||{},isJ=/juge|chief/i.test(gname(me)||"");
- return {"@today":isoDay(Date.now()),"@me":me.nom||"","@grade":posteOf(me)||gname(me)||"","@juge":isJ?me.nom||"":"","@jugeTel":isJ?me.tel||"":""}[v]??""}
-function jdJuge(v){modal.d.juge=v;const u=justiceStaff().find(u=>NRM(u.nom)==NRM(v));if(u){modal.d.jugeTel=u.tel||"";const t=document.getElementById("jd_jugeTel");if(t)t.value=modal.d.jugeTel}jdPrev()}
+ return {"@today":isoDay(Date.now()),"@me":me.nom||"","@grade":posteOf(me)||gname(me)||"","@juge":isJ?me.nom||"":"","@jugeTel":isJ?me.tel||"":"","@jugeGrade":isJ?(posteOf(me)||gname(me)||""):""}[v]??""}
+function jdJuge(v){modal.d.juge=v;const u=justiceStaff().find(u=>NRM(u.nom)==NRM(v));if(u){modal.d.jugeTel=u.tel||"";modal.d.jugeGrade=posteOf(u)||gname(u)||"";["jugeTel","jugeGrade"].forEach(k=>{const t=document.getElementById("jd_"+k);if(t)t.value=modal.d[k]})}jdPrev()}
 function jdPrev(){const el=document.getElementById("jdprev");if(!el||!modal||modal.type!="jdocEdit")return;const x=modal.id?S.jdocs[modal.id]:null,ty=x?x.type:modal.ty;if(!TPL[ty])return;
  el.innerHTML=tplPaper(Object.assign({type:ty},x||{},modal.d,{num:x?x.num:""}));tplFitSoon(el)}
 /* Sceau du ministre de la Justice */
@@ -1946,25 +2051,28 @@ function saveSceau(){if(!canSeal())return;const up={jusMinNom:tval("smn")||TPL_M
 /* ---------- Documents officiels ---------- */
 const DOC_T=[
  ["perq","Mandat de perquisition","MP","\u{1F50E}",[["motif","Raison",1,"text","","Ex. : Suspicion de trafic de stupéfiants"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeTel","N° de tél. du juge",0,"text","@jugeTel"],["delivre","Délivré le",1,"date","@today"],["nom","Nom de la personne visée",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["action","Action",1,"text","","Ex. : Perquisition du domicile et du véhicule"],["lieu","Adresse",1],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
- ["arret","Mandat d'arrêt","MA","\u{1F6A8}",[["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["signalement","Signalement / informations utiles",0,"area"],["faits","Faits reprochés",1,"area"],["agence","Agence chargée de l'exécution",0,"agence"],["validite","Valable jusqu'au",0,"date"]]],
- ["info","Mandat d'information","MI","\u{1F4C2}",[["cible","Personne ou entité visée",1],["detenteur","Organisme sollicité (banque, entreprise, opérateur…)",1],["infos","Informations demandées",1,"area"],["motif","Motif",1,"area"],["validite","Valable jusqu'au",0,"date"]]],
- ["conv","Convocation en justice","CJ","\u{1F4E8}",[["nom","Nom",1],["prenom","Prénom",1],["tel","Téléphone"],["qualite","Convoqué(e) en qualité de",1,"select",["Prévenu(e)","Témoin","Victime","Partie civile","Expert"]],["dateConv","Date et heure de la convocation",1,"datetime-local"],["lieu","Lieu",1,"text","Palais de justice de Los Santos"],["motif","Motif",1,"area"]]],
- ["gav","Prolongation de GAV","PG","⏱️",[["nom","Nom",1],["prenom","Prénom",1],["debut","Début de la garde à vue",0,"datetime-local"],["duree","Durée de la prolongation (heures)",1,"number"],["agence","Agence",0,"agence"],["motif","Motif de la prolongation",1,"area"]]],
- ["fed","Mise en fédérale","MF","\u{1F3DB}️",[["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["duree","Durée de la peine",1,"text","",'Ex. : 6 ans'],["etab","Établissement",0,"text","Pénitencier fédéral de Bolingbroke"],["faits","Faits retenus",1,"area"],["affaire","Référence du jugement"]]],
- ["dedo","Dédommagement","DD","\u{1F4B0}",[["nature","Nature",1,"select",["Civil","Judiciaire"]],["debiteur","Débiteur (qui paie)",1],["beneficiaire","Bénéficiaire",1],["montant","Montant ($)",1,"number"],["delai","À régler avant le",0,"date"],["motif","Motif",1,"area"]]],
- ["eloign","Mesure d'éloignement","ME","\u{1F6AB}",[["nom","Nom de la personne visée",1],["prenom","Prénom",1],["protege","Personne ou lieu protégé",1],["distance","Distance minimale (mètres)",1,"number"],["duree","Durée de la mesure",1,"text","",'Ex. : 14 jours'],["motif","Motif",1,"area"]]],
+ ["arret","Mandat d'arrêt","MA","\u{1F6A8}",[["motif","Raison",1],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeTel","N° de tél. du juge",0,"text","@jugeTel"],["delivre","Délivré le",1,"date","@today"],["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["tel","Numéro de téléphone"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["info","Mandat d'information","MI","\u{1F4C2}",[["motif","Raison",1],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeTel","N° de tél. du juge",0,"text","@jugeTel"],["delivre","Délivré le",1,"date","@today"],["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["tel","Numéro de téléphone"],["motifLong","Motif de la demande d'information (vide = la raison)",0,"area"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["conv","Convocation en justice","CJ","\u{1F4E8}",[["motif","Raison",1],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeTel","N° de tél. du juge",0,"text","@jugeTel"],["delivre","Délivré le",1,"date","@today"],["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["tel","Numéro de téléphone"],["dateConv","Date et heure de la convocation",1,"datetime-local"],["motifConv","Motif de la convocation",1],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["gav","Prolongation de GAV","PG","⏱️",[["motif","Raison",1],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeTel","N° de tél. du juge",0,"text","@jugeTel"],["delivre","Délivré le",1,"date","@today"],["heures","Durée de la prolongation (72 h maximum)",1,"select",Array.from({length:72},(_,i)=>[String(i+1),(i+1)+" heure"+(i?"s":"")]),"","24"],["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["tel","Numéro de téléphone"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["fed","Mise en fédérale","MF","\u{1F3DB}️",[["dateFait","Fait le",1,"date","@today"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeGrade","Grade du juge",0,"text","@jugeGrade"],["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["faits","Faits reprochés (grille des infractions)",1,"infs"],["duree","Durée de la détention",1,"text","","Ex. : 6 ans"],["coef","Coefficient",0,"text","","Ex. : 3"],["gang","Affiliation à des gangs ou organisations",1,"select",["Non","Oui"]],["gangDetail","Précision (gang / organisation)"],["interets","Intérêts particuliers",1,"select",["Non","Oui"]],["interetsDetail","Précision (intérêts particuliers)"],["parloir","Retrait du droit de parloir",1,"select",["Non","Oui"]],["affaire","Référence du jugement"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["dedo","Dédommagement","DD","\u{1F4B0}",[["nature","Nature",1,"select",["Civil","Judiciaire"]],["dateFait","Fait le",1,"date","@today"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["debiteur","Responsable : nom & prénom ou entreprise",1],["dnaiss","Responsable : date de naissance",0,"date"],["dtel","Responsable : n° de téléphone"],["beneficiaire","Victime : nom & prénom ou entreprise",1],["bnaiss","Victime : date de naissance",0,"date"],["btel","Victime : n° de téléphone"],["montant","Montant total ($)",1,"number"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["eloign","Mesure d'éloignement","ME","\u{1F6AB}",[["dateFait","Fait le",1,"date","@today"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeGrade","Grade du juge",0,"text","@jugeGrade"],["nom","Mis en cause : nom",1],["prenom","Mis en cause : prénom",1],["naiss","Mis en cause : date de naissance",0,"date"],["fiche","Mis en cause : n° de fiche de recensement"],["vnom","Personne protégée : nom et prénom",1],["vnaiss","Personne protégée : date de naissance",0,"date"],["vfiche","Personne protégée : n° de fiche de recensement"],["distance","Distance minimale",1,"select",["50","100","150","200","250","300","400","500"].map(v=>[v,v+" mètres"]),"","150"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
  ["pv","Procès-verbal","PV","\u{1F4DD}",[["objet","Objet",1],["datePV","Date et heure",0,"datetime-local"],["lieu","Lieu"],["personnes","Personnes présentes / concernées",0,"area"],["contenu","Contenu du procès-verbal",1,"area"]]],
- ["vdp","Déclaration de VDP","VD","⚖️",[["affaire","Affaire / jugement concerné",1],["nom","Nom de la personne concernée"],["prenom","Prénom"],["categorie","Catégorie du vice",1,"select",["Catégorie 1","Catégorie 2","Catégorie 3"]],["motif","Description du vice de procédure",1,"area"],["consequence","Conséquence",1,"select",["Relaxe de tous les faits reprochés","Annulation partielle de la procédure","Remise en liberté immédiate"]]]],
- ["casier","Extrait de casier judiciaire","EX","\u{1F4DC}",[["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["mentions","Condamnations inscrites",0,"area","",'Laisser vide = « Néant »']]],
- ["ouv","Ouverture administrative","OA","\u{1F513}",[["entreprise","Entreprise / établissement",1,"ent"],["adresse","Adresse"],["dateEffet","Date d'effet",1,"date"],["motif","Motif et conditions",0,"area"]]],
- ["ferm","Fermeture administrative","FA","\u{1F512}",[["entreprise","Entreprise / établissement",1,"ent"],["adresse","Adresse"],["dateEffet","Date d'effet",1,"date"],["duree","Durée",0,"text","Jusqu'à nouvel ordre"],["motif","Motif",1,"area"]]],
+ ["vdp","Déclaration de VDP","VD","⚖️",[["juge","Juge (nom et prénom)",1,"juge","@juge"],["delivre","Délivré le",1,"date","@today"],["dateJug","Date et heure du jugement",1,"datetime-local"],["nom","Nom",1],["prenom","Prénom",1],["dateRapport","Date du rapport",0,"date"],["dossier","N° du dossier MDT"],["vice","Vice de procédure",1,"select",VDP_T.map(v=>[v[0],v[1]+" — cat. "+v[2]])],["viceDetail","Précisions (facultatif)",0,"area"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["divorce","Procès-verbal de divorce","PD","\u{1F494}",[["dateFait","Fait le",1,"date","@today"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeGrade","Grade du juge",0,"text","@jugeGrade"],["p1","Première personne : nom et prénom",1],["naiss1","Première personne : date de naissance",0,"date"],["p2","Deuxième personne : nom et prénom",1],["naiss2","Deuxième personne : date de naissance",0,"date"],["garde","Qui récupère son nom de naissance ?",1,"select",[["1","La première personne"],["2","La deuxième personne"]]],["civilite","Civilité de cette personne",1,"select",[["Mme","Mme (nom de jeune fille)"],["Mr","Mr (nom de jeune garçon)"]]],["nomApres","Nom après le divorce",1],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["casier","Extrait de casier judiciaire","EX","\u{1F4DC}",[["dateFait","Fait le",1,"date","@today"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeGrade","Grade du juge",0,"text","@jugeGrade"],["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["dossier","N° de dossier","","text","","Ex. : #1234"],["faits","Condamnations (vide = aucune)",0,"infs"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["restit","Restitution de saisies","RS","\u{1F4E6}",[["dateFait","Fait le",1,"date","@today"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["jugeGrade","Grade du juge",0,"text","@jugeGrade"],["nom","Nom",1],["prenom","Prénom",1],["naiss","Date de naissance",0,"date"],["dossier","N° de dossier",0,"text","","Ex. : #1234"],["letale","Armes létales restituées (une par ligne)",0,"area"],["blanche","Armes blanches restituées (une par ligne)",0,"area"],["autres","Autres biens restitués (un par ligne)",0,"area"],["affaire","Référence du jugement"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["ouv","Réouverture d'entreprise","OA","\u{1F513}",[["dateFait","Fait le",1,"date","@today"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["entreprise","Nom de l'entreprise",1,"ent"],["repGrade","Poste du représentant",0,"text","","Ex. : PDG"],["repNom","Nom et prénom du représentant",1],["repTel","N° de téléphone"],["repNaiss","Date de naissance du représentant",0,"date"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
+ ["ferm","Fermeture administrative","FA","\u{1F512}",[["dateFait","Fait le",1,"date","@today"],["juge","Juge (nom et prénom)",1,"juge","@juge"],["entreprise","Nom de l'entreprise",1,"ent"],["repGrade","Poste du représentant",0,"text","","Ex. : PDG"],["repNom","Nom et prénom du représentant",1],["repTel","N° de téléphone"],["repNaiss","Date de naissance du représentant",0,"date"],["duree","Durée de la fermeture",1,"select",["24 heures","48 heures","72 heures","1 semaine","2 semaines","1 mois","Jusqu'à nouvel ordre"],"","Jusqu'à nouvel ordre"],["signNom","Nom et prénom du signataire",1,"text","@me"],["signGrade","Grade du signataire",1,"text","@grade"]]],
  ["expul","Avis d'expulsion","AE","\u{1F3E0}",[["destinataire","Personne ou entreprise visée",1],["lieu","Lieu / propriété concerné(e)",1],["delai","Date limite de départ",1,"date"],["motif","Motif",1,"area"]]],
  ["demeure","Mise en demeure","MD","✉️",[["destinataire","Destinataire",1],["objet","Objet",1],["montant","Montant réclamé ($)",0,"number"],["delai","Délai accordé (date limite)",1,"date"],["motif","Exposé des faits",1,"area"]]]];
 const DOCL=Object.fromEntries(DOC_T.map(t=>[t[0],t]));
 const DST2={valide:["Valide","ok"],annule:["Annulé","no"]};
-const docPerson=x=>[x.prenom,x.nom].filter(Boolean).join(" ")||x.cible||x.destinataire||x.entreprise||x.debiteur||x.affaire||x.objet||"—";
+const docPerson=x=>[x.prenom,x.nom].filter(Boolean).join(" ")||(x.p1?x.p1+" / "+(x.p2||""):"")||x.cible||x.destinataire||x.entreprise||x.debiteur||x.affaire||x.objet||"—";
 const fdt=v=>v?(String(v).includes("T")?new Date(v).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):fdd(v)):"";
-function docBody(x){const t=x.type,v=k=>esc(x[k]||""),p=`${v("prenom")} ${v("nom")}`.trim(),L=[];const P=s=>L.push(s);
+function docBody(x){if(TPL[x.type]&&x.signNom&&x.type!="perq"){const T=DOCL[x.type],O=[];T[4].forEach(f=>{if(/^sign/.test(f[0]))return;let v=x[f[0]];if(v==null||v===""||(Array.isArray(v)&&!v.length))return;if(Array.isArray(v))v=v.join(", ");else if(f[3]=="date")v=fddLong(v);else if(f[3]=="datetime-local")v=fdtA(v);else if(f[3]=="select"){const o=f[4].find(o=>Array.isArray(o)&&o[0]==v);if(o)v=o[1]}if(f[0]=="montant")v=money(v);O.push(`<b>${esc(f[1].replace(/ \(.*\)$/,""))} :</b> ${esc(v)}`)});if(["info","arret","perq"].includes(x.type))O.push(`Valable jusqu\u2019au <b>${fddLong(addDaysISO(x.delivre||isoDay(x.t),7))}</b>.`);return O.map(s=>`<p>${s}</p>`).join("")}
+ const t=x.type,v=k=>esc(x[k]||""),p=`${v("prenom")} ${v("nom")}`.trim(),L=[];const P=s=>L.push(s);
  switch(t){
  case "perq":if(x.juge||x.delivre){P(`<b>Raison :</b> ${v("motif")} — <b>Juge :</b> ${v("juge")}${x.jugeTel?` (tél. ${v("jugeTel")})`:""}`);P(`Délivré le <b>${fddLong(x.delivre||isoDay(x.t))}</b>. En vertu de l'autorité conférée par la loi à tout juge et officier de l'ordre public de Los Santos dûment assermenté, permettez à l'intéressé(e) de pénétrer et de fouiller le lieu suivant :`);P(`<b>Nom et prénom :</b> ${p}<br><b>Date de naissance :</b> ${fddLong(x.naiss)||"—"}<br><b>Action :</b> ${v("action")}<br><b>Adresse :</b> ${v("lieu")}`);P(`Ce mandat sera actif jusqu'à une semaine après son émission, soit le <b>${fddLong(addDaysISO(x.delivre||isoDay(x.t),7))}</b>.`);break}
   P(`Vu les éléments portés à notre connaissance, autorisons ${x.agence?"les agents de <b>"+v("agence")+"</b>":"les agents habilités"} à procéder à la perquisition du lieu suivant : <b>${v("lieu")}</b>${p?`, occupé ou détenu par <b>${p}</b>`:""}.`);P(`<b>Éléments recherchés :</b> ${v("objet")}`);P(`<b>Motif :</b> ${v("motif")}`);if(x.validite)P(`Le présent mandat est valable jusqu'au <b>${fdd(x.validite)}</b>.`);break;
@@ -2001,16 +2109,17 @@ V.jdocs=()=>{if(!canDocs())return empty("Accès réservé.");const ty=filt.jdt||
  <div><div class="card"><div class="inl"><input id="q_jdq" placeholder="Rechercher : n°, personne, entreprise, rédacteur…" value="${esc(q)}" oninput="filt.jdq=this.value;render()" style="flex:1;min-width:200px">${can("jus.docs")?`<button class="btn" onclick="openJdoc(null,'${ty||""}')">${ic("plus")}Nouveau document</button>`:""}</div></div>
  <div class="card tw"><table><tr><th>N°<th>Type<th>Concerne<th>Rédigé le<th>Par<th>Statut</tr>${L.map(x=>{const T=DOCL[x.type]||["","?","","\u{1F4C4}"];return `<tr class="click" onclick="openM('jdoc','${x.id}')"><td class="nw b">${esc(x.num)}<td class="nw">${T[3]} ${esc(T[1])}${x.type=="dedo"&&x.nature?` <span class="mu sm">(${esc(x.nature)})</span>`:""}<td>${esc(docPerson(x))}<td class="nw">${fd(x.t)}<td>${esc(x.byNom)}<td>${bdg(DST2,x.st||"valide")}</tr>`}).join("")||`<tr><td colspan="6" class="empty">Aucun document.</td></tr>`}</table></div></div></div>`};
 function MJdocEdit(){if(!can("jus.docs"))return null;const x=modal.id?S.jdocs[modal.id]:null;if(modal.id&&!x)return null;const ty=x?x.type:(modal.ty||keep.jdty||"perq"),T=DOCL[ty],d=modal.d,nf=modal.files||[],rm=modal.rm||{},F=x?jdocCache[x.id]:null;if(x&&F===undefined)loadJdocFiles(x.id);
- if(!x&&modal.dty!==ty){T[4].forEach(f=>{if(modal.d[f[0]]==null||modal.d[f[0]]===""){if(f[3]=="select")modal.d[f[0]]=f[4][0];else if(f[4])modal.d[f[0]]=jdDef(f[4])}});modal.dty=ty}
+ if(!x&&modal.dty!==ty){T[4].forEach(f=>{if(modal.d[f[0]]==null||modal.d[f[0]]===""){if(f[3]=="select")modal.d[f[0]]=f[6]!=null?f[6]:(Array.isArray(f[4][0])?f[4][0][0]:f[4][0]);else if(f[4])modal.d[f[0]]=jdDef(f[4])}});modal.dty=ty}
  const fld=([k,l,req,type,def,ph])=>{const v=d[k]??"";const lab=`${esc(l)}${req?" *":""}`;
-  if(type=="area")return `<label class="f full">${lab}<textarea data-nokeep rows="3" placeholder="${esc(ph||"")}" oninput="modal.d['${k}']=this.value">${esc(v)}</textarea></label>`;
-  if(type=="select")return `<label class="f">${lab}<select data-nokeep onchange="modal.d['${k}']=this.value">${opts(def,v)}</select></label>`;
+  if(type=="area")return `<label class="f full">${lab}<textarea data-nokeep rows="3" placeholder="${esc(ph||"")}" oninput="modal.d['${k}']=this.value;jdPrev()">${esc(v)}</textarea></label>`;
+  if(type=="select")return `<label class="f">${lab}<select data-nokeep onchange="modal.d['${k}']=this.value;jdPrev()">${opts(def,v)}</select></label>`;
+  if(type=="infs"){const A=tplArr(v);return `<div class="f full"><span class="fl">${lab}</span><div class="infs">${A.map((n,i)=>`<span class="chip">${esc(n)}<button type="button" title="Retirer" onclick="jdInfDel('${k}',${i})">×</button></span>`).join("")||`<span class="mu sm">Aucun fait sélectionné.</span>`}</div><div class="inl"><input id="jd_${k}_q" data-nokeep list="jdinfs" autocomplete="off" placeholder="Rechercher dans la grille des infractions…" style="flex:1" onkeydown="if(event.key=='Enter'){event.preventDefault();jdInfAdd('${k}')}" onchange="jdInfAdd('${k}',1)"><button type="button" class="btn sec sm" onclick="jdInfAdd('${k}')">${ic("plus")}Ajouter</button></div></div>`}
   if(type=="agence")return `<label class="f">${lab}<select data-nokeep onchange="modal.d['${k}']=this.value">${opts([""].concat(AGENCES),v)}</select></label>`;
   if(type=="ent")return `<label class="f">${lab}<input data-nokeep list="jdents" value="${esc(v)}" oninput="modal.d['${k}']=this.value"></label>`;
   if(type=="juge")return `<label class="f">${lab}<input data-nokeep id="jd_juge" list="jdjuges" autocomplete="off" value="${esc(v)}" placeholder="Choisir ou saisir un nom" oninput="jdJuge(this.value)"></label>`;
   return `<label class="f">${lab}<input data-nokeep id="jd_${k}" type="${type||"text"}" value="${esc(v)}" placeholder="${esc(ph||"")}" oninput="modal.d['${k}']=this.value;jdPrev()"></label>`};
  return {title:x?"Modifier "+esc(x.num):"Nouveau document officiel",wide:1,body:`${x?"":`<label class="f">Type de document<select data-nokeep onchange="modal.ty=this.value;render()">${opts(DOC_T.map(t=>[t[0],t[3]+" "+t[1]]),ty)}</select></label>`}
- <datalist id="jdjuges">${justiceStaff().map(u=>`<option value="${esc(u.nom)}">${esc(gname(u))}</option>`).join("")}</datalist><datalist id="jdents">${vals(S.entreprises).map(e=>`<option value="${esc(e.nom)}">`).join("")}${vals(S.users).filter(u=>u.role=="entreprise").map(u=>`<option value="${esc(u.nom)}">`).join("")}</datalist>
+ <datalist id="jdinfs">${infList().map(i=>`<option value="${esc(i.nom)}">${esc(i.cat||"")}</option>`).join("")}</datalist><datalist id="jdjuges">${justiceStaff().map(u=>`<option value="${esc(u.nom)}">${esc(gname(u))}</option>`).join("")}</datalist><datalist id="jdents">${vals(S.entreprises).map(e=>`<option value="${esc(e.nom)}">`).join("")}${vals(S.users).filter(u=>u.role=="entreprise").map(u=>`<option value="${esc(u.nom)}">`).join("")}</datalist>
  <div class="pe-card"><h4 style="margin-top:0">${T[3]} ${esc(T[1])}</h4><div class="form">${T[4].map(fld).join("")}</div>
  ${ty=="casier"?`<button class="btn sec sm" onclick="casierFill()">Remplir depuis l'Outil de justice</button>`:""}</div>
  ${TPL[ty]?`<details class="pe-pay" open><summary>Aperçu du document</summary><div id="jdprev" style="margin-top:10px">${tplPaper(Object.assign({type:ty},x||{},d,{num:x?x.num:""}))}</div></details>`:""}
@@ -2499,7 +2608,7 @@ function openJug(id){if(!can("jus.judge"))return;const j=id?S.jugements[id]:null
  const d=j?JSON.parse(JSON.stringify(j)):{st:"attente",dateJug:isoDay(Date.now()),faits:[],saisies:[],impayees:"non",fed:"auto",vdpCat:"1",juge:/juge|chief/i.test(gname(me))?me.nom:""};
  d.faits=d.faits||[];d.saisies=d.saisies||[];modal={type:"jug",id:id||null,d,files:[],rm:{}};keep={};if(j&&Object.keys(j.files||{}).length)loadJugFiles(j.id);render()}
 function jugAddFait(id){const x=S.infractions[id];if(!x||!modal||!modal.d)return;modal.d.faits.push({i:id,n:x.nom,c:x.cat,a:num(x.amende),p:x.prison,v:"rep",aj:false});keep.jfq="";render();setTimeout(()=>{const e=document.getElementById("jfq");e&&e.focus()},30)}
-function jugAddSaisie(){const e=document.getElementById("jsq"),t=e&&e.value.trim();if(!t)return;modal.d.saisies.push({t,r:false});keep.jsq="";e.value="";render();setTimeout(()=>{const f=document.getElementById("jsq");f&&f.focus()},30)}
+function jugAddSaisie(){const e=document.getElementById("jsq"),t=e&&e.value.trim();if(!t)return;modal.d.saisies.push({t,r:false,k:val("jsk")||"autre"});keep.jsq="";e.value="";render();setTimeout(()=>{const f=document.getElementById("jsq");f&&f.focus()},30)}
 async function addJugFiles(list){if(!modal||modal.type!="jug")return;const arr=[...(list||[])];if(!arr.length)return;modal.busy=1;render();for(const f of arr){try{modal.files.push(await fileToData(f))}catch(e){toast(e.message,1)}}modal.busy=0;render()}
 async function addJdocFiles(list){if(!modal||modal.type!="jdocEdit")return;const arr=[...(list||[])];if(!arr.length)return;modal.busy=1;render();for(const f of arr){try{modal.files.push(await fileToData(f))}catch(e){toast(e.message,1)}}modal.busy=0;render()}
 document.addEventListener("paste",e=>{if(!modal||!e.clipboardData||!["jug","jdocEdit"].includes(modal.type)||(modal.type=="jug"&&modal.d.st!="vdp"))return;const fs=[...e.clipboardData.items].filter(i=>i.kind=="file").map(i=>i.getAsFile()).filter(Boolean);if(fs.length){e.preventDefault();modal.type=="jug"?addJugFiles(fs):addJdocFiles(fs)}});
@@ -2526,10 +2635,10 @@ function MMdt(){return {title:"Note MDT",wide:1,body:`<p class="mu sm" style="ma
 function openJdoc(id,ty){if(!can("jus.docs"))return;const x=id?S.jdocs[id]:null;modal={type:"jdocEdit",id:id||null,ty:ty||"perq",d:x?JSON.parse(JSON.stringify(x)):{},files:[],rm:{}};keep={};render()}
 function casierFill(){const d=modal.d,n=NRM((d.prenom||"")+" "+(d.nom||"")),n2=NRM((d.nom||"")+" "+(d.prenom||""));if(!NRM(d.nom))return toast("Indiquez d'abord le nom et le prénom.",1);
  const J=vals(S.jugements).filter(j=>["coupable","bracelet"].includes(j.st)&&[n,n2].includes(NRM((j.prenom||"")+" "+(j.nom||"")))).sort((a,b)=>(a.dateJug||"").localeCompare(b.dateJug||""));
- d.mentions=J.length?J.map(j=>`- ${j.dateJug?fdd(j.dateJug):fd(j.t)} (${j.num}) : ${(j.faits||[]).filter(f=>f.v!=="non").map(f=>f.n).join(", ")} — ${money(jugCalc(j).am)}${jugCalc(j).pr?", "+jugCalc(j).prT:""}`).join("\n"):"";toast(J.length?J.length+" condamnation(s) reprise(s).":"Aucune condamnation trouvée : casier vierge.");render()}
+ d.faits=[...new Set(J.flatMap(j=>(j.faits||[]).filter(f=>f.v!=="non").map(f=>f.n)))];toast(J.length?J.length+" condamnation(s) reprise(s).":"Aucune condamnation trouvée : casier vierge.");render()}
 function jdocSave(){if(!can("jus.docs"))return;const x=modal.id?S.jdocs[modal.id]:null,ty=x?x.type:modal.ty,T=DOCL[ty],d=modal.d;
- for(const f of T[4])if(f[2]&&!String(d[f[0]]??"").trim())return say("Champ requis : "+f[1]);
- const u=ME(),now=Date.now(),id=modal.id||nid(),rec={};T[4].forEach(f=>rec[f[0]]=f[3]=="number"?(String(d[f[0]]??"").trim()===""?"":num(d[f[0]])):String(d[f[0]]??"").trim());
+ for(const f of T[4])if(f[2]&&(f[3]=="infs"?!tplArr(d[f[0]]).length:!String(d[f[0]]??"").trim()))return say("Champ requis : "+f[1]);
+ const u=ME(),now=Date.now(),id=modal.id||nid(),rec={};T[4].forEach(f=>rec[f[0]]=f[3]=="infs"?tplArr(d[f[0]]):f[3]=="number"?(String(d[f[0]]??"").trim()===""?"":num(d[f[0]])):String(d[f[0]]??"").trim());
  const up={};saveFiles("jdocs","jdocfiles",id,modal.files||[],modal.rm,up);
  if(x){Object.assign(up,rec,{mt:now,mNom:u.nom});DBX.update("jdocs/"+id,up)}
  else{const files={};Object.keys(up).forEach(k=>{if(k.startsWith("files/")&&up[k])files[k.slice(6)]=up[k]});DBX.set("jdocs/"+id,Object.assign(rec,{id,type:ty,num:numFor("jdocs",T[2]),st:"valide",files,t:now,by:u.id,byNom:u.nom,byPoste:posteOf(u)||gname(u)}))}
@@ -2539,7 +2648,7 @@ function jdocDel(id){if(!(can("jus.docs")||isDir()))return;const x=S.jdocs[id];a
 function jdocCopy(id){copyText(docText(S.jdocs[id])).then(()=>toast("Document copié : collez-le dans Discord."))}
 /* ---------- Imprimer : image du document envoyée sur imgbb (lien permanent) ---------- */
 const H2I_URL="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js";
-const DOCFONT_CSS="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;800&family=Mrs+Saint+Delafield&display=swap";
+const DOCFONT_CSS="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;800&family=Mrs+Saint+Delafield&family=Open+Sans:wght@400;700&display=swap";
 let h2iP=null,fontCssP=null;
 function loadH2I(){if(window.htmlToImage)return Promise.resolve(window.htmlToImage);return h2iP||(h2iP=new Promise((ok,ko)=>{const s=document.createElement("script");s.src=H2I_URL;s.onload=()=>window.htmlToImage?ok(window.htmlToImage):ko(new Error("Module d'image indisponible."));s.onerror=()=>{h2iP=null;ko(new Error("Impossible de charger le module de génération d'image (connexion ?)."))};document.head.appendChild(s)}))}
 const blobToData=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
