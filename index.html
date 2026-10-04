@@ -450,6 +450,7 @@ td .cs-btn{height:34px}
 .tpl ul.tl{margin:0;padding-left:1.3em}.tpl ul.tl li{margin:0}.tpl .ttl{color:#1b2234}
 .infs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.infs .chip{display:inline-flex;align-items:center;gap:6px;background:var(--cd2);border:1px solid var(--bd);border-radius:99px;padding:4px 6px 4px 12px;font-weight:600;font-size:13px}.infs .chip button{border:0;background:none;color:var(--mu);cursor:pointer;font-size:15px;line-height:1;border-radius:50%;width:20px;height:20px}.infs .chip button:hover{color:#f87171;background:color-mix(in srgb,#ef4444 14%,transparent)}
 .sz-k{font-size:11px;font-weight:700;color:var(--mu);background:var(--cd2);border-radius:99px;padding:3px 8px;white-space:nowrap}
+.sp-p{margin:2px 0 0;opacity:.75;font-size:11.5px;min-height:16px}
 </style></head>
 <body><div id="root"></div><div class="toasts" id="toasts"></div>
 <script>
@@ -886,13 +887,20 @@ function sealSvg(){return `<svg viewBox="0 0 200 200" role="img" aria-label="Sce
 </script>
 <script>
 /* =================== STRUCTURE =================== */
-/* Écran de connexion au serveur : 3 s au chargement du site et à la connexion, jamais pendant l'utilisation */
-const SPLASH_MS=(()=>{try{const v=localStorage.getItem("lsgov_splash_ms");return v!=null?+v:3000}catch(e){return 3000}})();let splashFrom=Date.now(),splashUntil=splashFrom+SPLASH_MS,splashT=null;
-function startSplash(){splashFrom=Date.now();splashUntil=splashFrom+SPLASH_MS;render()}
+/* Écran de connexion au serveur : sa durée s'adapte au ping mesuré vers la base (bon ping = court, mauvais ping = plus long) */
+const SPLASH_MS=(()=>{try{const v=localStorage.getItem("lsgov_splash_ms");return v!=null?+v:3000}catch(e){return 3000}})();
+let splashFrom=Date.now(),SP_DUR=SPLASH_MS,splashUntil=splashFrom+SP_DUR,splashT=null,splashPing=null;
+const pingDur=ms=>Math.round(Math.min(5000,Math.max(1500,1200+ms*6)));
+async function measurePing(){if(!DB_URL||!SPLASH_MS)return null;const one=async()=>{const t=performance.now();await fetch(DB_URL.replace(/\/$/,"")+"/.json?shallow=true&print=silent&_="+Math.random(),{cache:"no-store"});return performance.now()-t};
+ try{await one().catch(()=>0);const R=[];for(let i=0;i<3;i++)R.push(await one());R.sort((a,b)=>a-b);return Math.round(R[1])}catch(e){return null}}
+function startSplash(){splashFrom=Date.now();SP_DUR=SPLASH_MS;splashUntil=splashFrom+SP_DUR;splashPing=null;render();
+ const f=splashFrom;measurePing().then(ms=>{if(f!==splashFrom||ms==null)return;splashPing=ms;SP_DUR=pingDur(ms);splashUntil=splashFrom+SP_DUR;clearTimeout(splashT);splashT=null;render()})}
+setTimeout(()=>{const f=splashFrom;measurePing().then(ms=>{if(f!==splashFrom||ms==null)return;splashPing=ms;SP_DUR=pingDur(ms);splashUntil=splashFrom+SP_DUR;clearTimeout(splashT);splashT=null;try{render()}catch(e){}})},0);
 function splashH(){const el=Date.now()-splashFrom,left=Math.max(0,splashUntil-Date.now());
- const st=[[0,"Établissement de la liaison sécurisée…"],[Math.round(SPLASH_MS*.3),"Vérification des accréditations…"],[Math.round(SPLASH_MS*.63),"Synchronisation des registres officiels…"]];
- if(!splashT&&left>0){const nx=st.map(x=>x[0]).find(x=>x>el);splashT=setTimeout(()=>{splashT=null;render()},(nx!=null?nx-el:left)+30)}const msg=(el>=SPLASH_MS&&!ready)?"Connexion au serveur gouvernemental…":st.filter(s=>el>=s[0]).pop()[1];
- return `<div class="login"><div class="box splash"><div class="seal">${seal()}</div><div class="sp-t">Connexion au serveur gouvernemental</div><div class="sp-bar"><span style="animation-duration:${SPLASH_MS}ms;animation-delay:-${Math.min(el,SPLASH_MS-1)}ms"></span></div><p class="mu sm sp-m">${esc(msg)}</p></div></div>`}
+ const st=[[0,"Établissement de la liaison sécurisée…"],[Math.round(SP_DUR*.3),"Vérification des accréditations…"],[Math.round(SP_DUR*.63),"Synchronisation des registres officiels…"]];
+ if(!splashT&&left>0){const nx=st.map(x=>x[0]).find(x=>x>el);splashT=setTimeout(()=>{splashT=null;render()},(nx!=null?nx-el:left)+30)}const msg=(el>=SP_DUR&&!ready)?"Connexion au serveur gouvernemental…":st.filter(s=>el>=s[0]).pop()[1];
+ const q=splashPing==null?"":splashPing<80?"excellente":splashPing<150?"bonne":splashPing<300?"moyenne":"faible";
+ return `<div class="login"><div class="box splash"><div class="seal">${seal()}</div><div class="sp-t">Connexion au serveur gouvernemental</div><div class="sp-bar"><span style="animation-duration:${SP_DUR}ms;animation-delay:-${Math.min(el,SP_DUR-1)}ms"></span></div><p class="mu sm sp-m">${esc(msg)}</p><p class="mu sm sp-p">${splashPing==null?(DB_URL&&SPLASH_MS?"Mesure de la latence…":"&nbsp;"):`Latence : ${splashPing} ms · connexion ${q}`}</p></div></div>`}
 function page(){
  if(bootErr&&!ready)return `<div class="login"><div class="box"><div class="seal">${seal()}</div><div class="card"><h3>Connexion à la base impossible</h3><p class="err">${esc(bootErr)}</p></div></div></div>`;
  if(!ready||Date.now()<splashUntil)return splashH();
